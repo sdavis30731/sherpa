@@ -110,6 +110,25 @@ try {
     "(SECRET — server-only, never expose to browser)",
   );
 
+  // AGENT_SESSION_MASTER_KEY — auto-generated, never prompted.
+  // 32 random bytes, base64-encoded. Wraps the per-session keys created
+  // by SHRP-040. If lost or rotated, all agent authorization sessions
+  // become unreadable (users would re-authorize).
+  let agentMasterKey = existing.AGENT_SESSION_MASTER_KEY;
+  if (!agentMasterKey) {
+    const { randomBytes } = await import("node:crypto");
+    agentMasterKey = randomBytes(32).toString("base64");
+    console.log(
+      `\n  ${GREEN}✓${RESET} Generated AGENT_SESSION_MASTER_KEY (32 random bytes).`,
+    );
+    console.log(
+      `    ${DIM}Auto-generated server secret. Rotating it invalidates all`,
+    );
+    console.log(`    active agent authorization sessions.${RESET}`);
+  } else {
+    console.log(`\n  ${DIM}Keeping existing AGENT_SESSION_MASTER_KEY.${RESET}`);
+  }
+
   const siteUrl = await ask(
     rl,
     "Public site URL",
@@ -139,6 +158,7 @@ try {
     "",
     "# --- Server-only (DO NOT expose to browser) ---",
     `SUPABASE_SERVICE_ROLE_KEY=${serviceRoleKey}`,
+    `AGENT_SESSION_MASTER_KEY=${agentMasterKey}`,
     "",
   ].join("\n");
 
@@ -154,6 +174,7 @@ try {
     { name: "NEXT_PUBLIC_SUPABASE_ANON_KEY", value: anonKey, secret: false },
     { name: "NEXT_PUBLIC_SITE_URL", value: siteUrl, secret: false, note: "Update to your Vercel URL after first deploy" },
     { name: "SUPABASE_SERVICE_ROLE_KEY", value: serviceRoleKey, secret: true },
+    { name: "AGENT_SESSION_MASTER_KEY", value: agentMasterKey, secret: true, note: "Auto-generated. Wraps agent authorization session keys." },
   ];
 
   for (const v of vercelVars) {

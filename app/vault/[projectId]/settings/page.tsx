@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, Bot, ArrowRight } from "lucide-react";
 import { RenameProjectForm } from "./_components/rename-form";
 import { ArchiveProjectSection } from "./_components/archive-section";
 import { DeleteProjectSection } from "./_components/delete-section";
@@ -55,6 +55,27 @@ export default async function ProjectSettingsPage({
       </p>
 
       <div className="space-y-6">
+        <Link
+          href={`/vault/${project.id}/settings/agents`}
+          className="block rounded-2xl border border-sherpa-200 bg-sherpa-50/50 p-5 shadow-sm transition hover:border-sherpa-400 hover:bg-sherpa-50"
+        >
+          <div className="flex items-center gap-3">
+            <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-sherpa-500 text-white">
+              <Bot className="h-4 w-4" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <div className="text-base font-semibold text-slate-900">
+                AI Agent access
+              </div>
+              <p className="text-sm text-slate-600">
+                Generate MCP tokens to let Claude, Cursor, or Cowork use this
+                project&apos;s credentials — without seeing them.
+              </p>
+            </div>
+            <ArrowRight className="h-4 w-4 shrink-0 text-sherpa-500" />
+          </div>
+        </Link>
+
         <Card>
           <CardHeader>
             <CardTitle>Rename</CardTitle>

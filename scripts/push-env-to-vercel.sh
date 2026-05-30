@@ -19,7 +19,7 @@ if [ ! -f .vercel/project.json ] && [ ! -f .vercel/repo.json ]; then
   exit 1
 fi
 
-KEYS="NEXT_PUBLIC_SUPABASE_URL NEXT_PUBLIC_SUPABASE_ANON_KEY NEXT_PUBLIC_SITE_URL SUPABASE_SERVICE_ROLE_KEY"
+KEYS="NEXT_PUBLIC_SUPABASE_URL NEXT_PUBLIC_SUPABASE_ANON_KEY NEXT_PUBLIC_SITE_URL SUPABASE_SERVICE_ROLE_KEY AGENT_SESSION_MASTER_KEY"
 
 # Extract the value of a key from .env.local. Strips surrounding quotes
 # if present, and removes a trailing newline.

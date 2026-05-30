@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/card";
 import { Callout } from "@/components/ui/callout";
 import { Eye, EyeOff, Lock } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 
 const MAX_ATTEMPTS = 3;
 const COOLDOWN_MS = 60_000;
@@ -18,6 +19,8 @@ const COOLDOWN_MS = 60_000;
 export default function UnlockPage() {
   const router = useRouter();
   const vault = useVaultKey();
+  const searchParams = useSearchParams();
+  const next = searchParams.get("next") ?? "/vault";
 
   const [passphrase, setPassphrase] = React.useState("");
   const [reveal, setReveal] = React.useState(false);
@@ -84,7 +87,7 @@ export default function UnlockPage() {
       }
 
       vault.unlock(key);
-      router.push("/vault");
+      router.push(next);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not unlock.");
     } finally {
