@@ -74,17 +74,23 @@ export default function SetupPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not signed in");
 
+      // Upsert in case the public.users row wasn't auto-created by the
+      // handle_new_user trigger (e.g., user signed up before migration 0001
+      // had created the trigger). RLS allows insert + update where id = auth.uid().
       const { error: upErr } = await supabase
         .from("users")
-        .update({
-          argon_salt: toBase64(argonSalt),
-          argon_params: ARGON_PARAMS_PRODUCTION,
-          sentinel_ciphertext: sentinel,
-          recovery_wrapped_passphrase: wrappedPassphrase,
-          recovery_salt: toBase64(recoverySalt),
-          recovery_params: ARGON_PARAMS_PRODUCTION,
-        })
-        .eq("id", user.id);
+        .upsert(
+          {
+            id: user.id,
+            argon_salt: toBase64(argonSalt),
+            argon_params: ARGON_PARAMS_PRODUCTION,
+            sentinel_ciphertext: sentinel,
+            recovery_wrapped_passphrase: wrappedPassphrase,
+            recovery_salt: toBase64(recoverySalt),
+            recovery_params: ARGON_PARAMS_PRODUCTION,
+          },
+          { onConflict: "id" },
+        );
       if (upErr) throw upErr;
 
       // 5. Hold the derived key in the vault context for this session.
@@ -93,7 +99,17 @@ export default function SetupPage() {
       setStep("done");
       setTimeout(() => router.push("/vault"), 700);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not save your setup.");
+      // Log the raw error so Steve can see it in DevTools console too.
+      console.error("Vault setup failed:", err);
+      const message =
+        err instanceof Error
+          ? err.message
+          : err && typeof err === "object" && "message" in err
+            ? String((err as { message: unknown }).message)
+            : typeof err === "string"
+              ? err
+              : "Could not save your setup. (Check browser console for details.)";
+      setError(message);
       setStep("recovery");
     }
   }

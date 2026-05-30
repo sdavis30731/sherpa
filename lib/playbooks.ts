@@ -18,6 +18,9 @@
 
 import type * as React from "react";
 import StripePlaybook, { meta as stripeMeta } from "@/content/playbooks/stripe";
+import GitHubPlaybook, { meta as githubMeta } from "@/content/playbooks/github";
+import SupabasePlaybook, { meta as supabaseMeta } from "@/content/playbooks/supabase";
+import VercelPlaybook, { meta as vercelMeta } from "@/content/playbooks/vercel";
 
 export type Section =
   | "overview"
@@ -53,6 +56,9 @@ export interface Playbook {
 
 const REGISTRY: Record<string, Playbook> = {
   stripe: { meta: stripeMeta, Body: StripePlaybook },
+  github: { meta: githubMeta, Body: GitHubPlaybook },
+  supabase: { meta: supabaseMeta, Body: SupabasePlaybook },
+  vercel: { meta: vercelMeta, Body: VercelPlaybook },
 };
 
 export function getPlaybook(serviceId: string): Playbook | null {

@@ -162,6 +162,38 @@ middleware.ts         Next.js middleware that wires supabase/middleware.ts
   `auth.uid() = user_id`. Even with a leaked anon key, a user can only read
   their own rows.
 
+### Why not Supabase Vault?
+
+Supabase ships a `supabase_vault` extension (pgsodium under the hood) that
+encrypts secrets at the database layer. It's a legitimate and useful tool,
+but it's **deliberately not used for storing user credentials in Sherpa**.
+
+The two systems solve different problems:
+
+- **Supabase Vault** holds the encryption key on the server. Disk backups,
+  replication streams, and stolen drives can't reveal the plaintext, but
+  anyone with valid database access (the service-role key, a Supabase
+  support engineer, a successful SQL injection) can read the decrypted
+  view and see the plaintext. The threat model is "protect against
+  infrastructure theft".
+- **Sherpa's client-side encryption** derives the key in the user's
+  browser from their master passphrase via Argon2id. The plaintext is
+  encrypted *before* it ever leaves the browser. Supabase only ever stores
+  ciphertext. The threat model is "protect against everyone, including
+  Sherpa itself" — sometimes called zero-knowledge.
+
+Sherpa's headline technical claim — *Claude never sees your Stripe key, and
+neither do we* — only holds under the second model. The moment the
+encryption key lives on a server we control, that claim collapses to "we
+promise we're nice", which is what every other SaaS already says.
+
+Where Supabase Vault *would* fit comfortably is for **Sherpa's own internal
+secrets** (Stripe webhook signing secret for receiving payment events,
+Sentry DSN, third-party tokens). Today those live in Vercel env vars,
+which is equally secure and simpler. MCP access tokens
+(`mcp_tokens.token_hash`, SHRP-029) stay bcrypt-hashed regardless — a
+one-way hash means even a breach of that table doesn't yield usable tokens.
+
 ## Tests
 
 ```bash
