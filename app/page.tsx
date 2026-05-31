@@ -43,28 +43,31 @@ export default function HomePage() {
       {/* Hero */}
       <section className="mt-8 text-center">
         <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-sherpa-200 bg-sherpa-50 px-3 py-1 text-xs font-medium text-sherpa-700">
-          <ShieldCheck className="h-3.5 w-3.5" /> The credentials OS for vibe coders
+          <ShieldCheck className="h-3.5 w-3.5" /> Launch confidence for AI-built apps
         </div>
+        <p className="mb-2 text-base font-semibold uppercase tracking-wide text-slate-500">
+          Dude. Where are <span className="text-sherpa-500">my keys?!</span>
+        </p>
         <h1 className="text-5xl font-bold tracking-tight text-slate-900 sm:text-6xl">
-          Dude. Where are{" "}
-          <span className="text-sherpa-500">my keys?!</span>
+          Before you go live,{" "}
+          <span className="text-sherpa-500">run a Go-Live Check.</span>
         </h1>
         <p className="mx-auto mt-5 max-w-2xl text-lg text-slate-600">
-          You shipped a real product with Claude, Cursor, or Bolt. Now you have
-          API keys, webhook secrets, and DNS records scattered across six
-          dashboards, three <code className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-base text-slate-700">.env</code>
-          {" "}files, and one panicked group chat. Sherpa is the one place where
-          all of it lives — encrypted so even we can&apos;t read it.
+          You built a real app with Claude, Cursor, or Bolt. It works on your
+          machine. But underneath are{" "}
+          <strong className="font-semibold text-slate-800">
+            brittle, half-understood connections
+          </strong>{" "}
+          — Stripe webhooks, Supabase RLS, Vercel env vars, GitHub tokens,
+          AI keys with no spend cap, DNS records, OAuth callbacks. Sherpa
+          maps every credential your app depends on, flags what could break,
+          leak, or cost you money, and gives you a readiness score before
+          you launch.
         </p>
         <p className="mx-auto mt-4 max-w-2xl text-base text-slate-500">
-          Start here. We&apos;ve loaded a redacted{" "}
-          <code className="rounded bg-slate-100 px-1 py-0.5 font-mono text-sm text-slate-700">
-            .env
-          </code>{" "}
-          below so you can see what Sherpa does — what each key is, how risky
-          it is, and what to do next. When you&apos;re ready, swap in a
-          redacted version of your own (or your real one — it never leaves
-          your browser).{" "}
+          The Go-Live Check is below — already running on a redacted sample
+          so you can see it work. Swap in a redacted version of your own
+          .env any time (or your real one — it never leaves your browser).{" "}
           <strong className="text-slate-700">No signup required.</strong>
         </p>
       </section>
@@ -249,13 +252,13 @@ export default function HomePage() {
             Pricing
           </p>
           <h2 className="mt-2 text-3xl font-bold tracking-tight text-slate-900">
-            The core is free. Forever.
+            Launch insurance. Free for your first app.
           </h2>
           <p className="mx-auto mt-3 max-w-2xl text-base text-slate-600">
-            Vault, playbooks, risk-flag analysis, rotation reminders, the MCP
-            agent bridge, the activity log — included on the free tier,
-            permanently. No trial timer. No card on file. When (and only
-            when) you outgrow it, there&apos;s an upgrade waiting.
+            Run a Go-Live Check before every launch. Keep the credentials
+            for one app vaulted, rotated, and agent-accessible — forever,
+            on the free tier. When you ship your second app, $19 covers
+            the rest of your career.
           </p>
         </div>
 
@@ -273,7 +276,7 @@ export default function HomePage() {
               <span className="text-sm text-slate-500">/ forever</span>
             </div>
             <p className="mt-3 text-sm text-slate-600">
-              Everything you need to ship and protect one real product.
+              Be launch-ready on one app, permanently. No card. No timer.
             </p>
             <ul className="mt-5 space-y-2.5 text-sm text-slate-700">
               <li className="flex items-start gap-2">
@@ -321,7 +324,7 @@ export default function HomePage() {
               <span className="text-sm text-slate-500">one-time</span>
             </div>
             <p className="mt-3 text-sm text-slate-600">
-              For when you&apos;re juggling more than one product.
+              Launch insurance for every app you&apos;ll ever build.
             </p>
             <ul className="mt-5 space-y-2.5 text-sm text-slate-700">
               <li className="flex items-start gap-2">
