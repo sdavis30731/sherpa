@@ -43,7 +43,7 @@ export default function HomePage() {
       {/* Hero */}
       <section className="mt-8 text-center">
         <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-sherpa-200 bg-sherpa-50 px-3 py-1 text-xs font-medium text-sherpa-700">
-          <ShieldCheck className="h-3.5 w-3.5" /> Launch confidence for AI-built apps
+          <ShieldCheck className="h-3.5 w-3.5" /> Don&apos;t leave Camp 4 without your Sherpa
         </div>
         <p className="mb-2 text-base font-semibold uppercase tracking-wide text-slate-500">
           Dude. Where are <span className="text-sherpa-500">my keys?!</span>
@@ -245,6 +245,25 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* ---------------- BRAND VOICE BEAT ---------------- */}
+      <section className="mt-28">
+        <div className="mx-auto max-w-3xl rounded-3xl border border-slate-200 bg-gradient-to-br from-slate-50 via-white to-sherpa-50/40 p-10 text-center">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-sherpa-600">
+            Who this is for
+          </p>
+          <p className="mt-4 text-2xl font-bold leading-snug tracking-tight text-slate-900 sm:text-3xl">
+            Built for the people who scaled Everest the first time out{" "}
+            <span className="text-slate-500">with Cowork, Cursor, Codex, or Bolt.</span>
+          </p>
+          <p className="mx-auto mt-5 max-w-xl text-base text-slate-600">
+            You did the impossible thing. You built real software without a
+            traditional engineering background. Sherpa is the guide who
+            doesn&apos;t let you leave Camp 4 without your crampons, your
+            oxygen, and a clear-eyed look at the conditions ahead.
+          </p>
+        </div>
+      </section>
+
       {/* ---------------- PRICING ---------------- */}
       <section className="mt-28">
         <div className="text-center">
@@ -365,10 +384,7 @@ export default function HomePage() {
 
       {/* Footer */}
       <footer className="mt-20 border-t border-slate-200 pt-8 text-center text-xs text-slate-400">
-        <p>
-          Built for the people who scaled Everest the first time out with
-          Cowork, Cursor, Codex, or Bolt.
-        </p>
+        <p>Sherpa. Don&apos;t go up the mountain alone.</p>
         <div className="mt-3 flex items-center justify-center gap-4">
           <Link href="/security" className="hover:text-slate-600">
             Security
