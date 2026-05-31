@@ -43,18 +43,22 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+// Sample uses self-detecting placeholder values: the prefix is real so the
+// detector's by-value rule fires, and the rest is obvious filler ("xxxx…")
+// so no one mistakes it for a real key. Even if a user mangles the value,
+// the env-key NAME is enough for detection (SHRP-041j).
 const SAMPLE = `# A redacted sample — not your real keys. Edit freely.
 NEXT_PUBLIC_SUPABASE_URL=https://abc123.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIs...
-SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIs...
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiJ9.eyJyb2xlIjoiYW5vbiIsImlhdCI6MTcwMDAwMDAwMH0.REDACTEDxxxxxxxxxxxxxxxxxx
+SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiJ9.eyJyb2xlIjoic2VydmljZV9yb2xlIiwiaWF0IjoxNzAwMDAwMDAwfQ.REDACTEDxxxxxxxxxxxxxxxxxx
 
-STRIPE_SECRET_KEY=sk_live_REDACTED_REDACTED_REDACTED
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_REDACTED_REDACTED
-STRIPE_WEBHOOK_SECRET=whsec_REDACTED_REDACTED_REDACTED
+STRIPE_SECRET_KEY=sk_live_REDACTEDxxxxxxxxxxxxxxxxxxxx
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_REDACTEDxxxxxxxxxxxxxxxxxxxx
+STRIPE_WEBHOOK_SECRET=whsec_REDACTEDxxxxxxxxxxxxxxxxxxxx
 
-GITHUB_TOKEN=ghp_REDACTED_REDACTED_REDACTED
-OPENAI_API_KEY=sk-REDACTED_REDACTED_REDACTED
-RESEND_API_KEY=re_REDACTED_REDACTED_REDACTED`;
+GITHUB_TOKEN=ghp_REDACTEDxxxxxxxxxxxxxxxxxxxx
+OPENAI_API_KEY=sk-REDACTEDxxxxxxxxxxxxxxxxxxxx
+RESEND_API_KEY=re_REDACTEDxxxxxxxxxxxxxxxxxxxx`;
 
 function guessEnv(name: string): "dev" | "staging" | "production" {
   const lower = name.toLowerCase();
@@ -209,7 +213,9 @@ function analyze(text: string): {
 
   const parsed = parseEnv(text);
   const rows: AnalysisRow[] = parsed.entries.map((e) => {
-    const detection = detectKey(e.value);
+    // SHRP-041j: pass the env-key name so the detector can fall back to
+    // name-based rules when the value is redacted/short/junk.
+    const detection = detectKey(e.value, e.key);
     const serviceId = detection?.serviceId ?? "custom";
     const serviceName = getService(serviceId)?.name ?? "Unknown";
     const keyTypeId = detection?.keyTypeId ?? "other";
@@ -228,7 +234,7 @@ function analyze(text: string): {
     const others: RiskCredentialInput[] = parsed.entries
       .filter((o) => o.key !== e.key)
       .map((o) => {
-        const od = detectKey(o.value);
+        const od = detectKey(o.value, o.key);
         return {
           service: od?.serviceId ?? "custom",
           keyType: od?.keyTypeId ?? "other",
