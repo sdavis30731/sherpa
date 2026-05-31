@@ -30,6 +30,7 @@ import {
 } from "@/lib/agent-session";
 import { getPlaybook } from "@/lib/playbooks";
 import { getService as getServiceMeta } from "@/lib/services";
+import { checkRateLimit, recordRateLimitEvent } from "@/lib/rate-limit";
 
 // ---- protocol constants ----
 
@@ -765,6 +766,49 @@ export async function POST(request: NextRequest) {
       { status: 401 },
     );
   }
+
+  // Rate limit BEFORE parsing — there's no reason to do any work if the
+  // request was going to be refused anyway. The check is a single round-
+  // trip to Postgres so it's cheap.
+  const rate = await checkRateLimit(session.tokenId);
+  if (!rate.allowed) {
+    console.log(
+      `[MCP] Rate limit (${rate.window}) hit on token ${session.tokenId}: ` +
+        `${rate.usage.perMinute}/min, ${rate.usage.perHour}/hour`,
+    );
+    // Audit (fire and forget)
+    void createAdminClient()
+      .from("audit_log")
+      .insert({
+        user_id: session.userId,
+        project_id: session.projectId,
+        action: "rate_limit_exceeded",
+        actor: `mcp_token:${session.tokenId}`,
+        metadata: {
+          window: rate.window,
+          per_minute: rate.usage.perMinute,
+          per_hour: rate.usage.perHour,
+        },
+      } as never);
+    return NextResponse.json(
+      fail(
+        null,
+        -32000,
+        `Rate limit exceeded (${rate.window}). Token did ${rate.usage.perMinute} requests in the last minute and ${rate.usage.perHour} in the last hour. Try again in ${rate.retryAfterSec ?? 60} seconds.`,
+      ),
+      {
+        status: 429,
+        headers: {
+          "Retry-After": String(rate.retryAfterSec ?? 60),
+          "X-RateLimit-Limit-Minute": "60",
+          "X-RateLimit-Limit-Hour": "1000",
+          "X-RateLimit-Window-Exceeded": rate.window ?? "unknown",
+        },
+      },
+    );
+  }
+  // Record this request (fire and forget — non-blocking)
+  void recordRateLimitEvent(session.tokenId);
 
   let body: unknown;
   try {
