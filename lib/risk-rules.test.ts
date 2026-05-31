@@ -112,16 +112,27 @@ describe("risk: medium severity rules", () => {
 });
 
 describe("risk: low severity rules", () => {
-  it("reminds about OpenAI spend cap on any OpenAI api_key import", () => {
+  it("flags legacy account-wide OpenAI keys (sk- without proj prefix)", () => {
     const matches = evaluateRisk({
       ...baseCred,
       service: "openai",
       keyType: "api_key",
       env: "production",
-      value: "sk-abcdef",
+      value: "sk-abcdefghij1234567890ABCDEFGHIJ",
     });
-    const r = matches.find((m) => m.id === "openai.spend_cap.unknown");
+    const r = matches.find((m) => m.id === "openai.account_wide_key");
     expect(r?.severity).toBe("low");
+  });
+
+  it("does NOT flag project-scoped OpenAI keys (sk-proj-)", () => {
+    const matches = evaluateRisk({
+      ...baseCred,
+      service: "openai",
+      keyType: "project_key",
+      env: "production",
+      value: "sk-proj-abcdefghij1234567890ABCDEFGHIJ",
+    });
+    expect(matches.find((m) => m.id === "openai.account_wide_key")).toBeUndefined();
   });
 
   it("flags credentials not rotated in over 180 days", () => {
@@ -142,24 +153,46 @@ describe("risk: low severity rules", () => {
 });
 
 describe("risk: cross-credential rules", () => {
-  it("flags a Stripe webhook signing secret paired with a live secret key", () => {
+  it("flags Stripe key mode mismatch (live + test in same project)", () => {
     const cred: RiskCredentialInput = {
       service: "stripe",
-      keyType: "webhook_secret",
+      keyType: "secret_key",
       env: "production",
-      value: "whsec_abc",
+      value: "sk_live_abc",
     };
     const matches = evaluateRisk(cred, {
       siblings: [
         {
           service: "stripe",
-          keyType: "secret_key",
+          keyType: "publishable_key",
           env: "production",
-          value: "sk_live_xyz",
+          value: "pk_test_xyz", // test mode — mismatched with the live secret key
         },
       ],
     });
-    expect(matches.find((m) => m.id === "stripe.webhook_with_live_secret")).toBeDefined();
+    expect(matches.find((m) => m.id === "stripe.mode_mismatch")?.severity).toBe(
+      "high",
+    );
+  });
+
+  it("does NOT flag matching modes (live + live, or test + test)", () => {
+    const cred: RiskCredentialInput = {
+      service: "stripe",
+      keyType: "secret_key",
+      env: "production",
+      value: "sk_live_abc",
+    };
+    const matches = evaluateRisk(cred, {
+      siblings: [
+        {
+          service: "stripe",
+          keyType: "publishable_key",
+          env: "production",
+          value: "pk_live_xyz",
+        },
+      ],
+    });
+    expect(matches.find((m) => m.id === "stripe.mode_mismatch")).toBeUndefined();
   });
 });
 

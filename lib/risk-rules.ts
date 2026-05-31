@@ -127,41 +127,54 @@ const R4_GITHUB_CLASSIC_PAT: RiskRule = {
 };
 
 /**
- * R5 — OpenAI key without spend-cap context.
- * Heuristic: at import we have no way to know whether they've set caps in
- * the OpenAI dashboard. We surface the reminder so they go check.
+ * R5 — Legacy account-wide OpenAI key.
+ * OpenAI project-scoped keys (sk-proj-…) inherit per-project usage limits
+ * and are the modern recommendation. Account-wide keys (sk-…) draw from
+ * your whole account budget and are the more dangerous form factor. We
+ * only nudge on the latter, so the warning isn't noise.
  */
-const R5_OPENAI_SPEND_CAP_UNKNOWN: RiskRule = {
-  id: "openai.spend_cap.unknown",
+const R5_OPENAI_ACCOUNT_WIDE_KEY: RiskRule = {
+  id: "openai.account_wide_key",
   severity: "low",
   message:
-    "Have you set a hard monthly spend cap on this OpenAI key? A leaked or misused key can rack up costs fast.",
-  playbookSection: "pitfalls",
+    "Account-wide OpenAI key (sk-…). Modern best practice is a project-scoped key (sk-proj-…) so spend is bounded per project. Also: set a hard spend cap if you haven't.",
+  playbookSection: "scopes",
   applies: (c) =>
     c.service === "openai" &&
-    (c.keyType === "api_key" || c.keyType === "project_key"),
+    c.keyType === "api_key" &&
+    c.value.startsWith("sk-") &&
+    !c.value.startsWith("sk-proj-"),
 };
 
 /**
- * R6 — Webhook signing secret stored alongside the corresponding live
- * secret key. This isn't dangerous by itself but means a single breach
- * of the project compromises both ends of the payment flow.
+ * R6 — Stripe key mode mismatch.
+ * Test publishable key paired with a live secret key (or vice versa)
+ * almost always indicates a config mistake — and shipping it can fail
+ * silently because the test/live boundary is enforced server-side at
+ * payment time.
  */
-const R6_STRIPE_WEBHOOK_WITH_LIVE_SECRET: RiskRule = {
-  id: "stripe.webhook_with_live_secret",
-  severity: "low",
+const R6_STRIPE_MODE_MISMATCH: RiskRule = {
+  id: "stripe.mode_mismatch",
+  severity: "high",
   message:
-    "Stripe webhook signing secret stored alongside a live secret key — a single project compromise reveals both. Consider separating sensitive Stripe credentials across multiple projects.",
+    "Stripe key mode mismatch — you have a 'live' key and a 'test' key in the same project. One of them is probably the wrong mode and will fail at payment time.",
   playbookSection: "pitfalls",
-  applies: (c, ctx) =>
-    c.service === "stripe" &&
-    c.keyType === "webhook_secret" &&
-    ctx.siblings.some(
-      (s) =>
-        s.service === "stripe" &&
-        s.keyType === "secret_key" &&
-        s.value.startsWith("sk_live_"),
-    ),
+  applies: (c, ctx) => {
+    if (c.service !== "stripe") return false;
+    if (!c.value.startsWith("sk_") && !c.value.startsWith("pk_") && !c.value.startsWith("rk_")) {
+      return false;
+    }
+    const thisIsLive = c.value.includes("_live_");
+    const thisIsTest = c.value.includes("_test_");
+    if (!thisIsLive && !thisIsTest) return false;
+    return ctx.siblings.some((s) => {
+      if (s.service !== "stripe") return false;
+      const sIsLive = s.value.includes("_live_");
+      const sIsTest = s.value.includes("_test_");
+      // A mismatch is live + test in the same project (in either direction).
+      return (thisIsLive && sIsTest) || (thisIsTest && sIsLive);
+    });
+  },
 };
 
 /**
@@ -204,8 +217,8 @@ export const RISK_RULES: RiskRule[] = [
   R2_STRIPE_LIVE_IN_DEV,
   R3_STRIPE_LIVE_NEXT_PUBLIC,
   R4_GITHUB_CLASSIC_PAT,
-  R5_OPENAI_SPEND_CAP_UNKNOWN,
-  R6_STRIPE_WEBHOOK_WITH_LIVE_SECRET,
+  R5_OPENAI_ACCOUNT_WIDE_KEY,
+  R6_STRIPE_MODE_MISMATCH,
   R7_STALE_ROTATION,
   R8_PROD_KEY_IN_DEV,
 ];
