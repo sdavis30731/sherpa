@@ -29,6 +29,7 @@ import { Upload, AlertTriangle, ArrowLeft, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { worstRisk, type RiskCredentialInput } from "@/lib/risk-rules";
 import { RiskBadge } from "@/components/risk-badge";
+import { clearPendingImport } from "@/lib/pending-import";
 
 type Step = "paste" | "preview" | "importing" | "done";
 
@@ -47,9 +48,21 @@ interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onImported?: (count: number) => void;
+  /**
+   * Pre-fill the textarea with this text and skip directly to the preview
+   * step. Used by SHRP-041b for the landing-page → signup handoff so the
+   * user doesn't have to paste their .env twice.
+   */
+  initialText?: string;
 }
 
-export function ImportEnvDialog({ projectId, open, onOpenChange, onImported }: Props) {
+export function ImportEnvDialog({
+  projectId,
+  open,
+  onOpenChange,
+  onImported,
+  initialText,
+}: Props) {
   const router = useRouter();
   const vault = useVaultKey();
 
@@ -63,12 +76,25 @@ export function ImportEnvDialog({ projectId, open, onOpenChange, onImported }: P
   React.useEffect(() => {
     if (open) {
       setStep("paste");
-      setPastedText("");
+      setPastedText(initialText ?? "");
       setRows([]);
       setParseWarnings([]);
       setError(null);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
+
+  // If the dialog opens with initialText, advance straight to the preview.
+  // (Run after the first render so pastedText is already populated.)
+  const advancedRef = React.useRef(false);
+  React.useEffect(() => {
+    if (open && initialText && !advancedRef.current && pastedText === initialText) {
+      advancedRef.current = true;
+      onParse();
+    }
+    if (!open) advancedRef.current = false;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, initialText, pastedText]);
 
   function onParse() {
     const result = parseEnv(pastedText);
@@ -156,6 +182,9 @@ export function ImportEnvDialog({ projectId, open, onOpenChange, onImported }: P
         actor: "user",
         metadata: { count: included.length, services: servicesTouched },
       });
+
+      // Clear any landing-page pending import — we've consumed it.
+      clearPendingImport();
 
       setImportedCount(included.length);
       setStep("done");

@@ -2,12 +2,13 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useVaultKey } from "@/lib/vault-context";
 import { KeyRound, Lock, Unlock, Settings, Upload, Activity } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AddCredentialDialog } from "@/components/add-credential-dialog";
 import { ImportEnvDialog } from "@/components/import-env-dialog";
+import { loadPendingImport } from "@/lib/pending-import";
 
 /**
  * Project-page top-right actions: Add credential, and the unlock status
@@ -17,8 +18,30 @@ import { ImportEnvDialog } from "@/components/import-env-dialog";
 export function ProjectActions({ projectId }: { projectId: string }) {
   const router = useRouter();
   const vault = useVaultKey();
+  const searchParams = useSearchParams();
   const [open, setOpen] = React.useState(false);
   const [importOpen, setImportOpen] = React.useState(false);
+  const [pendingText, setPendingText] = React.useState<string | undefined>(undefined);
+
+  // If we arrived from the landing-page handoff (?continue_import=1) and
+  // there's pending text in localStorage, auto-open the import dialog with
+  // it pre-filled. Done once per mount.
+  const autoOpenedRef = React.useRef(false);
+  React.useEffect(() => {
+    if (autoOpenedRef.current) return;
+    if (searchParams.get("continue_import") !== "1") return;
+    const text = loadPendingImport();
+    if (!text) return;
+    autoOpenedRef.current = true;
+    setPendingText(text);
+    if (!vault.key) {
+      router.push(
+        `/vault/unlock?next=/vault/${projectId}?continue_import=1`,
+      );
+      return;
+    }
+    setImportOpen(true);
+  }, [searchParams, vault.key, projectId, router]);
 
   React.useEffect(() => {
     function onClick(e: MouseEvent) {
@@ -86,8 +109,12 @@ export function ProjectActions({ projectId }: { projectId: string }) {
       <ImportEnvDialog
         projectId={projectId}
         open={importOpen}
-        onOpenChange={setImportOpen}
+        onOpenChange={(o) => {
+          setImportOpen(o);
+          if (!o) setPendingText(undefined);
+        }}
         onImported={() => router.refresh()}
+        initialText={pendingText}
       />
     </div>
   );

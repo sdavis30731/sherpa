@@ -12,11 +12,12 @@
  */
 
 import * as React from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { parseEnv } from "@/lib/envParser";
 import { detectKey } from "@/lib/keyDetect";
 import { worstRisk, type RiskCredentialInput } from "@/lib/risk-rules";
 import { getService } from "@/lib/services";
+import { savePendingImport } from "@/lib/pending-import";
 import { ShieldCheck, AlertTriangle, AlertCircle, Info, ArrowRight, ClipboardPaste, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -51,10 +52,16 @@ interface AnalysisRow {
 }
 
 export function EnvAnalyzer() {
+  const router = useRouter();
   const [text, setText] = React.useState("");
 
   // Live analysis derived from the textarea content.
   const analysis = React.useMemo(() => analyze(text), [text]);
+
+  function onSaveToVault() {
+    if (text.trim()) savePendingImport(text);
+    router.push("/signup?intent=import");
+  }
 
   return (
     <div className="space-y-6">
@@ -103,7 +110,9 @@ export function EnvAnalyzer() {
         </span>
       </div>
 
-      {analysis.rows.length > 0 && <AnalysisResult analysis={analysis} />}
+      {analysis.rows.length > 0 && (
+        <AnalysisResult analysis={analysis} onSaveToVault={onSaveToVault} />
+      )}
     </div>
   );
 }
@@ -184,8 +193,10 @@ function analyze(text: string): {
 
 function AnalysisResult({
   analysis,
+  onSaveToVault,
 }: {
   analysis: ReturnType<typeof analyze>;
+  onSaveToVault: () => void;
 }) {
   const { rows, byService, riskCounts } = analysis;
   const totalRisks =
@@ -326,12 +337,13 @@ function AnalysisResult({
               <strong> Free for your first project.</strong>
             </p>
           </div>
-          <Link
-            href="/signup"
+          <button
+            type="button"
+            onClick={onSaveToVault}
             className="inline-flex items-center gap-2 rounded-md bg-sherpa-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-sherpa-600"
           >
-            Sign up free <ArrowRight className="h-4 w-4" />
-          </Link>
+            Save and sign up <ArrowRight className="h-4 w-4" />
+          </button>
         </div>
       </div>
     </div>

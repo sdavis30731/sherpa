@@ -9,6 +9,7 @@ import {
   NeedsAttentionCard,
   type OverdueItem,
 } from "./_components/needs-attention-card";
+import { PendingImportBanner } from "./_components/pending-import-banner";
 import { getService, type Environment } from "@/lib/services";
 import { evaluateRotation } from "@/lib/rotation";
 
@@ -79,6 +80,7 @@ export default async function VaultHome() {
 
   return (
     <main className="mx-auto max-w-4xl px-6 py-10">
+      <PendingImportBanner />
       <NeedsAttentionCard items={attentionItems} />
 
       <div className="mb-6 flex items-end justify-between gap-4">
