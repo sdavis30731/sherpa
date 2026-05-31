@@ -41,7 +41,7 @@ export default function SignupPage() {
   return (
     <main className="mx-auto flex min-h-full max-w-md flex-col justify-center px-6 py-16">
       <div className="mb-8 text-center">
-        <h1 className="text-3xl font-bold text-slate-900">Create your Sherpa account</h1>
+        <h1 className="text-3xl font-bold text-slate-900">Create your SherpaKeys account</h1>
         <p className="mt-2 text-sm text-slate-600">
           Free for your first project. No credit card.
         </p>
@@ -89,7 +89,7 @@ export default function SignupPage() {
       <div className="mt-8 space-y-3">
         <Reassure
           icon={<ShieldCheck className="h-4 w-4" />}
-          text="Sherpa never sees your passphrase."
+          text="SherpaKeys never sees your passphrase."
         />
         <Reassure
           icon={<KeyRound className="h-4 w-4" />}
@@ -97,7 +97,7 @@ export default function SignupPage() {
         />
         <Reassure
           icon={<Bot className="h-4 w-4" />}
-          text="When Claude or Cursor uses a key, they never see it — Sherpa makes the API call for them."
+          text="When Claude or Cursor uses a key, they never see it — SherpaKeys makes the API call for them."
         />
       </div>
     </main>

@@ -44,7 +44,7 @@ function LoginInner() {
   return (
     <main className="mx-auto flex min-h-full max-w-md flex-col justify-center px-6 py-16">
       <div className="mb-8 text-center">
-        <h1 className="text-3xl font-bold text-slate-900">Log in to Sherpa</h1>
+        <h1 className="text-3xl font-bold text-slate-900">Log in to SherpaKeys</h1>
         <p className="mt-2 text-sm text-slate-600">We&apos;ll email you a magic link.</p>
       </div>
 

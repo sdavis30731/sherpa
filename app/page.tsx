@@ -14,10 +14,20 @@ import { EnvAnalyzer } from "./_components/env-analyzer";
 
 export default function HomePage() {
   return (
-    <main className="mx-auto min-h-full max-w-5xl px-6 pb-24">
+    <main className="relative mx-auto min-h-full max-w-5xl px-6 pb-24">
+      {/* Soft gradient wash behind the hero — gives the top of the page a
+          sense of place without overwhelming the content. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[640px] bg-gradient-to-b from-sherpa-50/70 via-sherpa-50/20 to-transparent"
+      />
+
       {/* Top nav */}
       <nav className="flex items-center justify-between py-5">
-        <div className="text-lg font-bold text-sherpa-500">Sherpa</div>
+        <Link href="/" className="text-lg font-bold tracking-tight">
+          <span className="text-slate-900">Sherpa</span>
+          <span className="text-sherpa-500">Keys</span>
+        </Link>
         <div className="flex items-center gap-4 text-sm">
           <Link
             href="/security"
@@ -41,25 +51,25 @@ export default function HomePage() {
       </nav>
 
       {/* Hero */}
-      <section className="mt-8 text-center">
-        <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-sherpa-200 bg-sherpa-50 px-3 py-1 text-xs font-medium text-sherpa-700">
+      <section className="mt-12 text-center sm:mt-16">
+        <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-sherpa-200 bg-white/80 px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-sherpa-700 shadow-sm backdrop-blur-sm">
           <ShieldCheck className="h-3.5 w-3.5" /> Don&apos;t leave Camp 4 without your Sherpa
         </div>
-        <p className="mb-2 text-base font-semibold uppercase tracking-wide text-slate-500">
-          Dude. Where are <span className="text-sherpa-500">my keys?!</span>
-        </p>
-        <h1 className="text-5xl font-bold tracking-tight text-slate-900 sm:text-6xl">
-          Before you go live,{" "}
-          <span className="text-sherpa-500">run a Go-Live Check.</span>
+        <h1 className="text-balance text-5xl font-bold leading-[1.05] tracking-tight text-slate-900 sm:text-7xl">
+          Dude. Where are{" "}
+          <span className="text-sherpa-500">my keys?!</span>
         </h1>
-        <p className="mx-auto mt-5 max-w-2xl text-lg text-slate-600">
+        <p className="mx-auto mt-6 max-w-3xl text-balance text-2xl font-semibold leading-tight tracking-tight text-slate-700 sm:text-3xl">
+          Before you go live, run a Go-Live Check.
+        </p>
+        <p className="mx-auto mt-7 max-w-2xl text-lg leading-relaxed text-slate-600">
           You built a real app with Claude, Cursor, or Bolt. It works on your
           machine. But underneath are{" "}
           <strong className="font-semibold text-slate-800">
             brittle, half-understood connections
           </strong>{" "}
           — Stripe webhooks, Supabase RLS, Vercel env vars, GitHub tokens,
-          AI keys with no spend cap, DNS records, OAuth callbacks. Sherpa
+          AI keys with no spend cap, DNS records, OAuth callbacks. SherpaKeys
           maps every credential your app depends on, flags what could break,
           leak, or cost you money, and gives you a readiness score before
           you launch.
@@ -95,7 +105,7 @@ export default function HomePage() {
               broke. Multiply by 8 services and you just lost a Saturday.
             </p>
             <p className="mt-4 text-lg text-slate-600">
-              Sherpa keeps a hand-maintained playbook for every service —
+              SherpaKeys keeps a hand-maintained playbook for every service —
               <strong className="font-semibold text-slate-800"> the exact
               URL, the exact scopes, the exact pitfalls</strong>, and a
               rotation checklist that takes 90 seconds instead of 90 minutes.
@@ -129,7 +139,7 @@ export default function HomePage() {
             </h2>
             <p className="mt-5 text-lg text-slate-600">
               Most password managers can technically decrypt your data if they
-              wanted to (or if they got hacked). Sherpa can&apos;t. Your
+              wanted to (or if they got hacked). SherpaKeys can&apos;t. Your
               passphrase never leaves your device. Your keys are encrypted in
               your browser with a key derived from that passphrase. By the
               time anything reaches our servers, it&apos;s already
@@ -174,12 +184,12 @@ export default function HomePage() {
               up in a screenshot.
             </p>
             <p className="mt-4 text-lg text-slate-600">
-              Sherpa is an{" "}
+              SherpaKeys is an{" "}
               <strong className="font-semibold text-slate-800">
                 MCP server
               </strong>
-              . Your AI asks Sherpa to make the diagnostic call. Sherpa uses
-              your key server-side, returns the answer, and{" "}
+              . Your AI asks SherpaKeys to make the diagnostic call.
+              SherpaKeys uses your key server-side, returns the answer, and{" "}
               <strong className="font-semibold text-slate-800">
                 the model never touches the secret.
               </strong>{" "}
@@ -225,7 +235,7 @@ export default function HomePage() {
           <BenefitCard
             icon={<Search className="h-5 w-5" />}
             title="Risk-flagged at import"
-            body="service_role with NEXT_PUBLIC_? sk_live_ in dev? Sherpa shouts before you ship."
+            body="service_role with NEXT_PUBLIC_? sk_live_ in dev? SherpaKeys shouts before you ship."
           />
           <BenefitCard
             icon={<RotateCw className="h-5 w-5" />}
@@ -483,7 +493,7 @@ function RotationMockup() {
         <Step done text="Click Roll key on the live secret" />
         <Step
           current
-          text="Paste the new sk_live_… here — Sherpa updates Vercel, Railway, and your local .env"
+          text="Paste the new sk_live_… here — SherpaKeys updates Vercel, Railway, and your local .env"
         />
         <Step text="Revoke the old key (90s window so production doesn't blink)" />
         <Step text="Mark rotated" />
@@ -552,7 +562,7 @@ function SecurityMockup() {
         </div>
       </div>
       <div className="mt-3 text-[11px] leading-relaxed text-slate-400">
-        This is what Sherpa&apos;s servers see. Decryption happens in your
+        This is what SherpaKeys&apos;s servers see. Decryption happens in your
         browser, with a key derived from a passphrase only you know.
       </div>
     </div>
@@ -572,7 +582,7 @@ function MCPMockup() {
       </div>
       <div className="ml-6 rounded-2xl border border-sherpa-200 bg-sherpa-50 p-4 shadow-md">
         <div className="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-sherpa-700">
-          <Bot className="h-3 w-3" /> Claude → Sherpa MCP
+          <Bot className="h-3 w-3" /> Claude → SherpaKeys MCP
         </div>
         <div className="font-mono text-xs text-slate-700">
           sherpa_call_api(

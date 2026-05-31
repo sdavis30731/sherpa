@@ -155,7 +155,7 @@ export default function SetupPage() {
             <CardTitle>Choose a master passphrase</CardTitle>
           </CardHeader>
           <CardBody>
-            <Callout tone="warning" title="This is the one thing Sherpa cannot recover.">
+            <Callout tone="warning" title="This is the one thing SherpaKeys cannot recover.">
               Your passphrase encrypts everything in your vault. We never see it.
               If you forget it, you can use the recovery code you&apos;ll get on the
               next screen. If you lose both, your vault is unreadable.

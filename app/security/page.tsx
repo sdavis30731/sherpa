@@ -11,9 +11,9 @@ import {
 } from "lucide-react";
 
 export const metadata = {
-  title: "Security — Sherpa",
+  title: "Security — SherpaKeys",
   description:
-    "How Sherpa's zero-knowledge architecture protects your API keys, webhook secrets, and DNS records. AES-256-GCM, Argon2id, BIP-39 recovery, and an MCP agent bridge that never lets models see plaintext.",
+    "How SherpaKeys' zero-knowledge architecture protects your API keys, webhook secrets, and DNS records. AES-256-GCM, Argon2id, BIP-39 recovery, and an MCP agent bridge that never lets models see plaintext.",
 };
 
 export default function SecurityPage() {
@@ -21,8 +21,9 @@ export default function SecurityPage() {
     <main className="mx-auto min-h-full max-w-4xl px-6 pb-24">
       {/* Top nav */}
       <nav className="flex items-center justify-between py-5">
-        <Link href="/" className="text-lg font-bold text-sherpa-500">
-          Sherpa
+        <Link href="/" className="text-lg font-bold tracking-tight">
+          <span className="text-slate-900">Sherpa</span>
+          <span className="text-sherpa-500">Keys</span>
         </Link>
         <div className="flex items-center gap-4 text-sm">
           <Link
@@ -52,7 +53,7 @@ export default function SecurityPage() {
           We can&apos;t read your keys. Here&apos;s how.
         </h1>
         <p className="mt-5 max-w-3xl text-lg text-slate-600">
-          Sherpa is built so that even our own database administrators
+          SherpaKeys is built so that even our own database administrators
           can&apos;t decrypt your credentials. This page walks through the
           actual cryptography — partly because some of you will want to verify
           our claims, and partly because security pages with no math
@@ -89,7 +90,7 @@ export default function SecurityPage() {
             strong passphrase in any human lifetime.
           </Bullet>
           <Bullet>
-            When Claude or Cursor calls Stripe through Sherpa, we decrypt
+            When Claude or Cursor calls Stripe through SherpaKeys, we decrypt
             server-side only long enough to make the API call.{" "}
             <strong className="font-semibold">
               The AI never sees the plaintext secret.
@@ -110,7 +111,7 @@ export default function SecurityPage() {
           touch our servers, so no insider, no compromised admin, and no
           subpoena can force us to hand over what we don&apos;t have. This
           architecture has been used by serious security products for over
-          a decade — Sherpa applies it specifically to developer
+          a decade — SherpaKeys applies it specifically to developer
           credentials.
         </p>
         <p className="mt-4">
@@ -195,7 +196,7 @@ export default function SecurityPage() {
           <Box
             tone="info"
             title="The setup (once)"
-            body="When you connect Cowork/Cursor/Codex to Sherpa, your browser unwraps an ephemeral agent session key and seals it with a server-held master key (AGENT_SESSION_MASTER_KEY). The sealed blob is stored. Your browser key is gone."
+            body="When you connect Cowork/Cursor/Codex to SherpaKeys, your browser unwraps an ephemeral agent session key and seals it with a server-held master key (AGENT_SESSION_MASTER_KEY). The sealed blob is stored. Your browser key is gone."
           />
           <Box
             tone="info"
@@ -213,7 +214,7 @@ export default function SecurityPage() {
       </Section>
 
       {/* Section 5: What we don't do (transparency) */}
-      <Section eyebrow="Honesty" title="What Sherpa is NOT">
+      <Section eyebrow="Honesty" title="What SherpaKeys is NOT">
         <ul className="space-y-3 text-base text-slate-700">
           <li className="flex items-start gap-3">
             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
@@ -229,7 +230,7 @@ export default function SecurityPage() {
               <strong>Not a substitute for HSMs.</strong> If you&apos;re
               storing nuclear launch codes or running a publicly-traded
               fintech, you need a hardware security module, not a SaaS vault.
-              Sherpa is for the credentials a solo founder actually has.
+              SherpaKeys is for the credentials a solo founder actually has.
             </span>
           </li>
           <li className="flex items-start gap-3">

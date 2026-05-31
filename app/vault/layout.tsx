@@ -26,7 +26,10 @@ export default async function VaultLayout({ children }: { children: React.ReactN
     <>
       <header className="border-b border-slate-200 bg-white">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-3">
-          <div className="text-lg font-bold text-sherpa-500">Sherpa</div>
+          <div className="text-lg font-bold tracking-tight">
+            <span className="text-slate-900">Sherpa</span>
+            <span className="text-sherpa-500">Keys</span>
+          </div>
           <form action="/auth/logout" method="post">
             <button className="text-sm text-slate-600 hover:text-slate-900">
               Log out
