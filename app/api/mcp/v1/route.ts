@@ -28,6 +28,8 @@ import {
   unwrapSessionKey,
   decryptWithSessionKey,
 } from "@/lib/agent-session";
+import { getPlaybook } from "@/lib/playbooks";
+import { getService as getServiceMeta } from "@/lib/services";
 
 // ---- protocol constants ----
 
@@ -45,6 +47,22 @@ const TOOLS = [
     inputSchema: {
       type: "object" as const,
       properties: {},
+    },
+  },
+  {
+    name: "sherpa_rotate",
+    description:
+      "Returns ordered, plain-language steps for rotating a specific credential, plus a direct dashboard URL and a Sherpa deep-link the user can click. Does NOT execute the rotation automatically — the user (or, in a future version, the Sherpa Rotation Pack) does the actual rotation. Use this when the user asks how to rotate something, or when a credential is overdue.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        credential_id: {
+          type: "string",
+          description:
+            "The Sherpa credential ID to get rotation steps for, as returned by sherpa_list_services.",
+        },
+      },
+      required: ["credential_id"],
     },
   },
   {
@@ -225,6 +243,8 @@ async function handleToolsCall(
   switch (params.name) {
     case "sherpa_list_services":
       return tool_listServices(req, session);
+    case "sherpa_rotate":
+      return tool_rotate(req, session, params.arguments);
     case "sherpa_call_api":
       return tool_callApi(req, session, params.arguments);
     default:
@@ -298,6 +318,165 @@ async function tool_listServices(
       },
     ],
     structuredContent: { services: items },
+  });
+}
+
+// ---- sherpa_rotate ----
+
+interface RotateArgs {
+  credential_id?: string;
+}
+
+/**
+ * Detects the key type from a credential's label.
+ *
+ * Sherpa stores credentials with a label of the form
+ * "<user label> · <KeyType.label>", with the key-type slug only available
+ * indirectly (we look it up in the services catalog). This helper finds the
+ * matching key-type id by reading off the suffix.
+ *
+ * If we can't determine the key type, we return null and the rotate tool
+ * falls back to the first rotation guide for the service. Worth replacing
+ * with a structured key_type column on credentials (a small refactor on
+ * the backlog).
+ */
+function inferKeyTypeFromLabel(serviceId: string, label: string): string | null {
+  const svc = getServiceMeta(serviceId);
+  if (!svc) return null;
+  const suffix = label.split(" · ").pop()?.trim();
+  if (!suffix) return null;
+  const match = svc.keyTypes.find((kt) => kt.label === suffix);
+  return match?.id ?? null;
+}
+
+async function tool_rotate(
+  req: JsonRpcRequest,
+  session: AuthedSession,
+  rawArgs: unknown,
+): Promise<JsonRpcSuccess | JsonRpcError> {
+  if (!hasScope(session, "rotate") && !hasScope(session, "read-credential-names")) {
+    return fail(
+      req.id,
+      E_INVALID_REQUEST,
+      "Token does not have the 'rotate' or 'read-credential-names' scope.",
+    );
+  }
+
+  const args = (rawArgs ?? {}) as RotateArgs;
+  if (!args.credential_id) {
+    return fail(req.id, E_INVALID_PARAMS, "credential_id required");
+  }
+
+  interface CredentialRow {
+    id: string;
+    project_id: string;
+    service: string;
+    env: string;
+    label: string;
+    last_rotated_at: string | null;
+  }
+  const supabase = createAdminClient();
+  const credResult = await supabase
+    .from("credentials")
+    .select("id, project_id, service, env, label, last_rotated_at")
+    .eq("id", args.credential_id)
+    .is("deleted_at", null)
+    .maybeSingle();
+  const credential = credResult.data as CredentialRow | null;
+  if (!credential) {
+    return fail(req.id, E_INVALID_REQUEST, "Credential not found");
+  }
+  if (credential.project_id !== session.projectId) {
+    return fail(
+      req.id,
+      E_INVALID_REQUEST,
+      "Credential does not belong to this project",
+    );
+  }
+
+  const playbook = getPlaybook(credential.service);
+  if (!playbook || playbook.rotationSteps.length === 0) {
+    return fail(
+      req.id,
+      E_INVALID_REQUEST,
+      `No rotation guide is available for the '${credential.service}' service yet. The user can still rotate manually by visiting the service dashboard and using the Edit button on this credential to record the new value in Sherpa.`,
+    );
+  }
+
+  // Find the rotation guide matching this credential's key type. If we
+  // can't infer the key type from the label, fall back to the first guide.
+  const keyTypeId = inferKeyTypeFromLabel(credential.service, credential.label);
+  const guide =
+    (keyTypeId &&
+      playbook.rotationSteps.find((g) => g.keyType === keyTypeId)) ||
+    playbook.rotationSteps[0];
+
+  if (!guide) {
+    return fail(
+      req.id,
+      E_INTERNAL,
+      "Couldn't resolve rotation guide for this credential.",
+    );
+  }
+
+  // Build the Sherpa deep link the user can click to land directly on this
+  // credential with the rotation playbook section open.
+  const siteUrl =
+    process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ||
+    "http://localhost:3000";
+  const sherpaDeepLink = `${siteUrl}/vault/${credential.project_id}?credential=${credential.id}&playbook=rotation`;
+
+  // Audit log
+  await supabase.from("audit_log").insert({
+    user_id: session.userId,
+    project_id: session.projectId,
+    credential_id: credential.id,
+    action: "agent_rotate_requested",
+    actor: `mcp_token:${session.tokenId}`,
+    metadata: { service: credential.service, key_type: keyTypeId },
+  } as never);
+
+  const daysSinceRotation =
+    credential.last_rotated_at != null
+      ? Math.floor(
+          (Date.now() - new Date(credential.last_rotated_at).getTime()) /
+            86_400_000,
+        )
+      : null;
+
+  const result = {
+    credential: {
+      id: credential.id,
+      service: credential.service,
+      service_name: playbook.meta.name,
+      env: credential.env,
+      label: credential.label,
+      days_since_rotation: daysSinceRotation,
+    },
+    guide: {
+      title: guide.title,
+      dashboard_url: guide.dashboardUrl,
+      supports_programmatic_rotation: guide.supportsProgrammaticRotation,
+      warning: guide.warning ?? null,
+      steps: guide.steps,
+    },
+    sherpa_deep_link: sherpaDeepLink,
+    playbook_last_reviewed: playbook.meta.lastReviewed,
+    next_action:
+      "Present these steps to the user as numbered instructions. After they complete the rotation, the user should paste the new value into Sherpa using the deep link above — that re-encrypts the stored value and resets the rotation timer.",
+  };
+
+  // A text rendering for clients that don't read structuredContent.
+  const text =
+    `Rotation guide for ${guide.title} (${credential.label}):\n\n` +
+    (guide.warning ? `⚠️  ${guide.warning}\n\n` : "") +
+    guide.steps.map((s, i) => `${i + 1}. ${s}`).join("\n") +
+    `\n\nDashboard: ${guide.dashboardUrl}` +
+    `\nWhen done, paste the new value into Sherpa: ${sherpaDeepLink}`;
+
+  return success(req.id, {
+    content: [{ type: "text", text }],
+    structuredContent: result,
   });
 }
 

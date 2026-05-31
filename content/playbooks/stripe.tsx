@@ -15,7 +15,7 @@ import {
   Danger,
   KeyChip,
 } from "@/components/playbook-parts";
-import type { PlaybookMeta } from "@/lib/playbooks";
+import type { PlaybookMeta, RotationGuide } from "@/lib/playbooks";
 
 export const meta: PlaybookMeta = {
   service: "stripe",
@@ -23,6 +23,73 @@ export const meta: PlaybookMeta = {
   lastReviewed: "2026-05-28",
   defaultSection: "overview",
 };
+
+/**
+ * Structured rotation guidance per credential type. Consumed by the
+ * sherpa_rotate MCP tool (SHRP-033) so the agent can walk the user
+ * through rotation without ever seeing the key itself.
+ */
+export const rotationSteps: RotationGuide[] = [
+  {
+    keyType: "secret_key",
+    title: "Stripe secret key",
+    dashboardUrl: "https://dashboard.stripe.com/apikeys",
+    supportsProgrammaticRotation: true,
+    steps: [
+      "Open dashboard.stripe.com/apikeys.",
+      "Find the secret key. Click the three-dot menu next to it and choose 'Roll key…'.",
+      "Set an expiry on the OLD key (1 day for personal projects, 7 days for production). The new key is generated immediately; the old one keeps working until expiry.",
+      "Click 'Roll key' and copy the new value Stripe reveals. Then paste it into Sherpa via Edit on this credential — that re-encrypts the stored value and records the rotation.",
+      "Update your deployment env vars (Vercel project → Settings → Environment Variables) and trigger a redeploy.",
+      "Verify the new key works by exercising the payment flow.",
+      "Once you've confirmed everything works, you can revoke the old key from the same menu (or let it expire).",
+    ],
+  },
+  {
+    keyType: "publishable_key",
+    title: "Stripe publishable key",
+    dashboardUrl: "https://dashboard.stripe.com/apikeys",
+    supportsProgrammaticRotation: true,
+    warning: "Publishable keys are safe in frontend code but can create payment tokens. Rotate if you suspect abuse.",
+    steps: [
+      "Open dashboard.stripe.com/apikeys.",
+      "Click the three-dot menu next to the publishable key and choose 'Roll key…'. Set a grace period (1-7 days).",
+      "Copy the new value and paste into Sherpa via Edit.",
+      "Update NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY in Vercel and redeploy.",
+      "Test a checkout flow in your app to confirm the new key works.",
+    ],
+  },
+  {
+    keyType: "webhook_secret",
+    title: "Stripe webhook signing secret",
+    dashboardUrl: "https://dashboard.stripe.com/webhooks",
+    supportsProgrammaticRotation: false,
+    warning: "Webhook secrets have NO built-in grace period. Use the dual-endpoint pattern below to avoid dropped events.",
+    steps: [
+      "Open dashboard.stripe.com/webhooks.",
+      "Click 'Add endpoint'. Use the SAME URL as your existing webhook and select the same events. Stripe issues a fresh signing secret.",
+      "Update your code to accept EITHER signing secret — verify against both, accept if either is valid. Deploy.",
+      "Wait until you see successful events on the new endpoint in the Stripe dashboard.",
+      "Delete the OLD endpoint from the webhooks page.",
+      "Update your code to only verify against the new secret. Deploy again.",
+      "Paste the new secret into Sherpa via Edit on this credential.",
+    ],
+  },
+  {
+    keyType: "restricted_key",
+    title: "Stripe restricted key",
+    dashboardUrl: "https://dashboard.stripe.com/apikeys",
+    supportsProgrammaticRotation: false,
+    steps: [
+      "Open dashboard.stripe.com/apikeys.",
+      "Click 'Create restricted key'. Configure the same scopes as the old one.",
+      "Copy the new key value Stripe reveals once.",
+      "Paste it into Sherpa via Edit on this credential.",
+      "Update wherever the old key was used (env vars, CI, scripts) and redeploy.",
+      "Verify, then delete the old restricted key from the same page.",
+    ],
+  },
+];
 
 export default function StripePlaybook() {
   return (

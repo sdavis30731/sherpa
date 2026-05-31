@@ -17,7 +17,7 @@ import {
   Pitfall,
   KeyChip,
 } from "@/components/playbook-parts";
-import type { PlaybookMeta } from "@/lib/playbooks";
+import type { PlaybookMeta, RotationGuide } from "@/lib/playbooks";
 
 export const meta: PlaybookMeta = {
   service: "vercel",
@@ -25,6 +25,54 @@ export const meta: PlaybookMeta = {
   lastReviewed: "2026-05-28",
   defaultSection: "overview",
 };
+
+export const rotationSteps: RotationGuide[] = [
+  {
+    keyType: "project_token",
+    title: "Vercel project access token",
+    dashboardUrl: "https://vercel.com/account/settings/tokens",
+    supportsProgrammaticRotation: false,
+    warning: "Vercel tokens have no overlap built in, but creating a new one does NOT delete the old one — so you can run both in parallel briefly.",
+    steps: [
+      "Open vercel.com/account/settings/tokens.",
+      "Click 'Create Token'. Name it something dateable like 'sherpa-2026-q3'. Pick the same scope as the old token. Set a 90-day expiration.",
+      "Copy the new token Vercel reveals.",
+      "Paste into Sherpa via Edit on this credential.",
+      "Update wherever the token was used — CI scripts, Vercel CLI on your machine (~/.local/share/com.vercel.cli), GitHub Actions secrets.",
+      "Run the script or CLI command that needed the token to verify the new one works.",
+      "Go back to /tokens and click 'Delete' next to the OLD token.",
+    ],
+  },
+  {
+    keyType: "team_token",
+    title: "Vercel team access token",
+    dashboardUrl: "https://vercel.com/teams/_/settings/tokens",
+    supportsProgrammaticRotation: false,
+    steps: [
+      "Switch to the team in Vercel, then go to Settings → Tokens.",
+      "Click 'Create Token'. Same pattern as personal: name it, scope it, expire it.",
+      "Copy the new token.",
+      "Paste into Sherpa via Edit on this credential.",
+      "Update every script and CI system using it. Redeploy/restart.",
+      "Verify, then delete the old team token.",
+    ],
+  },
+  {
+    keyType: "deploy_hook",
+    title: "Vercel deploy hook URL",
+    dashboardUrl: "https://vercel.com/dashboard",
+    supportsProgrammaticRotation: false,
+    steps: [
+      "Open vercel.com/dashboard, click your project, then Settings → Git → Deploy Hooks.",
+      "Click 'Create Hook'. Give it a name and pick the branch it triggers on.",
+      "Copy the new hook URL Vercel reveals.",
+      "Update wherever it was used (CMS webhooks, cron jobs, third-party integrations).",
+      "Trigger the new hook once to verify it deploys correctly.",
+      "Delete the old hook from the same page.",
+      "Paste the new URL into Sherpa via Edit on this credential.",
+    ],
+  },
+];
 
 export default function VercelPlaybook() {
   return (

@@ -17,7 +17,7 @@ import {
   Danger,
   KeyChip,
 } from "@/components/playbook-parts";
-import type { PlaybookMeta } from "@/lib/playbooks";
+import type { PlaybookMeta, RotationGuide } from "@/lib/playbooks";
 
 export const meta: PlaybookMeta = {
   service: "supabase",
@@ -25,6 +25,71 @@ export const meta: PlaybookMeta = {
   lastReviewed: "2026-05-28",
   defaultSection: "overview",
 };
+
+export const rotationSteps: RotationGuide[] = [
+  {
+    keyType: "anon_key",
+    title: "Supabase anon (public) key",
+    dashboardUrl: "https://supabase.com/dashboard/project/_/settings/api",
+    supportsProgrammaticRotation: true,
+    warning: "The anon key is intended to be public. Rotate only if you suspect abuse OR you want to revoke an existing distribution.",
+    steps: [
+      "Open Supabase Dashboard → Settings → API for your project.",
+      "Find the 'anon public' key. Click the three-dot menu next to it and choose 'Rotate key'.",
+      "Supabase generates and shows the new key immediately. Copy it.",
+      "Paste it into Sherpa via Edit on this credential.",
+      "Update NEXT_PUBLIC_SUPABASE_ANON_KEY in Vercel.",
+      "CRITICAL: env var changes do NOT auto-redeploy on Vercel. Trigger a manual redeploy.",
+      "Verify by signing into your app and making sure auth still works.",
+    ],
+  },
+  {
+    keyType: "service_role_key",
+    title: "Supabase service_role key (SECRET)",
+    dashboardUrl: "https://supabase.com/dashboard/project/_/settings/api",
+    supportsProgrammaticRotation: true,
+    warning: "service_role bypasses RLS. NEVER put this in frontend code. NEVER prefix it with NEXT_PUBLIC_. Rotate immediately if you suspect leak.",
+    steps: [
+      "Open Supabase Dashboard → Settings → API.",
+      "Find 'service_role secret'. Click the three-dot menu and choose 'Rotate key'.",
+      "Copy the new key Supabase reveals.",
+      "Paste it into Sherpa via Edit on this credential.",
+      "Update SUPABASE_SERVICE_ROLE_KEY in Vercel (NO NEXT_PUBLIC_ prefix — this must stay server-side).",
+      "Trigger a Vercel redeploy.",
+      "If you think the leak was real, audit your tables for unexpected inserts/updates and your auth.users for suspicious accounts.",
+    ],
+  },
+  {
+    keyType: "jwt_secret",
+    title: "Supabase JWT secret",
+    dashboardUrl: "https://supabase.com/dashboard/project/_/settings/api",
+    supportsProgrammaticRotation: false,
+    warning: "Rotating the JWT secret logs out every active user. Only rotate if compromised or doing a planned security migration.",
+    steps: [
+      "Notify your users that they'll be logged out (or schedule the rotation for a low-traffic window).",
+      "Open Supabase Dashboard → Settings → API, scroll to JWT Settings.",
+      "Click 'Generate new JWT secret'.",
+      "Supabase regenerates the secret. Every existing JWT becomes invalid; users are forced to log in again.",
+      "Update SUPABASE_JWT_SECRET in your env vars if you verify JWTs in your own code.",
+      "Test sign-in to verify the new flow works end-to-end.",
+    ],
+  },
+  {
+    keyType: "db_connection",
+    title: "Supabase database connection string",
+    dashboardUrl: "https://supabase.com/dashboard/project/_/settings/database",
+    supportsProgrammaticRotation: true,
+    steps: [
+      "Open Supabase Dashboard → Settings → Database.",
+      "Click 'Reset database password'. Confirm.",
+      "The new password takes effect immediately; the old connection string stops working.",
+      "Copy the new connection string. There are two flavors — Direct (5432) and Pooler (6543). Update whichever you use.",
+      "Paste into Sherpa via Edit on this credential.",
+      "Update wherever it lives (Vercel DATABASE_URL, Prisma/Drizzle config) and redeploy.",
+      "Verify by running a simple query from your app.",
+    ],
+  },
+];
 
 export default function SupabasePlaybook() {
   return (

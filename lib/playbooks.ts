@@ -17,10 +17,22 @@
  */
 
 import type * as React from "react";
-import StripePlaybook, { meta as stripeMeta } from "@/content/playbooks/stripe";
-import GitHubPlaybook, { meta as githubMeta } from "@/content/playbooks/github";
-import SupabasePlaybook, { meta as supabaseMeta } from "@/content/playbooks/supabase";
-import VercelPlaybook, { meta as vercelMeta } from "@/content/playbooks/vercel";
+import StripePlaybook, {
+  meta as stripeMeta,
+  rotationSteps as stripeRotation,
+} from "@/content/playbooks/stripe";
+import GitHubPlaybook, {
+  meta as githubMeta,
+  rotationSteps as githubRotation,
+} from "@/content/playbooks/github";
+import SupabasePlaybook, {
+  meta as supabaseMeta,
+  rotationSteps as supabaseRotation,
+} from "@/content/playbooks/supabase";
+import VercelPlaybook, {
+  meta as vercelMeta,
+  rotationSteps as vercelRotation,
+} from "@/content/playbooks/vercel";
 
 export type Section =
   | "overview"
@@ -49,16 +61,39 @@ export interface PlaybookMeta {
   defaultSection?: Section;
 }
 
+/**
+ * Per-key-type rotation guidance used by the sherpa_rotate MCP tool
+ * (SHRP-033). Each entry covers one credential type for the service. The
+ * dashboardUrl gives the agent a direct place to send the user, and the
+ * steps are short, ordered instructions in plain language.
+ *
+ * supportsProgrammaticRotation is a hint for the agent — true means the
+ * service exposes an API call that could fully automate this in a future
+ * Sherpa Rotation Pack (SHRP-037b). For SHRP-033 (guided), the value
+ * doesn't gate anything; the agent just surfaces it.
+ */
+export interface RotationGuide {
+  keyType: string;
+  title: string;
+  dashboardUrl: string;
+  supportsProgrammaticRotation: boolean;
+  steps: string[];
+  /** Optional one-line warning shown above the steps. */
+  warning?: string;
+}
+
 export interface Playbook {
   meta: PlaybookMeta;
   Body: React.ComponentType;
+  /** Ordered guides covering each key type for this service. */
+  rotationSteps: RotationGuide[];
 }
 
 const REGISTRY: Record<string, Playbook> = {
-  stripe: { meta: stripeMeta, Body: StripePlaybook },
-  github: { meta: githubMeta, Body: GitHubPlaybook },
-  supabase: { meta: supabaseMeta, Body: SupabasePlaybook },
-  vercel: { meta: vercelMeta, Body: VercelPlaybook },
+  stripe: { meta: stripeMeta, Body: StripePlaybook, rotationSteps: stripeRotation },
+  github: { meta: githubMeta, Body: GitHubPlaybook, rotationSteps: githubRotation },
+  supabase: { meta: supabaseMeta, Body: SupabasePlaybook, rotationSteps: supabaseRotation },
+  vercel: { meta: vercelMeta, Body: VercelPlaybook, rotationSteps: vercelRotation },
 };
 
 export function getPlaybook(serviceId: string): Playbook | null {

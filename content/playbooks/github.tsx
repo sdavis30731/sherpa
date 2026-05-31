@@ -16,7 +16,7 @@ import {
   Danger,
   KeyChip,
 } from "@/components/playbook-parts";
-import type { PlaybookMeta } from "@/lib/playbooks";
+import type { PlaybookMeta, RotationGuide } from "@/lib/playbooks";
 
 export const meta: PlaybookMeta = {
   service: "github",
@@ -24,6 +24,69 @@ export const meta: PlaybookMeta = {
   lastReviewed: "2026-05-28",
   defaultSection: "overview",
 };
+
+export const rotationSteps: RotationGuide[] = [
+  {
+    keyType: "fine_grained_pat",
+    title: "GitHub fine-grained PAT",
+    dashboardUrl: "https://github.com/settings/personal-access-tokens",
+    supportsProgrammaticRotation: false,
+    warning: "GitHub does NOT support overlapping rotation. The OLD token stops working the instant you regenerate.",
+    steps: [
+      "Open github.com/settings/personal-access-tokens.",
+      "Click the PAT you want to rotate.",
+      "Scroll to the bottom and click 'Regenerate token'. Pick a new expiration (90 days is reasonable).",
+      "Copy the new token GitHub reveals once and paste into Sherpa via Edit.",
+      "Update wherever the PAT was used (Vercel env vars, GitHub Actions secrets, local .env.local) BEFORE the new token gets used.",
+      "Redeploy or restart your services.",
+      "Verify by running whatever script or deploy the PAT powered.",
+    ],
+  },
+  {
+    keyType: "classic_pat",
+    title: "GitHub classic PAT",
+    dashboardUrl: "https://github.com/settings/tokens",
+    supportsProgrammaticRotation: false,
+    warning: "Same as fine-grained: NO overlap. Deploy the new value before relying on it.",
+    steps: [
+      "Open github.com/settings/tokens.",
+      "Click the token to rotate, then 'Regenerate token'.",
+      "Copy the new value Github reveals once.",
+      "Paste into Sherpa via Edit on this credential.",
+      "Update all uses (env vars, CI, scripts) and redeploy.",
+      "Verify, then optionally migrate to a fine-grained PAT for future rotations.",
+    ],
+  },
+  {
+    keyType: "oauth_secret",
+    title: "GitHub OAuth app client secret",
+    dashboardUrl: "https://github.com/settings/developers",
+    supportsProgrammaticRotation: false,
+    steps: [
+      "Open github.com/settings/developers.",
+      "Click your OAuth app, then 'Generate a new client secret'.",
+      "The new secret is shown once. The OLD secret keeps working for 24 hours OR until you click Delete on it.",
+      "Paste the new secret into Sherpa via Edit on this credential.",
+      "Update wherever it was used and redeploy within the 24-hour overlap window.",
+      "Once verified, click Delete next to the old secret on the same page.",
+    ],
+  },
+  {
+    keyType: "deploy_key",
+    title: "GitHub deploy key (SSH)",
+    dashboardUrl: "https://github.com/",
+    supportsProgrammaticRotation: false,
+    steps: [
+      "On the machine that needs access, generate a new SSH keypair: ssh-keygen -t ed25519 -f ~/.ssh/repo_deploy_new",
+      "Go to your repo on GitHub → Settings → Deploy keys.",
+      "Add the new public key (~/.ssh/repo_deploy_new.pub). Give it the same access (read-only or read-write).",
+      "Update your SSH config or CI to use the new private key.",
+      "Verify by cloning or pushing.",
+      "Delete the OLD deploy key from the same GitHub page.",
+      "Store the new private key in Sherpa via Edit on this credential.",
+    ],
+  },
+];
 
 export default function GitHubPlaybook() {
   return (
