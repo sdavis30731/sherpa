@@ -76,8 +76,9 @@ export default function SecurityPage() {
           <Bullet>
             The key that encrypts your data is{" "}
             <em>derived</em> from your passphrase using{" "}
-            <span className="font-mono text-sm">Argon2id</span> — the same
-            algorithm 1Password uses, tuned for modern hardware.
+            <span className="font-mono text-sm">Argon2id</span> — the
+            algorithm that won the Password Hashing Competition, tuned for
+            modern hardware.
           </Bullet>
           <Bullet>
             If our database leaked tomorrow, the attacker would get a list of
@@ -100,13 +101,14 @@ export default function SecurityPage() {
         title="Zero-knowledge, in one paragraph"
       >
         <p>
-          Most password managers technically <em>could</em> decrypt your data
-          if they wanted to (or if they were compromised). Zero-knowledge
-          means we structurally can&apos;t. The encryption keys exist only
-          on your devices, derived from a passphrase you alone know. We
-          store ciphertext and metadata. That&apos;s it. This is the same
-          model that 1Password, Bitwarden, and ProtonMail use — battle-tested
-          for over a decade.
+          Zero-knowledge means the encryption keys exist only on your
+          devices, derived from a passphrase you alone know. We store
+          ciphertext and metadata. That&apos;s it. The encryption keys never
+          touch our servers, so no insider, no compromised admin, and no
+          subpoena can force us to hand over what we don&apos;t have. This
+          architecture has been used by serious security products for over
+          a decade — Sherpa applies it specifically to developer
+          credentials.
         </p>
         <p className="mt-4">
           What it costs you: <strong>if you forget your passphrase and

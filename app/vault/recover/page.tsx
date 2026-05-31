@@ -286,8 +286,8 @@ export default function RecoverPage() {
               <Callout tone="warning" title="Save this in a password manager.">
                 Your everyday way to unlock Sherpa is this passphrase — not
                 the 12 words. The 12 words are only for emergencies. Paste
-                this into 1Password, Apple Passwords, Bitwarden, or any
-                place you trust to keep it for next time.
+                this into Apple Passwords or your password manager of
+                choice — any place you trust to keep it for next time.
               </Callout>
 
               <Button onClick={() => router.push("/vault")} fullWidth>

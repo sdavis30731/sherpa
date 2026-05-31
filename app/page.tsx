@@ -126,7 +126,7 @@ export default function HomePage() {
               indistinguishable from random noise.
             </p>
             <p className="mt-4 text-lg text-slate-600">
-              We call this <strong className="font-semibold text-slate-800">zero-knowledge</strong>. It&apos;s the same architecture that 1Password and Bitwarden use, built on the same cryptography that protects HTTPS. If our database leaked tomorrow, the attacker would get ciphertext and nothing else.
+              We call this <strong className="font-semibold text-slate-800">zero-knowledge</strong>. It&apos;s the same proven architecture used by the major password managers, built on the same cryptography that protects HTTPS. If our database leaked tomorrow, the attacker would get ciphertext and nothing else.
             </p>
             <div className="mt-6 grid grid-cols-2 gap-3 text-sm">
               <SecurityFact label="Encryption" value="AES-256-GCM" />
@@ -149,36 +149,51 @@ export default function HomePage() {
         <div className="grid grid-cols-1 items-center gap-12 sm:grid-cols-12">
           <div className="sm:col-span-7">
             <div className="inline-flex items-center gap-2 rounded-full bg-sherpa-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-sherpa-700">
-              <Bot className="h-3.5 w-3.5" /> Agents can use your keys. They just can&apos;t see them.
+              <Bot className="h-3.5 w-3.5" /> Diagnose and assist — without seeing your keys
             </div>
             <h2 className="mt-4 text-4xl font-bold tracking-tight text-slate-900">
-              Let Claude move money. Without seeing the key.
+              Let your AI assistant help. Without holding the keys.
             </h2>
             <p className="mt-5 text-lg text-slate-600">
-              When you tell Claude in Cowork &ldquo;refund customer
-              cus_x9k2&rdquo;, the old way meant pasting your Stripe secret
-              key into the chat — where it lives in your transcript forever,
-              gets sent to a model provider, and may end up in training data
-              or a screenshot.
+              Half of debugging a vibe-coded app is sanity-checking config:
+              &ldquo;Is my webhook even configured?&rdquo; &ldquo;Am I using
+              the right Supabase key in the frontend?&rdquo; &ldquo;Which env
+              vars are missing in production?&rdquo; The old way to get help
+              meant pasting your secret keys into chat — where they live in
+              the transcript forever, ship to model providers, and may end
+              up in a screenshot.
             </p>
             <p className="mt-4 text-lg text-slate-600">
               Sherpa is an{" "}
               <strong className="font-semibold text-slate-800">
                 MCP server
               </strong>
-              . Claude asks Sherpa to make the Stripe call. Sherpa decrypts
-              your key server-side, calls Stripe, and returns the result.{" "}
+              . Your AI asks Sherpa to make the diagnostic call. Sherpa uses
+              your key server-side, returns the answer, and{" "}
               <strong className="font-semibold text-slate-800">
-                The model never touches the secret.
+                the model never touches the secret.
               </strong>{" "}
-              Every call is rate-limited, every action is in your audit log,
-              and you can kill the agent&apos;s session token any time.
+              Read-only by default. Write actions require your explicit
+              approval (coming with v1.1).
             </p>
             <ul className="mt-6 space-y-2 text-sm text-slate-700">
               <RotationBullet text="Works with Claude (Cowork, Code, Desktop), Cursor, Codex — any MCP client" />
-              <RotationBullet text="Scoped tokens: production-only, read-only, single-project, expiring" />
-              <RotationBullet text="Every agent call appears in your activity log with the prompt that triggered it" />
+              <RotationBullet text="Read-only by default; write actions gated by human approval, dollar caps, and dry-run previews" />
+              <RotationBullet text="Scoped tokens: production-only, single-project, expiring" />
+              <RotationBullet text="Every agent call lands in your activity log with the prompt that triggered it" />
             </ul>
+            <div className="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                What you can ask today
+              </div>
+              <ul className="mt-2 space-y-1.5 text-sm text-slate-700">
+                <li>&ldquo;Is my Stripe webhook endpoint configured correctly?&rdquo;</li>
+                <li>&ldquo;Is my frontend using the anon key or service_role?&rdquo;</li>
+                <li>&ldquo;Show which env vars are missing in Vercel production.&rdquo;</li>
+                <li>&ldquo;Does this GitHub token have more repo access than it needs?&rdquo;</li>
+                <li>&ldquo;Is a hard spend cap set on my OpenAI key?&rdquo;</li>
+              </ul>
+            </div>
           </div>
           <div className="sm:col-span-5">
             <MCPMockup />
@@ -526,7 +541,7 @@ function MCPMockup() {
           You, to Claude
         </div>
         <div className="text-sm text-slate-800">
-          &ldquo;Refund Stripe charge ch_3PqRk2... for $48.&rdquo;
+          &ldquo;Is my Stripe webhook configured correctly?&rdquo;
         </div>
       </div>
       <div className="ml-6 rounded-2xl border border-sherpa-200 bg-sherpa-50 p-4 shadow-md">
@@ -536,20 +551,28 @@ function MCPMockup() {
         <div className="font-mono text-xs text-slate-700">
           sherpa_call_api(
           <br />&nbsp;&nbsp;service: &ldquo;stripe&rdquo;,
-          <br />&nbsp;&nbsp;endpoint: &ldquo;refunds&rdquo;,
-          <br />&nbsp;&nbsp;params: &#123; charge: &ldquo;ch_3PqRk2…&rdquo; &#125;
+          <br />&nbsp;&nbsp;endpoint: &ldquo;webhook_endpoints&rdquo;,
+          <br />&nbsp;&nbsp;method: &ldquo;list&rdquo;
           <br />)
         </div>
         <div className="mt-2 text-[11px] text-slate-500">
-          Claude doesn&apos;t pass the key. Claude doesn&apos;t know the key.
+          Read-only. Claude doesn&apos;t see the key. Claude doesn&apos;t
+          know the key.
         </div>
       </div>
       <div className="ml-12 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 shadow-md">
         <div className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-700">
-          <CheckCircle2 className="h-3 w-3" /> Sherpa → Stripe → you
+          <CheckCircle2 className="h-3 w-3" /> Sherpa → Stripe → Claude
         </div>
-        <div className="font-mono text-xs text-emerald-900">
-          refund re_3PqRk2... created · $48.00
+        <div className="font-mono text-[11px] leading-relaxed text-emerald-900">
+          1 endpoint · status: enabled
+          <br />url: https://api.yourapp.com/stripe
+          <br />listening for: payment_intent.succeeded,
+          <br />invoice.paid, customer.subscription.deleted
+        </div>
+        <div className="mt-2 text-[11px] text-emerald-700">
+          &ldquo;Your webhook looks healthy. It&apos;s listening for the
+          three events your code references.&rdquo;
         </div>
       </div>
     </div>
