@@ -4,7 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useVaultKey } from "@/lib/vault-context";
-import { KeyRound, Lock, Unlock, Settings, Upload } from "lucide-react";
+import { KeyRound, Lock, Unlock, Settings, Upload, Activity } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AddCredentialDialog } from "@/components/add-credential-dialog";
 import { ImportEnvDialog } from "@/components/import-env-dialog";
@@ -55,6 +55,14 @@ export function ProjectActions({ projectId }: { projectId: string }) {
   return (
     <div className="flex items-center gap-2">
       <UnlockIndicator />
+      <Link
+        href={`/vault/${projectId}/audit`}
+        className="inline-flex h-9 items-center gap-1 rounded-md border border-slate-300 bg-white px-3 text-sm font-medium text-slate-600 shadow-sm hover:bg-slate-50 hover:text-slate-900"
+        title="Activity log"
+        aria-label="Activity log"
+      >
+        <Activity className="h-4 w-4" />
+      </Link>
       <Link
         href={`/vault/${projectId}/settings`}
         className="inline-flex h-9 items-center gap-1 rounded-md border border-slate-300 bg-white px-3 text-sm font-medium text-slate-600 shadow-sm hover:bg-slate-50 hover:text-slate-900"
