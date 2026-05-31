@@ -4,9 +4,10 @@ import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useVaultKey } from "@/lib/vault-context";
-import { KeyRound, Lock, Unlock, Settings } from "lucide-react";
+import { KeyRound, Lock, Unlock, Settings, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AddCredentialDialog } from "@/components/add-credential-dialog";
+import { ImportEnvDialog } from "@/components/import-env-dialog";
 
 /**
  * Project-page top-right actions: Add credential, and the unlock status
@@ -17,6 +18,7 @@ export function ProjectActions({ projectId }: { projectId: string }) {
   const router = useRouter();
   const vault = useVaultKey();
   const [open, setOpen] = React.useState(false);
+  const [importOpen, setImportOpen] = React.useState(false);
 
   React.useEffect(() => {
     function onClick(e: MouseEvent) {
@@ -24,6 +26,9 @@ export function ProjectActions({ projectId }: { projectId: string }) {
       if (target?.closest('[data-action="open-add-credential"]')) {
         e.preventDefault();
         openAdd();
+      } else if (target?.closest('[data-action="open-import-env"]')) {
+        e.preventDefault();
+        openImport();
       }
     }
     document.addEventListener("click", onClick);
@@ -39,6 +44,14 @@ export function ProjectActions({ projectId }: { projectId: string }) {
     setOpen(true);
   }
 
+  function openImport() {
+    if (!vault.key) {
+      router.push(`/vault/unlock?next=/vault/${projectId}`);
+      return;
+    }
+    setImportOpen(true);
+  }
+
   return (
     <div className="flex items-center gap-2">
       <UnlockIndicator />
@@ -50,6 +63,9 @@ export function ProjectActions({ projectId }: { projectId: string }) {
       >
         <Settings className="h-4 w-4" />
       </Link>
+      <Button variant="secondary" onClick={openImport}>
+        <Upload className="h-4 w-4" /> Import .env
+      </Button>
       <Button onClick={openAdd}>
         <KeyRound className="h-4 w-4" /> Add credential
       </Button>
@@ -58,6 +74,12 @@ export function ProjectActions({ projectId }: { projectId: string }) {
         open={open}
         onOpenChange={setOpen}
         onCreated={() => router.refresh()}
+      />
+      <ImportEnvDialog
+        projectId={projectId}
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        onImported={() => router.refresh()}
       />
     </div>
   );

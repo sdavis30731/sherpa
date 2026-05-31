@@ -31,6 +31,7 @@ import { DeleteCredentialDialog } from "@/components/delete-credential-dialog";
 import { MarkRotatedDialog } from "@/components/mark-rotated-dialog";
 import { useOpenPlaybook } from "@/components/playbook-context";
 import { getPlaybook } from "@/lib/playbooks";
+import { RiskBadge } from "@/components/risk-badge";
 import {
   Eye,
   EyeOff,
@@ -61,7 +62,13 @@ export interface CredentialView {
 const REVEAL_SECONDS = 10;
 const COPY_SECONDS = 30;
 
-export function CredentialRow({ cred }: { cred: CredentialView }) {
+export function CredentialRow({
+  cred,
+  risk = null,
+}: {
+  cred: CredentialView;
+  risk?: import("@/lib/risk-rules").RiskRule | null;
+}) {
   const router = useRouter();
   const vault = useVaultKey();
   const { open: openPlaybook } = useOpenPlaybook();
@@ -189,6 +196,14 @@ export function CredentialRow({ cred }: { cred: CredentialView }) {
                 : "Never rotated"}
             </div>
           </div>
+
+          {risk && (
+            <RiskBadge
+              rule={risk}
+              projectId={cred.project_id}
+              credentialId={cred.id}
+            />
+          )}
 
           <StatusPill status={info.status} />
 

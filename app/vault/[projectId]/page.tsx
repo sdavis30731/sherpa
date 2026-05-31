@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/card";
 import { Callout } from "@/components/ui/callout";
 import { getService } from "@/lib/services";
+import { worstRisk, type RiskCredentialInput, type RiskRule } from "@/lib/risk-rules";
 import { ProjectActions } from "./_components/project-actions";
 import { CredentialRow, type CredentialView } from "./_components/credential-row";
 import { ScrollToCredential } from "./_components/scroll-to-credential";
@@ -47,6 +48,38 @@ export default async function ProjectPage({
     .order("service");
 
   const credList = (credentials ?? []) as CredentialView[];
+
+  // Risk evaluation — metadata-only (we don't have plaintext on the server).
+  // For each credential, build a RiskCredentialInput from what we know and
+  // compute the worst-matching rule. Some rules (those that need a value
+  // prefix or original .env key name) won't fire here — they only fire at
+  // import time. That's fine; stale-rotation and similar metadata rules
+  // do fire and are useful.
+  const riskInputs: RiskCredentialInput[] = credList.map((c) => {
+    const days =
+      c.last_rotated_at != null
+        ? Math.floor(
+            (Date.now() - new Date(c.last_rotated_at).getTime()) / 86_400_000,
+          )
+        : null;
+    // We don't store key_type as a structured field yet (SHRP-013c worth
+    // doing). Approximate via the service's first keyType.
+    const svc = getService(c.service);
+    return {
+      service: c.service,
+      keyType: svc?.keyTypes[0]?.id ?? "other",
+      env: c.env,
+      value: "", // not available server-side without decryption
+      daysSinceRotation: days,
+    };
+  });
+  const credentialRisks: Record<string, RiskRule | null> = Object.fromEntries(
+    credList.map((c, i) => {
+      const siblings = riskInputs.filter((_, j) => j !== i);
+      return [c.id, worstRisk(riskInputs[i]!, { siblings })];
+    }),
+  );
+
   const grouped = groupByService(credList);
   // Map credential id → service id so the ScrollToCredential island can
   // open the right playbook when ?playbook=... is in the URL.
@@ -98,7 +131,12 @@ export default async function ProjectPage({
         ) : (
           <div className="space-y-6">
             {grouped.map(({ serviceId, items }) => (
-              <ServiceGroup key={serviceId} serviceId={serviceId} items={items} />
+              <ServiceGroup
+                key={serviceId}
+                serviceId={serviceId}
+                items={items}
+                risks={credentialRisks}
+              />
             ))}
           </div>
         )}
@@ -117,7 +155,15 @@ function groupByService(rows: CredentialView[]) {
   return Array.from(map.entries()).map(([serviceId, items]) => ({ serviceId, items }));
 }
 
-function ServiceGroup({ serviceId, items }: { serviceId: string; items: CredentialView[] }) {
+function ServiceGroup({
+  serviceId,
+  items,
+  risks,
+}: {
+  serviceId: string;
+  items: CredentialView[];
+  risks: Record<string, RiskRule | null>;
+}) {
   const service = getService(serviceId);
   const name = service?.name ?? serviceId;
   return (
@@ -139,7 +185,7 @@ function ServiceGroup({ serviceId, items }: { serviceId: string; items: Credenti
       <CardBody className="!p-0">
         <ul className="divide-y divide-slate-100">
           {items.map((c) => (
-            <CredentialRow key={c.id} cred={c} />
+            <CredentialRow key={c.id} cred={c} risk={risks[c.id] ?? null} />
           ))}
         </ul>
       </CardBody>
