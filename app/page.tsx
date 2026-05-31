@@ -57,7 +57,14 @@ export default function HomePage() {
           all of it lives — encrypted so even we can&apos;t read it.
         </p>
         <p className="mx-auto mt-4 max-w-2xl text-base text-slate-500">
-          Start here. Paste a <code className="rounded bg-slate-100 px-1 py-0.5 font-mono text-sm text-slate-700">.env</code> and we&apos;ll tell you which keys are dangerous, where to rotate them, and what each one actually does.{" "}
+          Start here. We&apos;ve loaded a redacted{" "}
+          <code className="rounded bg-slate-100 px-1 py-0.5 font-mono text-sm text-slate-700">
+            .env
+          </code>{" "}
+          below so you can see what Sherpa does — what each key is, how risky
+          it is, and what to do next. When you&apos;re ready, swap in a
+          redacted version of your own (or your real one — it never leaves
+          your browser).{" "}
           <strong className="text-slate-700">No signup required.</strong>
         </p>
       </section>
