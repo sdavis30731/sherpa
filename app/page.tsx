@@ -18,35 +18,26 @@ export default function HomePage() {
   return (
     <main className="min-h-full overflow-x-hidden bg-white">
       {/* ============================================================
-          HERO — light gradient + topographic overlay
+          HERO — clean light gradient. No background texture behind the
+          text (lesson learned). Peaks live outside the content gutter.
           ============================================================ */}
       <div className="relative isolate">
-        {/* Gradient wash */}
+        {/* Gradient wash — the only background behind the text */}
         <div
           aria-hidden
           className="absolute inset-0 -z-10 bg-gradient-to-b from-sherpa-50/70 via-white to-white"
         />
-        {/* Topographic line texture */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
-        >
-          <TopoPattern
-            variant="lines"
-            className="absolute inset-x-0 top-0 h-[640px] w-full text-sherpa-300/30"
-          />
-        </div>
-        {/* Mountain peak decoration, top-right */}
+        {/* Mountain peak silhouettes, anchored to the far edges so they
+            never overlap the hero text. Hidden on small screens to be safe. */}
         <TopoPattern
           variant="peak"
           aria-hidden
-          className="pointer-events-none absolute right-2 top-24 -z-10 hidden h-56 w-56 text-sherpa-400/25 sm:right-12 sm:block lg:right-24"
+          className="pointer-events-none absolute -right-12 top-40 -z-10 hidden h-48 w-48 text-sherpa-400/20 xl:block"
         />
-        {/* Mirror peak, bottom-left */}
         <TopoPattern
           variant="peak"
           aria-hidden
-          className="pointer-events-none absolute left-2 top-72 -z-10 hidden h-44 w-44 -scale-x-100 text-sherpa-300/20 sm:left-12 sm:block lg:left-24"
+          className="pointer-events-none absolute -left-12 top-64 -z-10 hidden h-40 w-40 -scale-x-100 text-sherpa-300/15 xl:block"
         />
 
         <div className="mx-auto max-w-5xl px-6">
