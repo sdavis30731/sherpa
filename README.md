@@ -1,232 +1,283 @@
-# Sherpa
+# SherpaKeys
 
-The keychain for vibe coders. One safe place for every API key, with step-by-step
-rotation guides and an MCP bridge so AI agents can use the keys without ever seeing them.
+**The AI firewall for indie developers.** A zero-knowledge keychain for AI-built
+apps, plus an MCP server that lets Claude, Cursor, and Codex use your API keys
+without ever seeing them — and gates every write action behind explicit user
+approval.
 
-This repo covers **SHRP-001 through SHRP-014** from the backlog:
+> **"Dude. Where are my keys?!"**
+>
+> Every founder who shipped a real app by talking to Claude or Cursor has had
+> that exact moment of panic. SherpaKeys is the tool you wish you had the
+> first time you searched *"is my supabase service_role key supposed to be
+> in NEXT_PUBLIC_?"* at 11pm before a launch.
 
-- A Next.js 15 (App Router) + TypeScript + Tailwind scaffold (SHRP-001).
-- Supabase Postgres schema with Row-Level Security on every table (SHRP-002).
-- Magic-link email signup / login via Supabase Auth (SHRP-003).
-- Master-passphrase setup with client-side Argon2id key derivation (SHRP-004).
-- Vault unlock with 3-attempt cooldown (SHRP-005).
-- BIP-39 recovery code flow with forced acknowledgement (SHRP-006).
-- AES-256-GCM encryption module + Vitest tests (SHRP-007).
-- Project list, create-project dialog, Postgres-enforced free-tier limit (SHRP-008).
-- Add-credential dialog with service grid, type picker, env, paste field (SHRP-009).
-- Live key-format detection that nudges you when a paste looks wrong (SHRP-010).
-- Project view with grouped credentials, env chips, rotation status pills (SHRP-011).
-- Reveal credential with 10s auto-hide, copy with 30s clipboard clear, audit log on every action (SHRP-012).
-- Edit (label / env / paste-to-rotate) and soft-delete with type-the-label confirmation (SHRP-013).
-- Project settings — rename, archive, hard-delete with type-the-name confirmation, cascade to credentials & MCP tokens, user-level audit preserved (SHRP-014).
-- "Needs attention" widget on /vault listing overdue and due-soon credentials, with deep links that scroll-and-flash the target row (SHRP-026).
-- Mark-as-rotated action for the case where the user rotated externally and just wants to reset the tracker (SHRP-027).
-- Playbook system: TSX-based playbooks at `content/playbooks/[service].tsx`, a Sheet drawer with sticky section nav, deep-linkable by `?playbook=SECTION` (SHRP-015).
-- Stripe playbook — first complete playbook covering Overview, Where to find each key, Recommended scopes, Rotation (with zero-downtime roll), Revocation if leaked, Common pitfalls (SHRP-016).
+🌐 **Live:** [sherpakeys.com](https://sherpakeys.com)
+🔒 **Security architecture:** [SECURITY.md](./SECURITY.md)
+📜 **License:** [MIT](./LICENSE)
 
-What is **not** in this slice yet: audit log viewer (SHRP-028),
-the remaining 11 service playbooks, the MCP server, Stripe billing.
+---
 
-## Quick start
+## What this is
+
+SherpaKeys does three things, each useful on its own and far more useful
+together:
+
+### 1. A zero-knowledge vault for credentials
+
+Your master passphrase never leaves your device. API keys, webhook secrets,
+and connection strings are encrypted in your browser with AES-256-GCM using
+a key derived from your passphrase via Argon2id. Our server only ever sees
+ciphertext. If our database leaked tomorrow, the attacker would walk away
+with a list of email addresses and an unreadable pile of bytes.
+
+### 2. The Go-Live Check
+
+Paste your `.env` and get back: which service every key belongs to, how
+dangerous each one is by category, which configurations are misconfigured
+(NEXT_PUBLIC_ on a service_role key? sk_live_ in a dev environment?), and
+a Go-Live readiness score with a transparent "what we checked / what we
+did NOT check" panel. Runs entirely in your browser before signup. No
+secrets are uploaded.
+
+### 3. The AI Firewall (MCP server)
+
+The big one. When Claude, Cursor, or Codex needs to call Stripe or Supabase
+or GitHub, the agent calls SherpaKeys' MCP server instead. SherpaKeys
+decrypts the credential server-side, makes the call, returns the response.
+**The model never sees the secret.** And writes — anything not on a small
+allow-list of read operations — require explicit human approval via an
+email link before they execute.
+
+You get autonomous read-side agents and human-in-the-loop write-side agents,
+without leaking credentials into AI transcripts.
+
+---
+
+## Why this exists
+
+AI coding tools have made building real software accessible to people without
+a CS degree. But shipping a real app means juggling API keys, webhook
+secrets, DNS records, OAuth callbacks, and rotation schedules across a dozen
+services. A single `NEXT_PUBLIC_` prefix on the wrong key, an `sk_live_` in
+the wrong slot, or an unbounded OpenAI key in a leaked repo turns launch day
+into the worst day of the year.
+
+And the next problem is already here: AI agents that can *take action* on
+those services. A hallucinated refund. A misunderstood DROP TABLE. A
+debugging session that nukes production.
+
+SherpaKeys is the safety layer for both problems. We hold the keys safely.
+We help you rotate them. We let agents use them without exposing them. And
+we make agents stop and ask before doing anything destructive.
+
+---
+
+## Architecture in 60 seconds
+
+```
+                Your browser                    SherpaKeys server          Stripe / etc.
+
+  ┌─────────────────────────────┐     ┌──────────────────────────┐     ┌─────────────┐
+  │ passphrase  → Argon2id      │     │                          │     │             │
+  │              ↓              │     │ Stores:                  │     │             │
+  │           vault key         │     │  • ciphertext            │     │             │
+  │              ↓              │ ──→ │  • IV                    │     │             │
+  │ secret →  AES-256-GCM →     │     │  • metadata              │     │             │
+  │           ciphertext        │     │                          │     │             │
+  └─────────────────────────────┘     │ NEVER stores:            │     │             │
+                                       │  • passphrase            │     │             │
+                                       │  • vault key             │     │             │
+                                       │  • plaintext secret      │     │             │
+                                       └──────────────────────────┘     │             │
+                                                                         │             │
+  ┌─────────────────────────────┐     ┌──────────────────────────┐     │             │
+  │ Claude (in Cowork)          │     │ MCP server               │     │             │
+  │  sherpa_call_api(           │ ──→ │  • Auth via SHA-256 hash │ ──→ │  Live API   │
+  │    service: "stripe",       │     │  • Write? → queue + email│     │             │
+  │    path: "/v1/customers"    │     │  • Read? → execute now   │     │             │
+  │  )                          │     │                          │     │             │
+  └─────────────────────────────┘     │ Agent never gets the key │     │             │
+                                       └──────────────────────────┘     └─────────────┘
+```
+
+For the full story including the agent session key sealing, the
+write-action approval flow, the threat model, and the cryptography stack,
+read [SECURITY.md](./SECURITY.md).
+
+---
+
+## Tech stack
+
+- **Frontend & backend:** Next.js 15 (App Router) + TypeScript + Tailwind
+- **Database & auth:** Supabase (Postgres with RLS on every table)
+- **Crypto:** Web Crypto API (browser-native) + `@noble/hashes` for
+  Argon2id + `@scure/bip39` for recovery codes
+- **Email:** Resend (graceful fallback if not configured)
+- **Agent protocol:** Model Context Protocol over HTTP / JSON-RPC 2.0
+- **Tests:** Vitest with happy-dom
+- **Hosting:** Vercel (auto-deploy from main)
+
+---
+
+## Quick start (self-host)
+
+This is a Next.js app backed by Supabase. To run a private instance:
 
 ```bash
-# 1. Install dependencies
+# 1. Clone and install
+git clone https://github.com/sdavis30731/sherpa.git
+cd sherpa
 npm install
 
-# 2. Walk through env-var setup interactively
-#    (prompts for Supabase URL + anon key + service role + site URL,
-#    writes .env.local, prints the exact Vercel env vars to copy.)
+# 2. Walk through env-var setup
 npm run setup
+# Prompts for Supabase URL + anon key + service role + site URL,
+# writes .env.local, prints the exact Vercel env vars to copy.
 
 # 3. Run the database migrations in Supabase
-#    Dashboard → SQL Editor → paste each file in order, click Run:
-#      supabase/migrations/0001_init.sql
-#      supabase/migrations/0002_project_limits.sql
-#      supabase/migrations/0003_soft_delete_purge.sql
-#      supabase/migrations/0004_project_settings.sql
+# Dashboard → SQL Editor → paste each file in order, click Run:
+#   supabase/migrations/0001_init.sql
+#   supabase/migrations/0002_project_limits.sql
+#   supabase/migrations/0003_soft_delete_purge.sql
+#   supabase/migrations/0004_project_settings.sql
+#   supabase/migrations/0005_agent_sessions.sql
+#   supabase/migrations/0006_rate_limit.sql
+#   supabase/migrations/0007_write_action_approval.sql
+#   supabase/migrations/0008_approval_results.sql
 
-# 4. Run the dev server
+# 4. Dev server
 npm run dev
 # Open http://localhost:3000
 
-# 5. Run the tests
+# 5. Tests
 npm test
 ```
 
-## Pushing to GitHub + Vercel
+### Optional env vars
 
-```bash
-# Initialise git locally (asks for your name/email if not configured)
-npm run init-git
+- `RESEND_API_KEY` and `EMAIL_FROM` — turn on approval email delivery.
+  Without these, the approval flow still works; the agent just returns
+  the URL inline for the user instead of sending email.
+- `AGENT_SESSION_MASTER_KEY` — 32 random bytes (base64-encoded) used to
+  seal agent session keys. Generate with `openssl rand -base64 32`.
 
-# Make your first commit
-git commit -m "Initial commit: Sherpa MVP"
+---
 
-# Create a PRIVATE repo on GitHub (do NOT initialise with a README),
-# then run the two commands GitHub shows you, like:
-git remote add origin git@github.com:YOUR_USERNAME/sherpa.git
-git push -u origin main
-```
-
-Then in Vercel:
-1. **Import Project** → pick the GitHub repo. Auto-detects Next.js.
-2. Before clicking Deploy, add the environment variables that `npm run setup`
-   printed for you. Confirm the `SUPABASE_SERVICE_ROLE_KEY` is marked
-   server-only (don't prefix it with `NEXT_PUBLIC_`).
-3. Deploy. Once you have the production URL, update `NEXT_PUBLIC_SITE_URL`
-   in Vercel to match, and add the URL to Supabase **Auth → URL
-   Configuration → Site URL** and **Redirect URLs**.
-
-Every push to `main` auto-deploys to production. Every PR gets its own
-preview URL.
-
-## Setting up Supabase
-
-1. Go to <https://supabase.com> and create a new project (US region recommended).
-2. Once the project is provisioned, open **Settings → API**. Copy the project URL
-   and the `anon` public key into `NEXT_PUBLIC_SUPABASE_URL` and
-   `NEXT_PUBLIC_SUPABASE_ANON_KEY` in `.env.local`.
-3. Copy the `service_role` secret key into `SUPABASE_SERVICE_ROLE_KEY`.
-   **This key bypasses Row-Level Security. Never expose it to the browser.** It
-   is only used server-side.
-4. Open **SQL Editor** and run the migrations **in order**:
-   - Paste `supabase/migrations/0001_init.sql` and click Run. This creates the
-     `users`, `projects`, `credentials`, `audit_log`, `rotation_events`,
-     `mcp_tokens`, and `waitlist` tables with RLS policies plus a trigger
-     that auto-creates a `public.users` row whenever a new auth user signs up.
-   - Paste `supabase/migrations/0002_project_limits.sql` and click Run. This
-     adds a BEFORE INSERT trigger on `projects` that enforces the free-tier
-     1-project limit at the database (so the limit can't be bypassed by a
-     custom client).
-   - Paste `supabase/migrations/0003_soft_delete_purge.sql` and click Run.
-     This adds a `purge_soft_deleted_credentials()` function that hard-
-     deletes credentials whose `deleted_at` is older than 30 days. Call
-     it on a daily schedule from a Supabase Edge Function or Vercel Cron
-     Job. See comments in the migration for details.
-   - Paste `supabase/migrations/0004_project_settings.sql` and click Run.
-     This switches `audit_log.project_id` to `ON DELETE SET NULL` so the
-     user-level audit trail survives a project deletion.
-5. Under **Authentication → Email Templates**, optionally customize the magic
-   link email. The default works fine.
-6. Under **Authentication → URL Configuration**, add `http://localhost:3000`
-   (and your production domain later) to **Site URL** and to **Redirect URLs**.
-
-## Project structure
+## Repository layout
 
 ```
 app/
-  layout.tsx          Root layout, mounts VaultKeyProvider
-  page.tsx            Public landing page
-  signup/page.tsx     Magic-link signup
-  login/page.tsx      Magic-link login
-  auth/
-    callback/         Magic-link callback that exchanges code → session
-    logout/           POST endpoint that signs out and redirects home
-  vault/
-    layout.tsx        Server-side auth gate
-    page.tsx          Vault home (placeholder for SHRP-008+)
-    setup/page.tsx    SHRP-004 + SHRP-006: passphrase + recovery code
-    unlock/page.tsx   SHRP-005: vault unlock with cooldown
-components/ui/        Small Tailwind primitives (button, input, card, callout)
+  page.tsx                      Public landing page
+  security/page.tsx             Public-facing security overview
+  signup/, login/               Magic-link auth
+  vault/                        Authenticated vault UI (RLS-scoped)
+    setup/, unlock/, recover/
+    [projectId]/
+      page.tsx                  Project view with grouped credentials
+      settings/, audit/, agents/
+  approve/[id]/                 AI firewall approval UI (this is the one
+                                 users get linked to from email)
+  api/
+    mcp/v1/route.ts             ★ The MCP server. Auth via Bearer token,
+                                  JSON-RPC 2.0, AI firewall lives here.
+    mcp-tokens/route.ts         Token creation (defaults permission='read')
+    approvals/[id]/
+      route.ts                  GET pending_approvals row
+      approve/route.ts          POST execute the approved action
+      reject/route.ts           POST reject the approval
+    agent-sessions/route.ts     Authorize / revoke agent sessions
+
 lib/
-  crypto.ts           SHRP-007: Argon2id + AES-256-GCM
-  crypto.test.ts      Vitest suite covering round-trips and tamper detection
-  passphrase.ts       Lightweight entropy estimator (zxcvbn replacement)
-  recovery.ts         BIP-39 recovery code helpers
-  vault-context.tsx   In-memory derived-key context (NEVER persisted)
-  supabase/
-    client.ts         Browser-side Supabase client
-    server.ts         Server-component Supabase client
-    middleware.ts     Cookie refresh + /vault/* auth gate
-  utils.ts            cn() helper
-supabase/migrations/
-  0001_init.sql       Tables, RLS policies, triggers
-middleware.ts         Next.js middleware that wires supabase/middleware.ts
+  crypto.ts                     ★ Argon2id + AES-256-GCM. The vault math.
+  agent-session.ts              ★ Session key sealing/unsealing.
+  write-actions.ts              ★ Per-service read-list registry. The
+                                  AI firewall's brain.
+  risk-rules.ts                 Configuration-misuse rules.
+  email.ts                      Resend wrapper (graceful no-key fallback).
+  keyDetect.ts                  Key-format detection (Stripe, GitHub, etc.)
+  envParser.ts                  .env file parser
+  passphrase.ts                 Entropy estimator (zxcvbn replacement)
+  recovery.ts                   BIP-39 helpers
+  playbooks.ts                  Service playbook registry
+
+content/playbooks/              TSX-based per-service playbooks
+supabase/migrations/            DB schema with RLS on every table
 ```
 
-## Security model — short version
+The stars (★) mark the files most relevant to anyone auditing the
+security claims.
 
-- The user picks a master passphrase. We derive a 32-byte key from it using
-  Argon2id (t=3, m=64MiB, p=1) with a per-user 16-byte salt.
-- The salt is stored on the server. The passphrase is **not**, and neither is
-  the derived key. The key lives only in React context, only for the page session.
-- A short sentinel string (`sherpa-ok`) is encrypted with the key at signup and
-  stored. On unlock, the user enters their passphrase, we re-derive the key,
-  and we try to decrypt the sentinel. If it succeeds, the passphrase is correct.
-- A separate 12-word BIP-39 recovery code is generated client-side. We derive
-  a recovery key from it, use that to encrypt the passphrase, and store the
-  ciphertext. The recovery code itself is **never** stored.
-- Refreshing the browser tab forces a re-unlock. The derived key is not
-  persisted to localStorage, IndexedDB, or cookies.
-- Every table has Row-Level Security enabled with policies of the form
-  `auth.uid() = user_id`. Even with a leaked anon key, a user can only read
-  their own rows.
+---
 
-### Why not Supabase Vault?
+## Status
 
-Supabase ships a `supabase_vault` extension (pgsodium under the hood) that
-encrypts secrets at the database layer. It's a legitimate and useful tool,
-but it's **deliberately not used for storing user credentials in Sherpa**.
+This is the v1.1 codebase as of June 2026.
 
-The two systems solve different problems:
+**Shipped:**
 
-- **Supabase Vault** holds the encryption key on the server. Disk backups,
-  replication streams, and stolen drives can't reveal the plaintext, but
-  anyone with valid database access (the service-role key, a Supabase
-  support engineer, a successful SQL injection) can read the decrypted
-  view and see the plaintext. The threat model is "protect against
-  infrastructure theft".
-- **Sherpa's client-side encryption** derives the key in the user's
-  browser from their master passphrase via Argon2id. The plaintext is
-  encrypted *before* it ever leaves the browser. Supabase only ever stores
-  ciphertext. The threat model is "protect against everyone, including
-  Sherpa itself" — sometimes called zero-knowledge.
+- Zero-knowledge vault with Argon2id + AES-256-GCM
+- BIP-39 recovery codes
+- Per-credential rotation tracking with overdue widget
+- Playbook system with Stripe, GitHub, Supabase, Vercel
+- `.env` analyzer + Go-Live Readiness Score (no signup)
+- Intrinsic risk classification per (service, key type) pair
+- Configuration-misuse risk rules
+- MCP server: `sherpa_list_services`, `sherpa_rotate`, `sherpa_call_api`,
+  `sherpa_get_approval_result`
+- Agent session key sealing
+- Per-token rate limiting
+- Audit log viewer with suspicious-pattern detection
+- **AI Firewall: read/write action classification, default-read tokens,
+  write-action approval via email + browser UI, dollar caps**
 
-Sherpa's headline technical claim — *Claude never sees your Stripe key, and
-neither do we* — only holds under the second model. The moment the
-encryption key lives on a server we control, that claim collapses to "we
-promise we're nice", which is what every other SaaS already says.
+**On the v1.2 roadmap (SHRP-043):**
 
-Where Supabase Vault *would* fit comfortably is for **Sherpa's own internal
-secrets** (Stripe webhook signing secret for receiving payment events,
-Sentry DSN, third-party tokens). Today those live in Vercel env vars,
-which is equally secure and simpler. MCP access tokens
-(`mcp_tokens.token_hash`, SHRP-029) stay bcrypt-hashed regardless — a
-one-way hash means even a breach of that table doesn't yield usable tokens.
+- Webhook reachability checks (Stripe, Resend)
+- DNS hygiene checks (SPF/DKIM/DMARC for sending domains)
+- Env-var sync between local `.env` and Vercel/Railway production
+- OAuth callback URL validation
+- AI provider spend cap detection
+- Supabase RLS policy audit on anon-reachable tables
+- Active-key status check at the provider
 
-## Tests
+Each one of these will migrate from the "What we did NOT check" column to
+the "What we checked" column in the Go-Live readiness panel.
 
-```bash
-npm test                 # one-shot
-npm run test:watch       # watch mode
-```
+---
 
-The Vitest suite covers:
+## Contributing
 
-- AES-256-GCM round-trips on empty strings, 1 KB payloads, and unicode.
-- Tampered-ciphertext detection (must throw).
-- Wrong-key decryption (must throw).
-- Argon2id determinism with the same passphrase + salt.
-- BIP-39 recovery code generation (12 words, distinct each run).
-- Passphrase strength estimator: common passwords scored 0, sequences and
-  repeats penalized, long mixed phrases score ≥3.
+PRs welcome, especially for:
 
-The crypto tests use lower Argon2id parameters (`ARGON_PARAMS_TEST`) so the
-suite finishes in seconds. Production code uses the higher
-`ARGON_PARAMS_PRODUCTION` parameters.
+- **New playbooks** — `content/playbooks/[service].tsx`. Use Stripe
+  (`content/playbooks/stripe.tsx`) as the template.
+- **New service support in the MCP server** — `lib/providers.ts` for
+  the auth header shape, `lib/write-actions.ts` for the read-list.
+- **New risk rules** — `lib/risk-rules.ts`. Each rule is a small object
+  with `id`, `severity`, `message`, and `applies()` function.
 
-## Next stories
+Things to think about before opening a PR:
 
-The next things to build (from `Sherpa_Backlog_MVP.xlsx`):
+- Does this change preserve zero-knowledge? Any new feature that requires
+  the server to decrypt user data needs explicit justification in the PR.
+- Is this conservative-by-default for the AI firewall? New writes should
+  require approval; new reads should be added to the explicit allow-list,
+  not bypass the gate.
+- Does it have tests? `npm test` runs the suite.
 
-- **SHRP-008** Create-project flow with free-tier limit.
-- **SHRP-009** Add-credential form (service picker + paste).
-- **SHRP-010** Auto-detect key format and warn on mismatches.
-- **SHRP-011** List/view credentials.
-- **SHRP-012** Reveal/copy with auto-clear.
-- **SHRP-015 / SHRP-016+** Playbook renderer and the first playbook (Stripe).
-- **SHRP-040 / SHRP-029–032** Key sealing model and MCP Agent Bridge.
+Security issues: see [SECURITY.md](./SECURITY.md) for responsible
+disclosure.
+
+---
 
 ## License
 
-Private — not yet released.
+[MIT](./LICENSE). Use it, fork it, ship it, charge for it. If you build
+on this, a link back to SherpaKeys is appreciated but not required.
+
+---
+
+*SherpaKeys is built for the people who shipped a real app the first time
+out — with Claude, Cursor, Codex, or Bolt. The credentials OS for the new
+generation of indie builders.*
