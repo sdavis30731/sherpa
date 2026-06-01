@@ -37,6 +37,7 @@ import {
   extractEndpoint,
   extractDollarAmountCents,
 } from "@/lib/write-actions";
+import { sendApprovalEmail } from "@/lib/email";
 
 // ---- protocol constants ----
 
@@ -75,14 +76,14 @@ const TOOLS = [
   {
     name: "sherpa_call_api",
     description:
-      "Call a third-party API on the user's behalf. Sherpa server-side injects the credential into the outbound request; the agent never sees the secret value. Requires an active agent authorization session (the user explicitly authorizes agent access from the Sherpa UI for a time window). Available services: stripe, github, openai, anthropic, resend, cloudflare, replicate.",
+      "Call a third-party API on the user's behalf. SherpaKeys server-side injects the credential into the outbound request; the agent never sees the secret value. Requires an active agent authorization session (the user explicitly authorizes agent access from the SherpaKeys UI for a time window). Read actions execute immediately; write actions (as classified by SherpaKeys' AI Firewall) queue for user approval and return a pending_approval response — the agent should then poll sherpa_get_approval_result with the returned approval_id. Available services: stripe, github, openai, anthropic, resend, cloudflare, replicate.",
     inputSchema: {
       type: "object" as const,
       properties: {
         credential_id: {
           type: "string",
           description:
-            "The Sherpa credential ID to use, as returned by sherpa_list_services.",
+            "The SherpaKeys credential ID to use, as returned by sherpa_list_services.",
         },
         method: {
           type: "string",
@@ -101,10 +102,26 @@ const TOOLS = [
         extra_headers: {
           type: "object",
           description:
-            "Optional additional headers (e.g. Idempotency-Key). Auth headers are injected by Sherpa and cannot be overridden.",
+            "Optional additional headers (e.g. Idempotency-Key). Auth headers are injected by SherpaKeys and cannot be overridden.",
         },
       },
       required: ["credential_id", "method", "path"],
+    },
+  },
+  {
+    name: "sherpa_get_approval_result",
+    description:
+      "Fetch the current status and result (if executed) of a write action that was queued for user approval. Call this after sherpa_call_api returns a pending_approval response. Returns status ('pending', 'approved', 'rejected', 'expired') and, if approved+executed, the upstream API's status code and response body. Poll this periodically (e.g. every 5-15 seconds) until status is no longer 'pending'.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        approval_id: {
+          type: "string",
+          description:
+            "The approval ID returned by sherpa_call_api when a write action was queued.",
+        },
+      },
+      required: ["approval_id"],
     },
   },
 ] as const;
@@ -266,6 +283,8 @@ async function handleToolsCall(
       return tool_rotate(req, session, params.arguments);
     case "sherpa_call_api":
       return tool_callApi(req, session, params.arguments);
+    case "sherpa_get_approval_result":
+      return tool_getApprovalResult(req, session, params.arguments);
     default:
       return fail(req.id, E_METHOD_NOT_FOUND, `Unknown tool: ${params.name}`);
   }
@@ -628,9 +647,9 @@ async function tool_callApi(
         `Write action refused: this MCP token is read-only. The owner of this token must enable write actions in SherpaKeys → project settings → AI Agent access. Write actions still require explicit user approval per-call.`,
       );
     }
-    // session.permission === "write" — Stage 2 will queue this and ask the
-    // user. For Stage 1 we deny with a clear stub message so the AI
-    // firewall is in place even though the approval UI isn't yet.
+    // session.permission === "write" — queue an approval row, email the
+    // user a link, and return a pending_approval response to the agent.
+    // The agent fetches the eventual result via sherpa_get_approval_result.
     const summary = summarizeAction(
       credential.service,
       endpoint,
@@ -645,8 +664,8 @@ async function tool_callApi(
         ? (args.body as Record<string, unknown>)
         : undefined,
     );
-    // Enforce the dollar cap right now even though the approval flow isn't
-    // wired — over-cap calls should never even reach the approval queue.
+    // Enforce the dollar cap before queuing — over-cap calls don't even
+    // create a pending row.
     if (
       session.dollarCapCents !== null &&
       dollarCents !== null &&
@@ -673,6 +692,48 @@ async function tool_callApi(
         `Write action refused: amount $${(dollarCents / 100).toFixed(2)} exceeds the per-call dollar cap of $${(session.dollarCapCents / 100).toFixed(2)} on this token.`,
       );
     }
+
+    // Default TTL: 1 hour from now.
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
+
+    // Insert the pending_approvals row. Store all the data the approve
+    // endpoint will need to re-execute the call: credential_id, path,
+    // body, extra_headers.
+    const { data: insertedApproval, error: insErr } = await supabase
+      .from("pending_approvals")
+      .insert({
+        user_id: session.userId,
+        token_id: session.tokenId,
+        project_id: session.projectId,
+        service: credential.service,
+        endpoint,
+        method,
+        params: {
+          credential_id: credentialId,
+          path,
+          body: args.body ?? null,
+          extra_headers: args.extra_headers ?? null,
+        },
+        action_summary: summary,
+        dollar_amount_cents: dollarCents,
+        agent_prompt: null, // future MCP arg; left null for now
+        expires_at: expiresAt.toISOString(),
+      } as never)
+      .select("id")
+      .single();
+    if (insErr || !insertedApproval) {
+      return fail(
+        req.id,
+        E_INTERNAL,
+        `Could not queue approval: ${insErr?.message ?? "unknown"}`,
+      );
+    }
+    const approvalId = (insertedApproval as { id: string }).id;
+    const baseUrl =
+      process.env.NEXT_PUBLIC_SITE_URL ?? "https://sherpakeys.com";
+    const approvalUrl = `${baseUrl.replace(/\/+$/, "")}/approve/${approvalId}`;
+
+    // Audit log
     await supabase.from("audit_log").insert({
       user_id: session.userId,
       project_id: session.projectId,
@@ -680,6 +741,7 @@ async function tool_callApi(
       action: "agent_write_pending_approval",
       actor: `mcp_token:${session.tokenId}`,
       metadata: {
+        approval_id: approvalId,
         service: credential.service,
         method,
         path,
@@ -687,11 +749,60 @@ async function tool_callApi(
         dollar_amount_cents: dollarCents,
       },
     } as never);
-    return fail(
-      req.id,
-      E_INVALID_REQUEST,
-      `Write action queued for approval (not yet executed). Stage 2 of the AI firewall will email the user and link them to an approval page; until that ships, write actions remain blocked. Summary: ${summary}`,
-    );
+
+    // Look up the user's email so we can notify them. The auth.admin
+    // path is the safest way to read this server-side.
+    let emailSent: { sent: boolean; reason?: string } = {
+      sent: false,
+      reason: "not_attempted",
+    };
+    try {
+      const adminUser = await supabase.auth.admin.getUserById(session.userId);
+      const toEmail = adminUser.data.user?.email;
+      if (toEmail) {
+        emailSent = await sendApprovalEmail({
+          to: toEmail,
+          approvalUrl,
+          summary,
+          service: credential.service,
+          endpoint,
+          method,
+          dollarAmountCents: dollarCents,
+          expiresAt,
+          agentPrompt: null,
+        });
+      } else {
+        emailSent = { sent: false, reason: "no_email_on_user_row" };
+      }
+    } catch (err) {
+      emailSent = {
+        sent: false,
+        reason: err instanceof Error ? err.message : "lookup_failed",
+      };
+    }
+
+    // Return a structured "pending approval" response so the agent
+    // knows what to tell the user.
+    const responseContent = {
+      status: "pending_approval",
+      approval_id: approvalId,
+      approval_url: approvalUrl,
+      expires_at: expiresAt.toISOString(),
+      summary,
+      email_sent: emailSent.sent,
+      message: emailSent.sent
+        ? "Write action queued. The owner of this token has been emailed an approval link. Once they approve, the result will be available via sherpa_get_approval_result."
+        : `Write action queued. Email could not be sent (${emailSent.reason}); show this URL to the user so they can approve: ${approvalUrl}. Result available via sherpa_get_approval_result.`,
+    };
+    return success(req.id, {
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify(responseContent, null, 2),
+        },
+      ],
+      structuredContent: responseContent,
+    });
   }
 
   // Find an active, non-expired, non-revoked agent session for this project.
@@ -849,6 +960,126 @@ async function tool_callApi(
       },
     ],
     structuredContent: summary,
+  });
+}
+
+// ---- sherpa_get_approval_result ---- (SHRP-042 Stage 2)
+
+interface GetApprovalArgs {
+  approval_id?: string;
+}
+
+async function tool_getApprovalResult(
+  req: JsonRpcRequest,
+  session: AuthedSession,
+  rawArgs: unknown,
+): Promise<JsonRpcSuccess | JsonRpcError> {
+  // No special scope needed — read-only metadata lookup, scoped to this
+  // session's user+project. Available to any authenticated token.
+  const args = (rawArgs ?? {}) as GetApprovalArgs;
+  const approvalId = args.approval_id;
+  if (!approvalId) {
+    return fail(req.id, E_INVALID_PARAMS, "approval_id required");
+  }
+
+  const supabase = createAdminClient();
+
+  interface ApprovalRow {
+    id: string;
+    user_id: string;
+    project_id: string;
+    status: "pending" | "approved" | "rejected" | "expired";
+    service: string;
+    endpoint: string;
+    method: string;
+    action_summary: string;
+    dollar_amount_cents: number | null;
+    expires_at: string;
+    approved_at: string | null;
+    rejected_at: string | null;
+    executed_at: string | null;
+    result_status_code: number | null;
+    result_body: string | null;
+  }
+
+  const { data } = await supabase
+    .from("pending_approvals")
+    .select(
+      "id, user_id, project_id, status, service, endpoint, method, action_summary, dollar_amount_cents, expires_at, approved_at, rejected_at, executed_at, result_status_code, result_body",
+    )
+    .eq("id", approvalId)
+    .maybeSingle();
+  const approval = data as ApprovalRow | null;
+
+  if (!approval) {
+    return fail(req.id, E_INVALID_REQUEST, "Approval not found");
+  }
+  // Hard scope: only this session's user/project can read this approval.
+  // Without this check a token leak in project A could enumerate
+  // project B's approvals.
+  if (
+    approval.user_id !== session.userId ||
+    approval.project_id !== session.projectId
+  ) {
+    return fail(
+      req.id,
+      E_INVALID_REQUEST,
+      "Approval does not belong to this token's project",
+    );
+  }
+
+  // Auto-expire if past deadline but still showing pending.
+  let effectiveStatus = approval.status;
+  if (
+    approval.status === "pending" &&
+    new Date(approval.expires_at).getTime() < Date.now()
+  ) {
+    effectiveStatus = "expired";
+    void supabase
+      .from("pending_approvals")
+      .update({ status: "expired" } as never)
+      .eq("id", approvalId);
+  }
+
+  // Parse the result body as JSON if it parses, otherwise keep as text.
+  let parsedBody: unknown = approval.result_body;
+  if (approval.result_body) {
+    try {
+      parsedBody = JSON.parse(approval.result_body);
+    } catch {
+      // keep as text
+    }
+  }
+
+  const responseContent = {
+    approval_id: approval.id,
+    status: effectiveStatus,
+    summary: approval.action_summary,
+    service: approval.service,
+    method: approval.method,
+    endpoint: approval.endpoint,
+    dollar_amount_cents: approval.dollar_amount_cents,
+    expires_at: approval.expires_at,
+    approved_at: approval.approved_at,
+    rejected_at: approval.rejected_at,
+    executed_at: approval.executed_at,
+    result:
+      approval.result_status_code !== null
+        ? {
+            status_code: approval.result_status_code,
+            body: parsedBody,
+          }
+        : null,
+  };
+
+  return success(req.id, {
+    content: [
+      {
+        type: "text",
+        text: JSON.stringify(responseContent, null, 2),
+      },
+    ],
+    structuredContent: responseContent,
   });
 }
 

@@ -1,0 +1,182 @@
+/**
+ * Email utility — SHRP-042 Stage 2
+ *
+ * Thin wrapper around Resend's HTTP API. The design is deliberately
+ * graceful: if RESEND_API_KEY is missing or the send fails, we log a
+ * warning and return { sent: false, reason }. We NEVER throw. This is
+ * because the approval flow must work even when email is misconfigured
+ * — the user can still reach the approval page via the URL the agent
+ * returns. Email is a notification accelerant, not a hard dependency.
+ *
+ * Env vars required to actually send mail (optional at startup):
+ *   - RESEND_API_KEY   The "re_…" API key from resend.com
+ *   - EMAIL_FROM       The verified sender, e.g. "SherpaKeys <noreply@sherpakeys.com>"
+ *
+ * If you haven't set up Resend yet:
+ *   1. Sign up at https://resend.com (free tier covers 3k/month)
+ *   2. Verify your sending domain
+ *   3. Add RESEND_API_KEY and EMAIL_FROM to your Vercel project env vars
+ *   4. Redeploy
+ *
+ * Until then, this module logs warnings and returns sent: false. The
+ * approval flow continues to work — the user just won't get an email.
+ */
+
+import { extractEndpoint } from "./write-actions";
+
+export interface SendResult {
+  sent: boolean;
+  reason?: string;
+  messageId?: string;
+}
+
+interface ResendErrorBody {
+  name?: string;
+  message?: string;
+  statusCode?: number;
+}
+
+interface ResendSuccessBody {
+  id?: string;
+}
+
+const RESEND_API_URL = "https://api.resend.com/emails";
+
+/**
+ * Low-level send. You probably want a higher-level helper like
+ * sendApprovalEmail() instead.
+ */
+async function sendEmail(args: {
+  to: string;
+  subject: string;
+  html: string;
+  text: string;
+}): Promise<SendResult> {
+  const apiKey = process.env.RESEND_API_KEY;
+  const from = process.env.EMAIL_FROM ?? "SherpaKeys <noreply@sherpakeys.com>";
+
+  if (!apiKey) {
+    console.warn(
+      "[email] RESEND_API_KEY not set — skipping email send. Approval flow will still work via direct URL.",
+    );
+    return { sent: false, reason: "no_api_key" };
+  }
+
+  try {
+    const response = await fetch(RESEND_API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        from,
+        to: [args.to],
+        subject: args.subject,
+        html: args.html,
+        text: args.text,
+      }),
+    });
+
+    if (!response.ok) {
+      const errBody = (await response
+        .json()
+        .catch(() => ({}))) as ResendErrorBody;
+      const reason = errBody.message ?? `http_${response.status}`;
+      console.warn("[email] Resend send failed:", reason);
+      return { sent: false, reason };
+    }
+
+    const body = (await response.json().catch(() => ({}))) as ResendSuccessBody;
+    return { sent: true, messageId: body.id };
+  } catch (err) {
+    const reason = err instanceof Error ? err.message : "unknown";
+    console.warn("[email] Network error sending mail:", reason);
+    return { sent: false, reason };
+  }
+}
+
+/**
+ * High-level helper for the approval-request email. Builds an
+ * approval-card-flavored HTML + plain-text email body.
+ */
+export async function sendApprovalEmail(args: {
+  to: string;
+  approvalUrl: string;
+  summary: string;
+  service: string;
+  endpoint: string;
+  method: string;
+  dollarAmountCents: number | null;
+  expiresAt: Date;
+  agentPrompt: string | null;
+}): Promise<SendResult> {
+  const dollarLine =
+    args.dollarAmountCents !== null
+      ? `<p style="margin: 8px 0 4px; font-size: 14px; color: #475569;">Amount</p>
+         <p style="margin: 0; font-size: 22px; font-weight: 700; color: #b91c1c;">$${(args.dollarAmountCents / 100).toFixed(2)}</p>`
+      : "";
+
+  const promptLine = args.agentPrompt
+    ? `<p style="margin: 16px 0 4px; font-size: 13px; color: #64748b;">The prompt that triggered this</p>
+       <blockquote style="border-left: 3px solid #cbd5e1; margin: 0; padding: 8px 12px; background: #f8fafc; color: #334155; font-style: italic;">${escapeHtml(args.agentPrompt)}</blockquote>`
+    : "";
+
+  const minutesLeft = Math.max(
+    1,
+    Math.round((args.expiresAt.getTime() - Date.now()) / 60000),
+  );
+
+  const html = `<!DOCTYPE html>
+<html>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f1f5f9; padding: 32px 16px; margin: 0;">
+  <table cellpadding="0" cellspacing="0" border="0" style="max-width: 540px; margin: 0 auto; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.06);">
+    <tr><td style="padding: 28px 32px 20px;">
+      <p style="margin: 0 0 4px; font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #1F6FEB;">SherpaKeys · AI Firewall</p>
+      <h1 style="margin: 0; font-size: 22px; color: #0f172a; font-weight: 700;">An AI agent wants to do something. Approve?</h1>
+    </td></tr>
+    <tr><td style="padding: 0 32px 8px;">
+      <p style="margin: 16px 0 4px; font-size: 13px; color: #64748b;">Proposed action</p>
+      <p style="margin: 0; font-family: 'SF Mono', Menlo, monospace; font-size: 14px; color: #0f172a; background: #f1f5f9; padding: 10px 12px; border-radius: 8px; word-break: break-all;">${escapeHtml(args.summary)}</p>
+      ${dollarLine}
+      ${promptLine}
+      <p style="margin: 24px 0 6px; font-size: 12px; color: #64748b;">Expires in approximately ${minutesLeft} minute${minutesLeft === 1 ? "" : "s"}</p>
+    </td></tr>
+    <tr><td style="padding: 16px 32px 32px;">
+      <a href="${args.approvalUrl}" style="display: block; text-align: center; background: linear-gradient(to bottom, #1F6FEB, #0747A6); color: white; padding: 14px 24px; border-radius: 12px; text-decoration: none; font-weight: 700; font-size: 15px;">Review and approve</a>
+      <p style="margin: 16px 0 0; font-size: 12px; color: #94a3b8; text-align: center;">If you didn't request this, you can safely ignore this email. The action will expire automatically.</p>
+    </td></tr>
+  </table>
+  <p style="text-align: center; font-size: 11px; color: #94a3b8; margin: 16px 0 0;">SherpaKeys — the keychain for AI-built apps.</p>
+</body>
+</html>`;
+
+  const text = `SherpaKeys — AI Firewall
+
+An AI agent wants to do something. Approve?
+
+Action: ${args.summary}
+${args.dollarAmountCents !== null ? `Amount: $${(args.dollarAmountCents / 100).toFixed(2)}\n` : ""}${args.agentPrompt ? `Prompt that triggered it: "${args.agentPrompt}"\n` : ""}
+Review and approve here (expires in about ${minutesLeft} minutes):
+${args.approvalUrl}
+
+If you didn't request this, you can safely ignore this email — the action will expire automatically.
+
+— SherpaKeys`;
+
+  return sendEmail({
+    to: args.to,
+    subject: `[SherpaKeys] Approve write action: ${args.service}/${args.endpoint ?? extractEndpoint("/")}`,
+    html,
+    text,
+  });
+}
+
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
