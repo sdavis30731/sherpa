@@ -46,6 +46,10 @@ export async function POST(request: NextRequest) {
     project_id?: string;
     name?: string;
     scopes?: string[];
+    /** SHRP-042: 'read' (default) or 'write' (still subject to per-action approval). */
+    permission?: "read" | "write";
+    /** SHRP-042: optional per-action dollar cap in cents. */
+    dollar_cap_cents?: number;
   };
   try {
     body = await request.json();
@@ -57,11 +61,30 @@ export async function POST(request: NextRequest) {
   const name = body.name?.trim();
   const scopes = body.scopes ?? ["read-credential-names", "call-api"];
 
+  // SHRP-042: default new tokens to read-only. Callers must opt in to write.
+  const permission = body.permission ?? "read";
+  const dollarCapCents = body.dollar_cap_cents ?? null;
+
   if (!projectId) {
     return NextResponse.json({ error: "project_id required" }, { status: 400 });
   }
   if (!name) {
     return NextResponse.json({ error: "name required" }, { status: 400 });
+  }
+  if (permission !== "read" && permission !== "write") {
+    return NextResponse.json(
+      { error: "permission must be 'read' or 'write'" },
+      { status: 400 },
+    );
+  }
+  if (
+    dollarCapCents !== null &&
+    (!Number.isInteger(dollarCapCents) || dollarCapCents < 0)
+  ) {
+    return NextResponse.json(
+      { error: "dollar_cap_cents must be a non-negative integer or omitted" },
+      { status: 400 },
+    );
   }
 
   // Validate scopes
@@ -104,6 +127,8 @@ export async function POST(request: NextRequest) {
       name,
       token_hash: tokenHash,
       scopes,
+      permission,
+      dollar_cap_cents: dollarCapCents,
     })
     .select("id")
     .single();
@@ -120,7 +145,13 @@ export async function POST(request: NextRequest) {
     project_id: projectId,
     action: "mcp_token_created",
     actor: "user",
-    metadata: { token_id: inserted.id, name, scopes },
+    metadata: {
+      token_id: inserted.id,
+      name,
+      scopes,
+      permission,
+      dollar_cap_cents: dollarCapCents,
+    },
   });
 
   return NextResponse.json({

@@ -31,6 +31,12 @@ import {
 import { getPlaybook } from "@/lib/playbooks";
 import { getService as getServiceMeta } from "@/lib/services";
 import { checkRateLimit, recordRateLimitEvent } from "@/lib/rate-limit";
+import {
+  isWriteAction,
+  summarizeAction,
+  extractEndpoint,
+  extractDollarAmountCents,
+} from "@/lib/write-actions";
 
 // ---- protocol constants ----
 
@@ -159,6 +165,10 @@ interface AuthedSession {
   userId: string;
   projectId: string;
   scopes: string[];
+  /** SHRP-042: 'read' = read-only token, 'write' = may request write actions (subject to approval). */
+  permission: "read" | "write";
+  /** SHRP-042: optional cap on individual write-action dollar amounts (in cents). */
+  dollarCapCents: number | null;
 }
 
 interface McpTokenRow {
@@ -167,6 +177,8 @@ interface McpTokenRow {
   project_id: string;
   scopes: string[];
   revoked_at: string | null;
+  permission: "read" | "write" | null;
+  dollar_cap_cents: number | null;
 }
 
 async function authenticate(request: NextRequest): Promise<AuthedSession | null> {
@@ -180,7 +192,9 @@ async function authenticate(request: NextRequest): Promise<AuthedSession | null>
 
   const { data } = await supabase
     .from("mcp_tokens")
-    .select("id, user_id, project_id, scopes, revoked_at")
+    .select(
+      "id, user_id, project_id, scopes, revoked_at, permission, dollar_cap_cents",
+    )
     .eq("token_hash", tokenHash)
     .maybeSingle();
 
@@ -201,6 +215,10 @@ async function authenticate(request: NextRequest): Promise<AuthedSession | null>
     userId: row.user_id,
     projectId: row.project_id,
     scopes: row.scopes ?? [],
+    // SHRP-042: default to 'read' if the column is null (existing tokens
+    // pre-migration), which is the safest possible interpretation.
+    permission: row.permission ?? "read",
+    dollarCapCents: row.dollar_cap_cents,
   };
 }
 
@@ -566,6 +584,113 @@ async function tool_callApi(
       req.id,
       E_INVALID_REQUEST,
       `Service '${credential.service}' is not yet supported by sherpa_call_api. Supported: stripe, github, openai, anthropic, resend, cloudflare, replicate.`,
+    );
+  }
+
+  // ===========================================================
+  // SHRP-042 — Write-action gate ("the AI firewall")
+  //
+  // Conservative by default: anything not explicitly listed as a read in
+  // lib/write-actions.ts is treated as a write and gated. Read-only tokens
+  // refuse writes outright; write-permission tokens currently return a
+  // "pending approval not yet wired" stub (Stage 2 will create a
+  // pending_approvals row + send an email + return a request ID).
+  // ===========================================================
+  const endpoint = extractEndpoint(path);
+  const isWrite = isWriteAction(credential.service, endpoint, method);
+  if (isWrite) {
+    if (session.permission === "read") {
+      // Audit the rejected attempt so the user can see what their agent
+      // tried to do.
+      await supabase.from("audit_log").insert({
+        user_id: session.userId,
+        project_id: session.projectId,
+        credential_id: credentialId,
+        action: "agent_write_denied_readonly_token",
+        actor: `mcp_token:${session.tokenId}`,
+        metadata: {
+          service: credential.service,
+          method,
+          path,
+          summary: summarizeAction(
+            credential.service,
+            endpoint,
+            method,
+            typeof args.body === "object" && args.body !== null
+              ? (args.body as Record<string, unknown>)
+              : undefined,
+          ),
+        },
+      } as never);
+      return fail(
+        req.id,
+        E_INVALID_REQUEST,
+        `Write action refused: this MCP token is read-only. The owner of this token must enable write actions in SherpaKeys → project settings → AI Agent access. Write actions still require explicit user approval per-call.`,
+      );
+    }
+    // session.permission === "write" — Stage 2 will queue this and ask the
+    // user. For Stage 1 we deny with a clear stub message so the AI
+    // firewall is in place even though the approval UI isn't yet.
+    const summary = summarizeAction(
+      credential.service,
+      endpoint,
+      method,
+      typeof args.body === "object" && args.body !== null
+        ? (args.body as Record<string, unknown>)
+        : undefined,
+    );
+    const dollarCents = extractDollarAmountCents(
+      credential.service,
+      typeof args.body === "object" && args.body !== null
+        ? (args.body as Record<string, unknown>)
+        : undefined,
+    );
+    // Enforce the dollar cap right now even though the approval flow isn't
+    // wired — over-cap calls should never even reach the approval queue.
+    if (
+      session.dollarCapCents !== null &&
+      dollarCents !== null &&
+      dollarCents > session.dollarCapCents
+    ) {
+      await supabase.from("audit_log").insert({
+        user_id: session.userId,
+        project_id: session.projectId,
+        credential_id: credentialId,
+        action: "agent_write_denied_over_cap",
+        actor: `mcp_token:${session.tokenId}`,
+        metadata: {
+          service: credential.service,
+          method,
+          path,
+          summary,
+          dollar_amount_cents: dollarCents,
+          dollar_cap_cents: session.dollarCapCents,
+        },
+      } as never);
+      return fail(
+        req.id,
+        E_INVALID_REQUEST,
+        `Write action refused: amount $${(dollarCents / 100).toFixed(2)} exceeds the per-call dollar cap of $${(session.dollarCapCents / 100).toFixed(2)} on this token.`,
+      );
+    }
+    await supabase.from("audit_log").insert({
+      user_id: session.userId,
+      project_id: session.projectId,
+      credential_id: credentialId,
+      action: "agent_write_pending_approval",
+      actor: `mcp_token:${session.tokenId}`,
+      metadata: {
+        service: credential.service,
+        method,
+        path,
+        summary,
+        dollar_amount_cents: dollarCents,
+      },
+    } as never);
+    return fail(
+      req.id,
+      E_INVALID_REQUEST,
+      `Write action queued for approval (not yet executed). Stage 2 of the AI firewall will email the user and link them to an approval page; until that ships, write actions remain blocked. Summary: ${summary}`,
     );
   }
 
