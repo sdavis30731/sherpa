@@ -46,9 +46,6 @@ export default function SecurityPage() {
         <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">
           <ShieldCheck className="h-3.5 w-3.5" /> Zero-knowledge architecture
         </div>
-        <p className="mb-3 text-sm font-semibold uppercase tracking-wider text-slate-500">
-          Your Sherpa carries the rope. Never opens your pack.
-        </p>
         <h1 className="text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">
           We can&apos;t read your keys. Here&apos;s how.
         </h1>

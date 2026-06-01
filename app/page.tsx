@@ -9,7 +9,6 @@ import {
   ArrowRight,
   Search,
   Terminal,
-  Mountain,
 } from "lucide-react";
 import { EnvAnalyzer } from "./_components/env-analyzer";
 import { TopoPattern } from "./_components/topo-pattern";
@@ -18,26 +17,14 @@ export default function HomePage() {
   return (
     <main className="min-h-full overflow-x-hidden bg-white">
       {/* ============================================================
-          HERO — clean light gradient. No background texture behind the
-          text (lesson learned). Peaks live outside the content gutter.
+          HERO — clarity-first. Plain-language product description so a
+          first-time visitor knows what SherpaKeys does in 5 seconds.
           ============================================================ */}
       <div className="relative isolate">
-        {/* Gradient wash — the only background behind the text */}
+        {/* Gradient wash */}
         <div
           aria-hidden
           className="absolute inset-0 -z-10 bg-gradient-to-b from-sherpa-50/70 via-white to-white"
-        />
-        {/* Mountain peak silhouettes, anchored to the far edges so they
-            never overlap the hero text. Hidden on small screens to be safe. */}
-        <TopoPattern
-          variant="peak"
-          aria-hidden
-          className="pointer-events-none absolute -right-12 top-40 -z-10 hidden h-48 w-48 text-sherpa-400/20 xl:block"
-        />
-        <TopoPattern
-          variant="peak"
-          aria-hidden
-          className="pointer-events-none absolute -left-12 top-64 -z-10 hidden h-40 w-40 -scale-x-100 text-sherpa-300/15 xl:block"
         />
 
         <div className="mx-auto max-w-5xl px-6">
@@ -75,34 +62,33 @@ export default function HomePage() {
           {/* Hero content */}
           <section className="pt-16 pb-12 text-center sm:pt-24 sm:pb-16">
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-sherpa-200 bg-white/80 px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-sherpa-700 shadow-sm backdrop-blur-sm">
-              <ShieldCheck className="h-3.5 w-3.5" /> Don&apos;t leave Camp 4 without your Sherpa
+              <KeyRound className="h-3.5 w-3.5" /> The keychain for AI-built apps
             </div>
-            <h1 className="text-balance text-5xl font-bold leading-[1.02] tracking-tight text-slate-900 sm:text-7xl">
-              Dude. Where are{" "}
+            <h1 className="text-balance text-4xl font-bold leading-[1.05] tracking-tight text-slate-900 sm:text-6xl">
+              Your AI-built app has secrets{" "}
               <span className="bg-gradient-to-br from-sherpa-500 to-sherpa-700 bg-clip-text text-transparent">
-                my keys?!
+                everywhere.
               </span>
             </h1>
-            <p className="mx-auto mt-6 max-w-3xl text-balance text-2xl font-semibold leading-tight tracking-tight text-slate-700 sm:text-3xl">
-              Before you go live, run a Go-Live Check.
+            <p className="mx-auto mt-4 max-w-3xl text-balance text-2xl font-semibold leading-tight tracking-tight text-slate-700 sm:text-3xl">
+              SherpaKeys finds them, explains them, and helps you fix them.
             </p>
             <p className="mx-auto mt-7 max-w-2xl text-lg leading-relaxed text-slate-600">
-              You built a real app with Claude, Cursor, or Bolt. It works on your
-              machine. But underneath are{" "}
-              <strong className="font-semibold text-slate-800">
-                brittle, half-understood connections
-              </strong>{" "}
-              — Stripe webhooks, Supabase RLS, Vercel env vars, GitHub tokens,
-              AI keys with no spend cap, DNS records, OAuth callbacks. SherpaKeys
-              maps every credential your app depends on, flags what could break,
-              leak, or cost you money, and gives you a readiness score before
-              you launch.
+              Paste your{" "}
+              <code className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-base text-slate-700">
+                .env
+              </code>
+              . SherpaKeys identifies every API key, flags the dangerous ones,
+              explains what each one does, shows you how to rotate it, and
+              stores it encrypted if you want a vault.
             </p>
-            <p className="mx-auto mt-5 max-w-2xl text-base text-slate-500">
-              The Go-Live Check is below — already running on a redacted sample
-              so you can see it work. Swap in a redacted version of your own
-              .env any time (or your real one — it never leaves your browser).{" "}
-              <strong className="text-slate-700">No signup required.</strong>
+            <p className="mx-auto mt-4 max-w-2xl text-base text-slate-500">
+              Built for founders, builders, and vibe coders shipping real apps
+              with Claude, Cursor, Bolt, and Vercel.
+            </p>
+            <p className="mx-auto mt-6 inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700 ring-1 ring-emerald-200">
+              <ShieldCheck className="h-3.5 w-3.5" />
+              Runs in your browser. Your secrets are never uploaded.
             </p>
           </section>
         </div>
@@ -111,20 +97,111 @@ export default function HomePage() {
       {/* ============================================================
           ANALYZER — glassmorphic card on white
           ============================================================ */}
-      <div className="mx-auto max-w-3xl px-6 pb-28">
+      <div className="mx-auto max-w-3xl px-6 pb-20">
         <div className="rounded-3xl border border-slate-200/70 bg-white p-6 shadow-xl shadow-slate-900/[0.04] ring-1 ring-slate-900/5 sm:p-8">
           <EnvAnalyzer />
         </div>
       </div>
 
       {/* ============================================================
-          STORY 1: ROTATION — white background
+          WHY THIS MATTERS — context-setting before the product flow
+          ============================================================ */}
+      <Section background="slate-50">
+        <div className="mx-auto max-w-3xl text-center">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-sherpa-600">
+            Why this matters
+          </p>
+          <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
+            You built it. Now it has to survive contact with real users.
+          </h2>
+          <p className="mx-auto mt-5 max-w-2xl text-lg leading-relaxed text-slate-600">
+            Every real app depends on dozens of API keys, webhook secrets, and
+            DNS records — most of them dangerous if misconfigured. A single{" "}
+            <code className="rounded bg-white px-1.5 py-0.5 font-mono text-sm text-slate-700 ring-1 ring-slate-200">
+              NEXT_PUBLIC_
+            </code>{" "}
+            prefix on the wrong key, a{" "}
+            <code className="rounded bg-white px-1.5 py-0.5 font-mono text-sm text-slate-700 ring-1 ring-slate-200">
+              sk_live_
+            </code>{" "}
+            in your test environment, an OpenAI key with no spend cap — and
+            your launch day becomes the worst day of the year.
+          </p>
+          <p className="mx-auto mt-4 max-w-2xl text-lg leading-relaxed text-slate-600">
+            SherpaKeys catches these{" "}
+            <strong className="font-semibold text-slate-800">
+              before your customers do
+            </strong>
+            .
+          </p>
+        </div>
+      </Section>
+
+      {/* ============================================================
+          5-STEP PRODUCT FLOW — the spine of what SherpaKeys does
           ============================================================ */}
       <Section background="white">
+        <div className="text-center">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-sherpa-600">
+            How it works
+          </p>
+          <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
+            Five steps from messy{" "}
+            <code className="rounded bg-slate-100 px-2 py-0.5 font-mono text-2xl text-slate-700 sm:text-3xl">
+              .env
+            </code>{" "}
+            to launch-ready.
+          </h2>
+          <p className="mx-auto mt-4 max-w-2xl text-base text-slate-600">
+            Each step builds on the last. The first two already happened — in
+            the analyzer above. Here&apos;s where the rest leads.
+          </p>
+        </div>
+
+        <div className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+          <FlowCard
+            n={1}
+            title="Find the mess"
+            body="Paste your .env. SherpaKeys parses every line and identifies the service behind each key — Stripe, Supabase, GitHub, OpenAI, AWS, and more."
+            icon={<Search className="h-5 w-5" />}
+            highlight
+          />
+          <FlowCard
+            n={2}
+            title="Understand the keys"
+            body="Each key gets a plain-English explanation: what it can do, why it's risky, and whether it's public-by-design or critical-if-leaked."
+            icon={<KeyRound className="h-5 w-5" />}
+            highlight
+          />
+          <FlowCard
+            n={3}
+            title="Fix the risk"
+            body="Step-by-step rotation playbooks for every supported service — the exact URL, the exact scopes, the exact pitfalls."
+            icon={<RotateCw className="h-5 w-5" />}
+          />
+          <FlowCard
+            n={4}
+            title="Store safely"
+            body="Encrypted in your browser before it reaches us. We can't read it. Same crypto model as the major password managers."
+            icon={<Lock className="h-5 w-5" />}
+          />
+          <FlowCard
+            n={5}
+            title="Let AI help safely"
+            body="Claude or Cursor can call Stripe, Supabase, or Vercel through SherpaKeys — without ever seeing the secret key."
+            icon={<Bot className="h-5 w-5" />}
+          />
+        </div>
+      </Section>
+
+      {/* ============================================================
+          STORY 1: ROTATION — deep dive on step 3
+          ============================================================ */}
+      <Section background="slate-50">
         <div className="grid grid-cols-1 items-center gap-12 sm:grid-cols-12">
           <div className="sm:col-span-7">
             <EyebrowChip tone="amber" icon={<RotateCw className="h-3.5 w-3.5" />}>
-              Rotation, without the rabbit hole
+              Step 3 · Fix the risk
             </EyebrowChip>
             <h2 className="mt-4 text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">
               &ldquo;Where do I even go to rotate this?&rdquo;
@@ -157,16 +234,16 @@ export default function HomePage() {
       </Section>
 
       {/* ============================================================
-          STORY 2: SECURITY — slate-50 full bleed
+          STORY 2: SECURITY — deep dive on step 4
           ============================================================ */}
-      <Section background="slate-50">
+      <Section background="white">
         <div className="grid grid-cols-1 items-center gap-12 sm:grid-cols-12">
           <div className="sm:col-span-5">
             <SecurityMockup />
           </div>
           <div className="sm:col-span-7">
             <EyebrowChip tone="emerald" icon={<Lock className="h-3.5 w-3.5" />}>
-              Encrypted before it leaves your browser
+              Step 4 · Store safely
             </EyebrowChip>
             <h2 className="mt-4 text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">
               Even <span className="italic">we</span> can&apos;t read your keys.
@@ -210,13 +287,13 @@ export default function HomePage() {
       </Section>
 
       {/* ============================================================
-          STORY 3: MCP — white background
+          STORY 3: MCP — deep dive on step 5
           ============================================================ */}
-      <Section background="white">
+      <Section background="slate-50">
         <div className="grid grid-cols-1 items-center gap-12 sm:grid-cols-12">
           <div className="sm:col-span-7">
             <EyebrowChip tone="sherpa" icon={<Bot className="h-3.5 w-3.5" />}>
-              Diagnose and assist — without seeing your keys
+              Step 5 · Let AI help safely
             </EyebrowChip>
             <h2 className="mt-4 text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">
               Let your AI assistant help. Without holding the keys.
@@ -269,9 +346,9 @@ export default function HomePage() {
       </Section>
 
       {/* ============================================================
-          BENEFITS GRID — slate-50 full bleed
+          BENEFITS GRID — white background
           ============================================================ */}
-      <Section background="slate-50">
+      <Section background="white">
         <div className="text-center">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-sherpa-600">
             Everything in one place
@@ -305,10 +382,11 @@ export default function HomePage() {
       </Section>
 
       {/* ============================================================
-          BRAND VOICE — DARK NAVY centerpiece with topographic visual
+          BRAND VOICE — DARK NAVY centerpiece. "Dude. Where are my keys?!"
+          is the campaign moment; climbing metaphor stripped.
           ============================================================ */}
       <div className="relative isolate overflow-hidden bg-slate-900 text-white">
-        {/* Background topo rings */}
+        {/* Background decorative rings — abstract, not mountain-coded */}
         <TopoPattern
           variant="rings"
           aria-hidden
@@ -327,20 +405,26 @@ export default function HomePage() {
 
         <div className="mx-auto max-w-4xl px-6 py-28 text-center sm:py-32">
           <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-sherpa-100 backdrop-blur-sm">
-            <Mountain className="h-3.5 w-3.5" /> Who this is for
+            <KeyRound className="h-3.5 w-3.5" /> A familiar moment
           </div>
-          <h2 className="text-balance text-4xl font-bold leading-[1.1] tracking-tight sm:text-6xl">
-            Built for the people who scaled Everest{" "}
-            <span className="text-sherpa-300">the first time out</span>{" "}
-            <span className="text-white/60">
-              with Cowork, Cursor, Codex, or Bolt.
+          <h2 className="text-balance text-5xl font-bold leading-[1.05] tracking-tight sm:text-7xl">
+            &ldquo;Dude. Where are{" "}
+            <span className="bg-gradient-to-br from-sherpa-300 to-sherpa-500 bg-clip-text text-transparent">
+              my keys?!
             </span>
+            &rdquo;
           </h2>
           <p className="mx-auto mt-8 max-w-2xl text-balance text-lg leading-relaxed text-slate-300">
-            You did the impossible thing. You built real software without a
-            traditional engineering background. Sherpa is the guide who
-            doesn&apos;t let you leave Camp 4 without your crampons, your
-            oxygen, and a clear-eyed look at the conditions ahead.
+            Every founder who shipped a real app by talking to Claude or
+            Cursor has had this exact moment of panic — staring at a deploy
+            screen, a Stripe dashboard, or six open browser tabs full of
+            half-rotated secrets. SherpaKeys is the tool you wish you had
+            the first time you Googled{" "}
+            <em className="italic text-slate-200">
+              &ldquo;is my supabase service role key supposed to be in
+              NEXT_PUBLIC_?&rdquo;
+            </em>{" "}
+            at 11pm before a launch.
           </p>
           <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
             <Link
@@ -474,8 +558,8 @@ export default function HomePage() {
             <span className="text-slate-900">Sherpa</span>
             <span className="text-sherpa-500">Keys</span>
           </div>
-          <p className="text-sm italic text-slate-500">
-            Sherpa. Don&apos;t go up the mountain alone.
+          <p className="text-sm text-slate-500">
+            The keychain for AI-built apps.
           </p>
           <div className="mt-5 flex items-center justify-center gap-4 text-xs text-slate-500">
             <Link href="/security" className="hover:text-slate-700">
@@ -622,6 +706,58 @@ function BenefitCard({
       </div>
       <h3 className="text-sm font-semibold text-slate-900">{title}</h3>
       <p className="mt-1.5 text-sm text-slate-600">{body}</p>
+    </div>
+  );
+}
+
+/**
+ * FlowCard — one numbered step in the 5-step product flow.
+ *
+ * `highlight` marks the steps already demonstrated by the analyzer above
+ * (steps 1 and 2). It gives those cards a subtle green-tint border and a
+ * "Just demonstrated above" tag, so visitors immediately tie the abstract
+ * flow back to what they just saw.
+ */
+function FlowCard({
+  n,
+  title,
+  body,
+  icon,
+  highlight = false,
+}: {
+  n: number;
+  title: string;
+  body: string;
+  icon: React.ReactNode;
+  highlight?: boolean;
+}) {
+  return (
+    <div
+      className={`relative rounded-2xl border bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
+        highlight
+          ? "border-emerald-200 ring-1 ring-emerald-100"
+          : "border-slate-200"
+      }`}
+    >
+      <div className="mb-3 flex items-center gap-2">
+        <span
+          className={`inline-flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold ${
+            highlight
+              ? "bg-emerald-500 text-white"
+              : "bg-sherpa-500 text-white"
+          }`}
+        >
+          {n}
+        </span>
+        <span className="text-sherpa-600">{icon}</span>
+      </div>
+      <h3 className="text-base font-semibold text-slate-900">{title}</h3>
+      <p className="mt-1.5 text-sm leading-relaxed text-slate-600">{body}</p>
+      {highlight && (
+        <div className="mt-3 inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-emerald-700 ring-1 ring-emerald-200">
+          <CheckCircle2 className="h-3 w-3" /> Just demonstrated above
+        </div>
+      )}
     </div>
   );
 }
