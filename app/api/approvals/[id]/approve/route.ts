@@ -1,22 +1,32 @@
 /**
- * POST /api/approvals/[id]/approve  (SHRP-042 Stage 2)
+ * POST /api/approvals/[id]/approve  (SHRP-042 Stage 2 + SHRP-042-bug fix)
  *
- * The user clicked "Approve" on /approve/[id]. Server-side we:
- *   1. Verify the approval row exists, belongs to the authed user, and is
- *      still pending and unexpired.
- *   2. Atomically update status to 'approved' (so concurrent clicks don't
- *      double-fire).
- *   3. Decrypt the credential using the project's active agent session.
- *   4. Make the upstream API call.
- *   5. Store the result_status_code, result_body, executed_at on the row.
- *   6. Audit-log the approval and the execution.
+ * The user clicked "Approve" on /approve/[id]. The order of operations is
+ * deliberate: we verify EVERY precondition (agent session live, credential
+ * present in the session, decryption actually succeeds) BEFORE we mark the
+ * approval as approved. That way a failed precondition leaves the row in
+ * 'pending' state, so the user can fix the problem (e.g. re-authorize
+ * agents) and click Approve again — instead of being stuck with a row that
+ * says 'approved' but never executed.
+ *
+ *   1. Verify caller.
+ *   2. Load approval, check ownership + status + TTL.
+ *   3. Load the credential and verify it belongs to this project.
+ *   4. Find the active agent session for this project.
+ *   5. Find the session-encrypted version of this specific credential.
+ *   6. Actually decrypt it (fail fast if the crypto can't be done).
+ *   7. **NOW** atomically claim the row (status='approved'). Concurrent
+ *      clicks lose the eq("status","pending") race and get a clean 409.
+ *   8. Make the upstream API call with the already-decrypted credential.
+ *   9. Persist the result onto the row (result_status_code/body/executed_at)
+ *      and audit-log everything.
  *
  * The agent fetches the result later via sherpa_get_approval_result.
  *
  * NOTE: The credential-decrypt-and-call logic here mirrors tool_callApi in
  * app/api/mcp/v1/route.ts. A future refactor (SHRP-042 follow-up) should
- * extract a shared executor — for now we duplicate to ship Stage 2 cleanly
- * without touching the MCP server's critical path.
+ * extract a shared executor — for now we duplicate to keep the MCP server's
+ * critical path stable.
  */
 
 import { NextResponse, type NextRequest } from "next/server";
@@ -75,7 +85,9 @@ export async function POST(
 ) {
   const { id } = await context.params;
 
-  // 1) Verify caller and approval ownership
+  // ============================================================
+  // 1) Verify caller
+  // ============================================================
   const userClient = await createClient();
   const { data: { user } } = await userClient.auth.getUser();
   if (!user) {
@@ -87,6 +99,9 @@ export async function POST(
   // gate every step on user_id matching auth.uid().
   const supabase = createAdminClient();
 
+  // ============================================================
+  // 2) Load approval, check ownership + status + TTL
+  // ============================================================
   const { data: approvalData } = await supabase
     .from("pending_approvals")
     .select(
@@ -120,27 +135,11 @@ export async function POST(
     );
   }
 
-  // 2) Atomically claim it: only update if still pending. The eq("status", "pending")
-  // makes this a no-op if a concurrent caller already won.
-  const { data: claimed, error: claimErr } = await supabase
-    .from("pending_approvals")
-    .update({
-      status: "approved",
-      approved_at: new Date().toISOString(),
-    } as never)
-    .eq("id", id)
-    .eq("status", "pending")
-    .select("id")
-    .maybeSingle();
-  if (claimErr || !claimed) {
-    return NextResponse.json(
-      { error: "Approval was already resolved" },
-      { status: 409 },
-    );
-  }
-
-  // 3) Load the credential. We persist credential_id on the approval via
-  // params.credential_id (set when the MCP server queued the approval).
+  // ============================================================
+  // 3) Load the credential and verify it belongs to this project
+  // (BEFORE atomic claim — we don't want to mark approved if we can't
+  //  even find the credential)
+  // ============================================================
   const credentialId =
     typeof approval.params === "object" && approval.params !== null
       ? (approval.params as { credential_id?: string }).credential_id
@@ -179,7 +178,11 @@ export async function POST(
     );
   }
 
-  // 4) Find the active agent session and decrypt
+  // ============================================================
+  // 4) Find the active agent session
+  // (BEFORE atomic claim — if no session, the row stays 'pending' so
+  //  the user can re-authorize agents and click Approve again)
+  // ============================================================
   const { data: sessionData } = await supabase
     .from("agent_sessions")
     .select("id, wrapper_ciphertext, expires_at, revoked_at")
@@ -194,12 +197,17 @@ export async function POST(
     return NextResponse.json(
       {
         error:
-          "No active agent session. Re-authorize agents in project settings before executing this approval.",
+          "No active agent session. Re-authorize agents in project settings, then click Approve again.",
+        recovery: "reauthorize_agents",
       },
       { status: 409 },
     );
   }
 
+  // ============================================================
+  // 5) Find the session-encrypted credential
+  // (BEFORE atomic claim — same reason)
+  // ============================================================
   const { data: sessionCredData } = await supabase
     .from("agent_session_credentials")
     .select("session_ciphertext")
@@ -211,12 +219,17 @@ export async function POST(
     return NextResponse.json(
       {
         error:
-          "Credential is not part of the current agent session. Re-authorize agents to include it.",
+          "This credential is not part of the current agent session. Re-authorize agents and include it, then click Approve again.",
+        recovery: "reauthorize_agents",
       },
       { status: 409 },
     );
   }
 
+  // ============================================================
+  // 6) Actually decrypt
+  // (BEFORE atomic claim — if the crypto fails, we leave row pending)
+  // ============================================================
   let plaintextCredential: string;
   try {
     const sessionKey = await unwrapSessionKey(agentSession.wrapper_ciphertext);
@@ -227,16 +240,37 @@ export async function POST(
   } catch (err) {
     return NextResponse.json(
       {
-        error: `Decryption failed: ${err instanceof Error ? err.message : "unknown"}`,
+        error: `Decryption failed: ${err instanceof Error ? err.message : "unknown"}. The row was not marked approved — the agent session may be corrupt; re-authorize agents and try again.`,
       },
       { status: 500 },
     );
   }
 
-  // 5) Build and dispatch the upstream call
-  // The path was stored as the agent's original path argument. We need to
-  // reconstruct it from the approval's endpoint + the original params if
-  // possible. For now we expect params.path was stored.
+  // ============================================================
+  // 7) NOW atomically claim the row
+  // Every precondition above has passed. The eq("status","pending")
+  // gives us race-safety for concurrent clicks.
+  // ============================================================
+  const { data: claimed, error: claimErr } = await supabase
+    .from("pending_approvals")
+    .update({
+      status: "approved",
+      approved_at: new Date().toISOString(),
+    } as never)
+    .eq("id", id)
+    .eq("status", "pending")
+    .select("id")
+    .maybeSingle();
+  if (claimErr || !claimed) {
+    return NextResponse.json(
+      { error: "Approval was already resolved by a concurrent click" },
+      { status: 409 },
+    );
+  }
+
+  // ============================================================
+  // 8) Build and dispatch the upstream call
+  // ============================================================
   const path =
     typeof approval.params === "object" && approval.params !== null
       ? ((approval.params as { path?: string }).path ?? "/")
@@ -289,7 +323,10 @@ export async function POST(
     });
   } catch (err) {
     const reason = err instanceof Error ? err.message : "unknown";
-    // Persist the failure so the agent can see what happened
+    // Persist the failure so the agent can see what happened — note the
+    // row is already marked 'approved' at this point, so this is a real
+    // approved-but-execution-failed state, which IS legitimate (network
+    // glitch, upstream service down, etc.) and should be visible.
     await supabase
       .from("pending_approvals")
       .update({
@@ -306,7 +343,9 @@ export async function POST(
 
   const responseText = await providerResponse.text();
 
-  // 6) Persist the result
+  // ============================================================
+  // 9) Persist the result + audit log
+  // ============================================================
   await supabase
     .from("pending_approvals")
     .update({
@@ -316,7 +355,6 @@ export async function POST(
     } as never)
     .eq("id", id);
 
-  // 7) Audit log
   await supabase.from("audit_log").insert({
     user_id: approval.user_id,
     project_id: approval.project_id,

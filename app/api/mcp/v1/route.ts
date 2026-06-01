@@ -693,6 +693,50 @@ async function tool_callApi(
       );
     }
 
+    // ===========================================================
+    // SHRP-042-bug — Pre-check agent session BEFORE queuing.
+    //
+    // If there's no active agent session for this project, or the
+    // credential isn't included in the current session, the approval is
+    // structurally doomed — the user couldn't approve-and-execute it
+    // even if they tried. Fail fast with an actionable error instead of
+    // creating a pending row that can never resolve.
+    // ===========================================================
+    interface PreCheckSessionRow {
+      id: string;
+      revoked_at: string | null;
+    }
+    const preCheckSession = await supabase
+      .from("agent_sessions")
+      .select("id, revoked_at")
+      .eq("project_id", session.projectId)
+      .is("revoked_at", null)
+      .gt("expires_at", new Date().toISOString())
+      .order("authorized_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    const activeSession = preCheckSession.data as PreCheckSessionRow | null;
+    if (!activeSession) {
+      return fail(
+        req.id,
+        E_INVALID_REQUEST,
+        "Write action queueing blocked: no active agent session for this project. The user must go to SherpaKeys → project settings → AI Agent access and click 'Authorize agents' before write actions can be approved.",
+      );
+    }
+    const preCheckCred = await supabase
+      .from("agent_session_credentials")
+      .select("credential_id")
+      .eq("session_id", activeSession.id)
+      .eq("credential_id", credentialId)
+      .maybeSingle();
+    if (!preCheckCred.data) {
+      return fail(
+        req.id,
+        E_INVALID_REQUEST,
+        "Write action queueing blocked: this credential is not included in the current agent session. The user must re-authorize agents and check this credential in the list, then retry.",
+      );
+    }
+
     // Default TTL: 1 hour from now.
     const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
 
@@ -782,7 +826,10 @@ async function tool_callApi(
     }
 
     // Return a structured "pending approval" response so the agent
-    // knows what to tell the user.
+    // knows what to tell the user — AND automatically polls until the
+    // user resolves it. The message below instructs the LLM to poll
+    // sherpa_get_approval_result rather than wait for human direction,
+    // which removes a friction step in the user's flow.
     const responseContent = {
       status: "pending_approval",
       approval_id: approvalId,
@@ -790,9 +837,16 @@ async function tool_callApi(
       expires_at: expiresAt.toISOString(),
       summary,
       email_sent: emailSent.sent,
-      message: emailSent.sent
-        ? "Write action queued. The owner of this token has been emailed an approval link. Once they approve, the result will be available via sherpa_get_approval_result."
-        : `Write action queued. Email could not be sent (${emailSent.reason}); show this URL to the user so they can approve: ${approvalUrl}. Result available via sherpa_get_approval_result.`,
+      next_action: "poll_sherpa_get_approval_result",
+      poll_interval_seconds: 5,
+      poll_max_attempts: 60,
+      message: [
+        emailSent.sent
+          ? `Write action queued. SherpaKeys has emailed an approval link to the token owner.`
+          : `Write action queued. Email could not be sent (${emailSent.reason}).`,
+        `IMPORTANT — tell the user: "I've queued a ${summary} request for your approval. Click here to approve: ${approvalUrl}"`,
+        `Then, while you wait for them: automatically call sherpa_get_approval_result with approval_id="${approvalId}" every 5 seconds, up to 60 attempts, until status changes from 'pending'. Do NOT wait for the user to tell you to check — poll on your own. If status becomes 'approved', return result.body to the user. If 'rejected' or 'expired', tell the user clearly and stop polling.`,
+      ].join(" "),
     };
     return success(req.id, {
       content: [
