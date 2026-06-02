@@ -12,7 +12,6 @@ import {
 } from "lucide-react";
 import { EnvAnalyzer } from "./_components/env-analyzer";
 import { TopoPattern } from "./_components/topo-pattern";
-import { LifetimeUpgradeButton } from "./_components/lifetime-upgrade-button";
 
 export default function HomePage() {
   return (
@@ -512,7 +511,7 @@ export default function HomePage() {
               className="pointer-events-none absolute -right-32 -top-32 h-96 w-96 text-sherpa-400/10"
             />
             <div className="absolute -top-3 right-6 rounded-full bg-gradient-to-b from-sherpa-500 to-sherpa-600 px-3 py-1 text-xs font-semibold text-white shadow-md shadow-sherpa-500/40">
-              Most popular
+              Coming with v1.1
             </div>
             <div className="relative">
               <div className="flex items-center justify-between">
@@ -544,11 +543,12 @@ export default function HomePage() {
                 </PriceBullet>
                 <PriceBullet color="sherpa">Priority email support</PriceBullet>
               </ul>
-              <div className="mt-7">
-                <LifetimeUpgradeButton className="inline-flex w-full items-center justify-center gap-2 rounded-xl border-2 border-sherpa-500 bg-white px-4 py-3 text-sm font-semibold text-sherpa-600 transition hover:bg-sherpa-50 disabled:cursor-not-allowed disabled:opacity-50">
-                  Get lifetime access · $19
-                </LifetimeUpgradeButton>
-              </div>
+              <Link
+                href="/pro-waitlist?tier=lifetime"
+                className="mt-7 inline-flex w-full items-center justify-center gap-2 rounded-xl border-2 border-sherpa-500 bg-white px-4 py-3 text-sm font-semibold text-sherpa-600 transition hover:bg-sherpa-50"
+              >
+                Join the early-access list
+              </Link>
             </div>
           </div>
 

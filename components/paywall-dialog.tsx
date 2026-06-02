@@ -1,18 +1,20 @@
 "use client";
 
-import * as React from "react";
+import Link from "next/link";
 import { Dialog } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Infinity as InfinityIcon, Loader2 } from "lucide-react";
+import { Sparkles, Infinity as InfinityIcon, Clock } from "lucide-react";
 
 /**
- * Paywall dialog — opens when a free-tier user hits the 1-project limit
- * (SHRP-008). Wired to the real Stripe Checkout flow as of SHRP-045.
+ * Paywall dialog — opens when a free-tier user hits the 1-project limit.
  *
- * Click "Upgrade to Lifetime" → POSTs to /api/checkout/lifetime → redirects
- * to Stripe-hosted Checkout. Stripe takes care of the payment UI; we
- * receive the user back at /thanks-for-upgrading and the webhook flips
- * their plan to lifetime.
+ * Status (SHRP-054): Stripe Lifetime checkout is temporarily paused while
+ * SherpaKeys' legal entity (LLC) is being formed via Stripe Atlas. We don't
+ * want $19 payments flowing into EcoVerse's bank account in the meantime.
+ * The dialog now points users to the launch waitlist instead of starting a
+ * Stripe Checkout session.
+ *
+ * To re-enable: revert this file to the previous SHRP-045 version.
  */
 export function PaywallDialog({
   open,
@@ -21,40 +23,12 @@ export function PaywallDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const [state, setState] = React.useState<"idle" | "loading" | "error">(
-    "idle",
-  );
-  const [error, setError] = React.useState<string | null>(null);
-
-  async function onUpgrade() {
-    setState("loading");
-    setError(null);
-    try {
-      const res = await fetch("/api/checkout/lifetime", { method: "POST" });
-      if (res.status === 401) {
-        window.location.href = "/signup?next=lifetime";
-        return;
-      }
-      const body = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        throw new Error(body.error ?? `HTTP ${res.status}`);
-      }
-      if (!body.url) {
-        throw new Error("Checkout URL missing from server response");
-      }
-      window.location.href = body.url as string;
-    } catch (err) {
-      setState("error");
-      setError(err instanceof Error ? err.message : "Could not start checkout");
-    }
-  }
-
   return (
     <Dialog
       open={open}
       onOpenChange={onOpenChange}
       title="You're out of free projects"
-      description="The free tier allows one project. Upgrade to Lifetime for unlimited."
+      description="The free tier allows one project. Lifetime is coming with v1.1 — join the launch waitlist below and we'll let you know the moment it goes live."
     >
       <div className="space-y-5">
         <div className="rounded-lg border border-sherpa-200 bg-sherpa-50 p-4">
@@ -86,34 +60,26 @@ export function PaywallDialog({
           </ul>
         </div>
 
-        {error && (
-          <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
-            {error}
+        <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+          <Clock className="mt-0.5 h-4 w-4 shrink-0" />
+          <div>
+            <strong>Coming with v1.1.</strong> We&apos;re finalizing setup
+            before opening Lifetime purchases. Join the early-access list to
+            be among the first told when it&apos;s live.
           </div>
-        )}
-
-        <div className="flex justify-end gap-2">
-          <Button
-            variant="secondary"
-            onClick={() => onOpenChange(false)}
-            disabled={state === "loading"}
-          >
-            Close
-          </Button>
-          <Button onClick={onUpgrade} disabled={state === "loading"}>
-            {state === "loading" ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" /> Redirecting…
-              </>
-            ) : (
-              <>Upgrade to Lifetime · $19</>
-            )}
-          </Button>
         </div>
 
-        <p className="text-center text-xs text-slate-500">
-          Secure checkout via Stripe. Refunds available within 14 days.
-        </p>
+        <div className="flex justify-end gap-2">
+          <Button variant="secondary" onClick={() => onOpenChange(false)}>
+            Close
+          </Button>
+          <Link
+            href="/pro-waitlist?tier=lifetime"
+            className="inline-flex items-center justify-center gap-2 rounded-md bg-sherpa-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-sherpa-600"
+          >
+            Join the early-access list
+          </Link>
+        </div>
       </div>
     </Dialog>
   );
