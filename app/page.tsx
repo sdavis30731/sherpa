@@ -585,7 +585,7 @@ export default function HomePage() {
               <PriceBullet>Priority email + chat support</PriceBullet>
             </ul>
             <Link
-              href="/signup?intent=pro-waitlist"
+              href="/pro-waitlist"
               className="mt-7 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-400 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
             >
               Join the early-access list
