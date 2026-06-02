@@ -111,6 +111,8 @@ export async function POST(request: NextRequest) {
   const supabase = createAdminClient();
 
   // Flip the user to lifetime — idempotent (re-runs do the same thing).
+  // Note: public.users does NOT have an email column (email lives in
+  // auth.users). We select only id.
   const { data: updated, error: updErr } = await supabase
     .from("users")
     .update({
@@ -120,7 +122,7 @@ export async function POST(request: NextRequest) {
       plan_started_at: new Date().toISOString(),
     } as never)
     .eq("id", userId)
-    .select("id, email")
+    .select("id")
     .maybeSingle();
 
   if (updErr || !updated) {
