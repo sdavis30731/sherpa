@@ -65,22 +65,28 @@ export default function HomePage() {
               <KeyRound className="h-3.5 w-3.5" /> The keychain for AI-built apps
             </div>
             <h1 className="text-balance text-4xl font-bold leading-[1.05] tracking-tight text-slate-900 sm:text-6xl">
-              Your AI-built app has secrets{" "}
+              Let AI work on your app.
+              <br className="hidden sm:block" />
+              <span className="sm:hidden"> </span>
+              Don&apos;t hand it{" "}
               <span className="bg-gradient-to-br from-sherpa-500 to-sherpa-700 bg-clip-text text-transparent">
-                everywhere.
+                the keys.
               </span>
             </h1>
-            <p className="mx-auto mt-4 max-w-3xl text-balance text-2xl font-semibold leading-tight tracking-tight text-slate-700 sm:text-3xl">
-              SherpaKeys finds them, explains them, and helps you fix them.
+            <p className="mx-auto mt-6 max-w-3xl text-balance text-xl font-semibold leading-tight tracking-tight text-slate-700 sm:text-2xl">
+              AI agents now need access to your app stack. SherpaKeys lets
+              them operate safely — without exposing your secrets or giving
+              them unchecked power.
             </p>
             <p className="mx-auto mt-7 max-w-2xl text-lg leading-relaxed text-slate-600">
               Paste your{" "}
               <code className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-base text-slate-700">
                 .env
               </code>
-              . SherpaKeys identifies every API key, flags the dangerous ones,
-              explains what each one does, shows you how to rotate it, and
-              stores it encrypted if you want a vault.
+              . SherpaKeys identifies every key, classifies the risks, walks
+              you through rotation, and gives Claude or Cursor a safe way to
+              call your APIs — read by default, write only with your explicit
+              approval.
             </p>
             <p className="mx-auto mt-4 max-w-2xl text-base text-slate-500">
               Built for founders, builders, and vibe coders shipping real apps

@@ -3,9 +3,9 @@ import "./globals.css";
 import { VaultKeyProvider } from "@/lib/vault-context";
 
 export const metadata: Metadata = {
-  title: "SherpaKeys — Don't leave Camp 4 without your Sherpa",
+  title: "SherpaKeys — Let AI work on your app. Don't hand it the keys.",
   description:
-    "Launch confidence for AI-built apps. Run a Go-Live Check on every credential your app depends on — before you ship. Zero-knowledge encrypted. Step-by-step rotation guides. Your AI agents can use them without ever seeing them.",
+    "The AI firewall for AI-built apps. SherpaKeys lets Claude, Cursor, and Codex operate on your stack safely — without exposing your secrets or giving them unchecked power. Zero-knowledge encrypted credential vault, write-action approval, and a Go-Live Check that runs before you ship.",
 };
 
 export default function RootLayout({
