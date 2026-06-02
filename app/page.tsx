@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { EnvAnalyzer } from "./_components/env-analyzer";
 import { TopoPattern } from "./_components/topo-pattern";
+import { LifetimeUpgradeButton } from "./_components/lifetime-upgrade-button";
 
 export default function HomePage() {
   return (
@@ -543,12 +544,11 @@ export default function HomePage() {
                 </PriceBullet>
                 <PriceBullet color="sherpa">Priority email support</PriceBullet>
               </ul>
-              <Link
-                href="/signup?upgrade=lifetime"
-                className="mt-7 inline-flex w-full items-center justify-center gap-2 rounded-xl border-2 border-sherpa-500 bg-white px-4 py-3 text-sm font-semibold text-sherpa-600 transition hover:bg-sherpa-50"
-              >
-                Get lifetime access
-              </Link>
+              <div className="mt-7">
+                <LifetimeUpgradeButton className="inline-flex w-full items-center justify-center gap-2 rounded-xl border-2 border-sherpa-500 bg-white px-4 py-3 text-sm font-semibold text-sherpa-600 transition hover:bg-sherpa-50 disabled:cursor-not-allowed disabled:opacity-50">
+                  Get lifetime access · $19
+                </LifetimeUpgradeButton>
+              </div>
             </div>
           </div>
 
