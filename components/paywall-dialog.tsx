@@ -81,7 +81,7 @@ export function PaywallDialog({
             </li>
             <li className="flex items-start gap-2">
               <Sparkles className="mt-0.5 h-4 w-4 shrink-0" /> Priority email
-              support — every Lifetime buyer gets a human reply
+              support
             </li>
           </ul>
         </div>

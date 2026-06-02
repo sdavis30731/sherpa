@@ -86,8 +86,8 @@ export default async function ThanksForUpgradingPage({
           className="text-slate-600 hover:underline"
         >
           support@sherpakeys.com
-        </a>{" "}
-        — every Lifetime customer gets a human reply.
+        </a>
+        .
       </p>
     </main>
   );
