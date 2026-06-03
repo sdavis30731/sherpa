@@ -84,7 +84,7 @@ export default function HomePage() {
                   href="/signup"
                   className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-b from-sherpa-500 to-sherpa-600 px-5 py-3 text-sm font-semibold text-white shadow-md shadow-sherpa-500/30 transition hover:shadow-lg hover:shadow-sherpa-500/40"
                 >
-                  Sign up free <ArrowRight className="h-4 w-4" />
+                  Join the waitlist <ArrowRight className="h-4 w-4" />
                 </Link>
                 <Link
                   href="#secured"
@@ -490,7 +490,7 @@ export default function HomePage() {
                 href="/signup"
                 className="mt-auto inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-b from-sherpa-500 to-sherpa-600 px-4 py-3 text-sm font-semibold text-white shadow-sm shadow-sherpa-500/30 transition hover:shadow-md hover:shadow-sherpa-500/40"
               >
-                <KeyRound className="h-4 w-4" /> Start free
+                <KeyRound className="h-4 w-4" /> Join the waitlist
               </Link>
             </div>
 

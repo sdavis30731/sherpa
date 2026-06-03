@@ -36,7 +36,7 @@ export default function SecurityPage() {
             href="/signup"
             className="rounded-md bg-sherpa-500 px-4 py-2 font-semibold text-white shadow-sm hover:bg-sherpa-600"
           >
-            Sign up free
+            Join waitlist
           </Link>
         </div>
       </nav>

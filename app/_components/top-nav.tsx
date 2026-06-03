@@ -75,7 +75,7 @@ export function TopNav() {
           href="/signup"
           className="rounded-lg bg-gradient-to-b from-sherpa-500 to-sherpa-600 px-4 py-2 font-semibold text-white shadow-sm shadow-sherpa-500/30 transition hover:shadow-md hover:shadow-sherpa-500/40"
         >
-          Sign up free
+          Join waitlist
         </Link>
       </div>
 
@@ -115,7 +115,7 @@ export function TopNav() {
               onClick={() => setOpen(false)}
               className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-b from-sherpa-500 to-sherpa-600 px-4 py-3 text-sm font-semibold text-white shadow-sm shadow-sherpa-500/30"
             >
-              Sign up free
+              Join waitlist
             </Link>
           </div>
         </div>

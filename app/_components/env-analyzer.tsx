@@ -43,22 +43,24 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-// Sample uses self-detecting placeholder values: the prefix is real so the
-// detector's by-value rule fires, and the rest is obvious filler ("xxxx…")
-// so no one mistakes it for a real key. Even if a user mangles the value,
-// the env-key NAME is enough for detection (SHRP-041j).
+// Sample values are deliberate obvious placeholders — the env-key NAME
+// drives detection (SHRP-041j), not the value entropy. We do NOT use
+// high-entropy "REDACTED + 24 x's" fillers because GitHub's push
+// protection (and other scanners) treats those as potential real keys
+// and blocks pushes. The "REPLACE_WITH_YOUR_*" pattern is unmistakeably
+// placeholder text. See SHRP-067.
 const SAMPLE = `# A redacted sample — not your real keys. Edit freely.
 NEXT_PUBLIC_SUPABASE_URL=https://abc123.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiJ9.eyJyb2xlIjoiYW5vbiIsImlhdCI6MTcwMDAwMDAwMH0.REDACTEDxxxxxxxxxxxxxxxxxx
-SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiJ9.eyJyb2xlIjoic2VydmljZV9yb2xlIiwiaWF0IjoxNzAwMDAwMDAwfQ.REDACTEDxxxxxxxxxxxxxxxxxx
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiJ9.eyJyb2xlIjoiYW5vbiJ9.REPLACE_WITH_YOUR_ANON_KEY
+SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiJ9.eyJyb2xlIjoic2VydmljZV9yb2xlIn0.REPLACE_WITH_YOUR_SERVICE_ROLE_KEY
 
-STRIPE_SECRET_KEY=sk_live_REDACTEDxxxxxxxxxxxxxxxxxxxx
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_REDACTEDxxxxxxxxxxxxxxxxxxxx
-STRIPE_WEBHOOK_SECRET=whsec_REDACTEDxxxxxxxxxxxxxxxxxxxx
+STRIPE_SECRET_KEY=sk_live_REPLACE_WITH_YOUR_STRIPE_LIVE_SECRET
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_REPLACE_WITH_YOUR_PUBLISHABLE_KEY
+STRIPE_WEBHOOK_SECRET=whsec_REPLACE_WITH_YOUR_WEBHOOK_SIGNING_SECRET
 
-GITHUB_TOKEN=ghp_REDACTEDxxxxxxxxxxxxxxxxxxxx
-OPENAI_API_KEY=sk-REDACTEDxxxxxxxxxxxxxxxxxxxx
-RESEND_API_KEY=re_REDACTEDxxxxxxxxxxxxxxxxxxxx`;
+GITHUB_TOKEN=ghp_REPLACE_WITH_YOUR_GITHUB_PAT
+OPENAI_API_KEY=sk-REPLACE_WITH_YOUR_OPENAI_KEY
+RESEND_API_KEY=re_REPLACE_WITH_YOUR_RESEND_KEY`;
 
 function guessEnv(name: string): "dev" | "staging" | "production" {
   const lower = name.toLowerCase();
@@ -622,23 +624,21 @@ function AnalysisResult({
         </table>
       </div>
 
-      {/* Save CTA — phrased differently if they're on the sample */}
+      {/* Save CTA — paused: signups closed until LLC + ToS land, so this
+          routes to the waitlist gate at /signup instead of magic-link auth. */}
       <div className="rounded-xl border border-sherpa-200 bg-gradient-to-br from-sherpa-50 to-white p-5">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 text-sm font-bold text-sherpa-900">
               <ClipboardPaste className="h-4 w-4" />
               {usingSample
-                ? "Like what you see? Sign up and bring your real .env."
-                : "Save this analysis to your vault"}
+                ? "Like what you see? Join the launch waitlist."
+                : "Save this analysis when we launch"}
             </div>
             <p className="mt-1 text-sm text-slate-600">
               {usingSample
-                ? "When you sign up, paste your actual .env — encrypted in your browser, rotation reminders, agents that can use it without seeing it. Free for your first project."
-                : "Sign up to encrypt these credentials, get rotation reminders, and let your AI agents use them without ever seeing the keys."}{" "}
-              {!usingSample && (
-                <strong>Free for your first project.</strong>
-              )}
+                ? "SherpaKeys is in pre-launch — we're finalizing our LLC and Terms of Service before we'll accept real production keys. Join the waitlist and we'll email you when signups open."
+                : "SherpaKeys is in pre-launch. Your .env stays in your browser. Join the waitlist and we'll resurface this analysis when signups open."}
             </p>
           </div>
           <button
@@ -646,8 +646,7 @@ function AnalysisResult({
             onClick={onSaveToVault}
             className="inline-flex items-center gap-2 rounded-md bg-sherpa-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-sherpa-600"
           >
-            {usingSample ? "Sign up free" : "Save and sign up"}{" "}
-            <ArrowRight className="h-4 w-4" />
+            Join the waitlist <ArrowRight className="h-4 w-4" />
           </button>
         </div>
       </div>
