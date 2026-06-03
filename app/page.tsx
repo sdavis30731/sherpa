@@ -236,14 +236,39 @@ export default function HomePage() {
                 <SecurityFact label="Key derivation" value="Argon2id" />
                 <SecurityFact label="Recovery" value="BIP-39 (12 words)" />
                 <SecurityFact
-                  label="Server can decrypt?"
-                  value="No. Ever."
+                  label="Vault at rest"
+                  value="Zero-knowledge"
                   emphasis
                 />
               </div>
 
+              {/* The honest threat-model carve-out for active agent sessions.
+                  Steve's call: don't bury this — the buyer should see it
+                  on the homepage, not just on /security. */}
+              <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-5">
+                <div className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  Active agent sessions — the honest tradeoff
+                </div>
+                <p className="mt-2 text-sm leading-relaxed text-slate-700">
+                  When your AI agent makes a call, the server decrypts that one
+                  credential server-side just long enough to make the request,
+                  then zeros the key. The model never sees plaintext. But for
+                  the brief moment of that call, the server <em>can</em> read
+                  that one credential — so active sessions trust our server
+                  more than your at-rest vault does. Every call is logged,
+                  rate-limited, and revocable instantly. Full threat model on{" "}
+                  <Link
+                    href="/security"
+                    className="font-semibold text-sherpa-600 hover:text-sherpa-700"
+                  >
+                    /security
+                  </Link>
+                  .
+                </p>
+              </div>
+
               {/* The boundary — what we explicitly are not */}
-              <div className="mt-8 rounded-2xl border border-slate-200 bg-slate-50 p-5">
+              <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-5">
                 <div className="text-xs font-semibold uppercase tracking-wider text-slate-500">
                   What SherpaKeys is not
                 </div>
@@ -354,9 +379,13 @@ export default function HomePage() {
                 </BulletCheck>
                 <BulletCheck>
                   <span>
-                    Auto-rotation + env-var sync —{" "}
+                    Auto-rotation{" "}
                     <span className="rounded-md bg-amber-100 px-1.5 py-0.5 text-xs font-semibold text-amber-800">
-                      coming v1.1
+                      v1.1
+                    </span>{" "}
+                    · env-var sync across Vercel/Railway/Render{" "}
+                    <span className="rounded-md bg-slate-100 px-1.5 py-0.5 text-xs font-semibold text-slate-700">
+                      v1.2
                     </span>
                   </span>
                 </BulletCheck>
@@ -537,7 +566,7 @@ export default function HomePage() {
                   Auto-rotation (v1.1)
                 </PriceBullet>
                 <PriceBullet color="sherpa">
-                  Env-var sync (v1.1)
+                  Env-var sync (v1.2)
                 </PriceBullet>
                 <PriceBullet color="sherpa">Priority support</PriceBullet>
               </ul>
@@ -1074,8 +1103,8 @@ function LifecycleMockup() {
               Env-var sync
             </div>
           </div>
-          <span className="rounded-md bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-800">
-            Coming v1.1
+          <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700">
+            Coming v1.2
           </span>
         </div>
         <p className="mt-2 text-xs leading-relaxed text-slate-600">

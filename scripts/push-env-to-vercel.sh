@@ -63,4 +63,4 @@ npx --yes vercel deploy --prod --force
 echo ""
 echo "✓ Deploy triggered."
 echo ""
-echo "Wait ~2 minutes, then refresh https://sherpa-three.vercel.app and try Log in."
+echo "Wait ~2 minutes, then refresh https://sherpakeys.com and try Log in."

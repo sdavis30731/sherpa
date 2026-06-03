@@ -253,10 +253,17 @@ export default function SecurityPage() {
               <strong>We do publish what we&apos;ve learned.</strong>{" "}
               Discovered a vulnerability? Email{" "}
               <a
-                href="mailto:security@sherpa.app"
+                href="mailto:security@sherpakeys.com"
                 className="font-medium text-sherpa-600 hover:underline"
               >
-                security@sherpa.app
+                security@sherpakeys.com
+              </a>{" "}
+              or open a private advisory at{" "}
+              <a
+                href="https://github.com/sdavis30731/sherpa/security/advisories/new"
+                className="font-medium text-sherpa-600 hover:underline"
+              >
+                github.com/sdavis30731/sherpa
               </a>
               . Responsible disclosure gets credited in our changelog.
             </span>
