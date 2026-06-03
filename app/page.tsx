@@ -39,7 +39,7 @@ import { TopNav } from "./_components/top-nav";
 
 export default function HomePage() {
   return (
-    <main className="min-h-full overflow-x-hidden bg-white">
+    <main className="min-h-full overflow-x-clip bg-white">
       {/* ============================================================
           STICKY TOP NAV — stays in view as the visitor anchor-jumps
           between sections. Translucent white with a backdrop blur so
@@ -70,12 +70,8 @@ export default function HomePage() {
               </div>
               <h1 className="text-balance text-5xl font-bold leading-[1.02] tracking-tight text-slate-900 sm:text-6xl lg:text-7xl">
                 Vibe code{" "}
-                <span className="relative whitespace-nowrap">
-                  <span className="relative z-10">without fear</span>
-                  <span
-                    aria-hidden
-                    className="absolute inset-x-0 bottom-2 z-0 h-3 bg-sherpa-200/80 sm:bottom-3 sm:h-4"
-                  />
+                <span className="bg-gradient-to-br from-sherpa-500 to-sherpa-700 bg-clip-text text-transparent">
+                  without fear
                 </span>
                 .
               </h1>
