@@ -13,6 +13,7 @@ const config: Config = {
           50: "#eef4ff",
           100: "#dee9fb",
           200: "#b7d0f7",
+          300: "#85abf2", // ← was missing; falls back to transparent without it
           400: "#5388ee",
           500: "#1f6feb",
           600: "#1659cb",

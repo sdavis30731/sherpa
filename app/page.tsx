@@ -161,7 +161,7 @@ export default function HomePage() {
           </div>
           <h2 className="text-balance text-5xl font-bold leading-[1.05] tracking-tight sm:text-7xl">
             &ldquo;Dude. Where are{" "}
-            <span className="bg-gradient-to-br from-sherpa-300 to-sherpa-500 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-br from-sherpa-200 to-sherpa-400 bg-clip-text text-transparent">
               my keys?!
             </span>
             &rdquo;
@@ -463,47 +463,116 @@ function SecurityFact({
 function MCPMockup() {
   return (
     <div className="space-y-3">
-      <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-md shadow-slate-900/5">
-        <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-          You, to Claude
+      {/* Step 1 — Email arrives in inbox */}
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-900/10">
+        {/* Fake inbox header */}
+        <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-4 py-2 text-[10px] font-medium uppercase tracking-wider text-slate-400">
+          <span>Inbox · 1 new</span>
+          <span>2:14 pm</span>
         </div>
-        <div className="text-sm text-slate-800">
-          &ldquo;Is my Stripe webhook configured correctly?&rdquo;
+        <div className="px-4 py-3">
+          <div className="flex items-start gap-2.5">
+            {/* Logo blob */}
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-sherpa-500 to-sherpa-600 text-[10px] font-bold text-white">
+              SK
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-baseline justify-between gap-2">
+                <div className="truncate text-[12px] font-semibold text-slate-900">
+                  SherpaKeys
+                </div>
+                <div className="shrink-0 text-[10px] text-slate-400">
+                  noreply@sherpakeys.com
+                </div>
+              </div>
+              <div className="mt-0.5 truncate text-[13px] font-semibold text-slate-800">
+                Approve write action: stripe/customers
+              </div>
+              <div className="mt-0.5 truncate text-[11px] text-slate-500">
+                An AI agent wants to do something. Approve in your browser?
+              </div>
+              <div className="mt-2.5 inline-flex items-center gap-1.5 rounded-md bg-gradient-to-b from-sherpa-500 to-sherpa-600 px-2.5 py-1 text-[10px] font-semibold text-white shadow-sm">
+                Review and approve →
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-      <div className="ml-6 rounded-2xl border border-sherpa-200 bg-sherpa-50 p-4 shadow-md shadow-sherpa-500/10">
-        <div className="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-sherpa-700">
-          <Bot className="h-3 w-3" /> Claude → SherpaKeys MCP
+
+      {/* Connector */}
+      <div className="ml-4 flex items-center gap-2 pl-1 text-[10px] font-medium uppercase tracking-wider text-slate-400">
+        <span className="h-3 w-px bg-slate-300" />
+        <span>You click the email</span>
+      </div>
+
+      {/* Step 2 — Approval page */}
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-900/10">
+        {/* Fake browser chrome */}
+        <div className="flex items-center gap-1.5 border-b border-slate-100 bg-slate-50 px-3 py-1.5">
+          <span className="h-2 w-2 rounded-full bg-red-300" />
+          <span className="h-2 w-2 rounded-full bg-amber-300" />
+          <span className="h-2 w-2 rounded-full bg-emerald-300" />
+          <div className="ml-2 truncate rounded bg-white px-2 py-0.5 text-[9px] text-slate-500 ring-1 ring-slate-200">
+            sherpakeys.com/approve/9a0a4ecf…
+          </div>
         </div>
-        <div className="font-mono text-xs text-slate-700">
-          sherpa_call_api(
-          <br />
-          &nbsp;&nbsp;service: &ldquo;stripe&rdquo;,
-          <br />
-          &nbsp;&nbsp;endpoint: &ldquo;webhook_endpoints&rdquo;,
-          <br />
-          &nbsp;&nbsp;method: &ldquo;list&rdquo;
-          <br />)
+        {/* Approval card body */}
+        <div className="bg-amber-50 px-3 py-1 text-[9px] font-semibold uppercase tracking-wider text-amber-800">
+          ⏱ Awaiting your decision · 58 min left
         </div>
-        <div className="mt-2 text-[11px] text-slate-500">
-          Read-only. Claude doesn&apos;t see the key.
+        <div className="px-4 py-4">
+          <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+            Proposed action
+          </div>
+          <div className="mt-1.5 rounded-lg bg-slate-50 p-2.5 font-mono text-[11px] text-slate-900 ring-1 ring-slate-200">
+            POST stripe/customers
+            <br />
+            <span className="text-slate-500">
+              email = sarah@example.com
+            </span>
+          </div>
+          <div className="mt-3 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+            Amount
+          </div>
+          <div className="mt-0.5 text-xl font-bold tracking-tight text-red-700">
+            $48.00
+          </div>
+
+          <div className="mt-4 grid grid-cols-2 gap-2">
+            <div className="inline-flex items-center justify-center gap-1 rounded-lg border-2 border-slate-300 bg-white py-1.5 text-[11px] font-semibold text-slate-700">
+              Reject
+            </div>
+            <div className="inline-flex items-center justify-center gap-1 rounded-lg bg-gradient-to-b from-emerald-500 to-emerald-600 py-1.5 text-[11px] font-semibold text-white shadow-sm">
+              <CheckCircle2 className="h-3 w-3" />
+              Approve & execute
+            </div>
+          </div>
         </div>
       </div>
-      <div className="ml-12 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 shadow-md shadow-emerald-500/10">
-        <div className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-700">
-          <CheckCircle2 className="h-3 w-3" /> SherpaKeys → Stripe → Claude
+
+      {/* Connector */}
+      <div className="ml-4 flex items-center gap-2 pl-1 text-[10px] font-medium uppercase tracking-wider text-slate-400">
+        <span className="h-3 w-px bg-slate-300" />
+        <span>SherpaKeys decrypts key server-side, makes call</span>
+      </div>
+
+      {/* Step 3 — Approved + executed */}
+      <div className="overflow-hidden rounded-2xl border border-emerald-200 bg-emerald-50 shadow-md shadow-emerald-500/10">
+        <div className="flex items-center gap-1.5 border-b border-emerald-100 bg-emerald-100/60 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-emerald-800">
+          <CheckCircle2 className="h-3 w-3" /> Approved · Executed
         </div>
-        <div className="font-mono text-[11px] leading-relaxed text-emerald-900">
-          1 endpoint · status: enabled
-          <br />
-          url: https://api.yourapp.com/stripe
-          <br />
-          listening for: payment_intent.succeeded,
-          <br />
-          invoice.paid, customer.subscription.deleted
-        </div>
-        <div className="mt-2 text-[11px] text-emerald-700">
-          &ldquo;Your webhook looks healthy.&rdquo;
+        <div className="px-4 py-3">
+          <div className="font-mono text-[11px] leading-relaxed text-emerald-900">
+            <span className="text-emerald-600">200 OK</span> ·
+            <span className="ml-1 text-slate-500">created customer</span>
+            <br />
+            id: cus_UcqBi541zF9OqV
+            <br />
+            email: sarah@example.com
+          </div>
+          <div className="mt-2 text-[10px] italic text-emerald-700">
+            Claude got the response. Claude never saw your Stripe key.
+          </div>
         </div>
       </div>
     </div>
