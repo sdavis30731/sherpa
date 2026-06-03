@@ -1,16 +1,13 @@
 # SherpaKeys
 
-**The AI firewall for indie developers.** A zero-knowledge keychain for AI-built
-apps, plus an MCP server that lets Claude, Cursor, and Codex use your API keys
-without ever seeing them — and gates every write action behind explicit user
-approval.
+**Vibe code without fear.**
 
-> **"Dude. Where are my keys?!"**
->
-> Every founder who shipped a real app by talking to Claude or Cursor has had
-> that exact moment of panic. SherpaKeys is the tool you wish you had the
-> first time you searched *"is my supabase service_role key supposed to be
-> in NEXT_PUBLIC_?"* at 11pm before a launch.
+SherpaKeys exists to empower you with organized, maintained, and secured
+credentials you can use as you build — without handing them to the AI tools
+doing the work.
+
+Built for solo founders and indie devs shipping real apps with Claude,
+Cursor, Cowork, and Codex.
 
 🌐 **Live:** [sherpakeys.com](https://sherpakeys.com)
 🔒 **Security architecture:** [SECURITY.md](./SECURITY.md)
@@ -18,58 +15,92 @@ approval.
 
 ---
 
-## What this is
+## Why this exists
 
-SherpaKeys does three things, each useful on its own and far more useful
-together:
+AI coding tools have made shipping real software accessible to people without
+a CS degree. But shipping a real app means juggling API keys, webhook
+secrets, OAuth callbacks, and rotation schedules across a dozen services.
+A single `NEXT_PUBLIC_` prefix on the wrong key, an `sk_live_` in the wrong
+slot, or an unbounded OpenAI key in a leaked repo turns launch day into the
+worst day of the year.
 
-### 1. A zero-knowledge vault for credentials
+And the next problem is already here: AI agents that can *take action* on
+those services. A hallucinated refund. A misunderstood `DROP TABLE`. A
+debugging session that nukes production.
 
-Your master passphrase never leaves your device. API keys, webhook secrets,
-and connection strings are encrypted in your browser with AES-256-GCM using
-a key derived from your passphrase via Argon2id. Our server only ever sees
-ciphertext. If our database leaked tomorrow, the attacker would walk away
-with a list of email addresses and an unreadable pile of bytes.
-
-### 2. The Go-Live Check
-
-Paste your `.env` and get back: which service every key belongs to, how
-dangerous each one is by category, which configurations are misconfigured
-(NEXT_PUBLIC_ on a service_role key? sk_live_ in a dev environment?), and
-a Go-Live readiness score with a transparent "what we checked / what we
-did NOT check" panel. Runs entirely in your browser before signup. No
-secrets are uploaded.
-
-### 3. The AI Firewall (MCP server)
-
-The big one. When Claude, Cursor, or Codex needs to call Stripe or Supabase
-or GitHub, the agent calls SherpaKeys' MCP server instead. SherpaKeys
-decrypts the credential server-side, makes the call, returns the response.
-**The model never sees the secret.** And writes — anything not on a small
-allow-list of read operations — require explicit human approval via an
-email link before they execute.
-
-You get autonomous read-side agents and human-in-the-loop write-side agents,
-without leaking credentials into AI transcripts.
+SherpaKeys is the safety layer for both — designed around three pillars.
 
 ---
 
-## Why this exists
+## The three pillars
 
-AI coding tools have made building real software accessible to people without
-a CS degree. But shipping a real app means juggling API keys, webhook
-secrets, DNS records, OAuth callbacks, and rotation schedules across a dozen
-services. A single `NEXT_PUBLIC_` prefix on the wrong key, an `sk_live_` in
-the wrong slot, or an unbounded OpenAI key in a leaked repo turns launch day
-into the worst day of the year.
+### 1. Secured — your AI gets the answer; it never gets the key
 
-And the next problem is already here: AI agents that can *take action* on
-those services. A hallucinated refund. A misunderstood DROP TABLE. A
-debugging session that nukes production.
+When Claude, Cursor, Cowork, or Codex needs to call Stripe or Supabase or
+GitHub, the agent calls SherpaKeys' MCP server instead. SherpaKeys decrypts
+the credential server-side, makes the call, returns the response. **The
+model never sees the secret.**
 
-SherpaKeys is the safety layer for both problems. We hold the keys safely.
-We help you rotate them. We let agents use them without exposing them. And
-we make agents stop and ask before doing anything destructive.
+Write actions — anything that costs money or moves data — pause for
+explicit human approval via email + a browser-side approval card before
+they execute. Reads stream through silently. You stay in flow; SherpaKeys
+stays in the loop.
+
+Under the hood: AES-256-GCM ciphertext, Argon2id key derivation, BIP-39
+recovery codes, zero-knowledge architecture. The server never sees your
+passphrase, your vault key, or your plaintext secrets. If our database
+leaked tomorrow, the attacker would walk away with a list of email
+addresses and an unreadable pile of bytes.
+
+### 2. Organized — one vault, one source of truth
+
+Paste your `.env` once. SherpaKeys detects which key belongs to which
+service, classifies its intrinsic risk (Critical / High / Medium /
+Public-by-design), flags configuration mistakes (`NEXT_PUBLIC_` on a
+`service_role`? `sk_live_` in a dev project?), and gives you a Go-Live
+readiness score with a transparent "what we checked / what we did NOT
+check" panel. Runs entirely in your browser before signup — no secrets
+uploaded.
+
+After signup, the same vault holds your real credentials — organized by
+project, copy-with-auto-clear, all browser-encrypted before they hit the
+server.
+
+### 3. Maintained — keys age; SherpaKeys ages them for you
+
+Per-credential rotation tracking with an overdue widget so you can see at
+a glance which keys are stale. Step-by-step rotation playbooks for Stripe,
+GitHub, Supabase, and Vercel — each one a checklist with the exact
+dashboard clicks. Audit log that records every read, every approval, every
+rotation, timestamped and queryable.
+
+Auto-rotation and env-var sync (push the same source-of-truth values to
+Vercel, Railway, and Render in one action) are on the v1.2 roadmap.
+
+---
+
+## What SherpaKeys is NOT
+
+So the wrong audience doesn't file the wrong issues:
+
+- **Not for your customer-facing AI runtime.** If you're building a
+  customer-support chatbot that needs to refund Stripe charges
+  automatically, you want a properly coded backend integration with
+  fine-grained authorization. SherpaKeys puts a human in the loop on
+  writes *by design* — right for **developers operating their own stack**,
+  wrong for **production runtime that serves end users**.
+- **Not a password manager for human passwords.** SherpaKeys is for
+  *machine credentials* — API keys, webhook secrets, connection strings.
+  Use 1Password or Bitwarden for your Netflix login.
+- **Not an AI agent itself.** SherpaKeys sits *between* your AI tools
+  (Claude, Cursor, Cowork, Codex) and the APIs you'd never paste your
+  secret keys into. It doesn't think, plan, or act. It just makes the
+  call your agent asked it to — after you approve writes.
+
+If you're a solo founder, indie dev, or small team using AI to build and
+operate your own app, SherpaKeys is for you. If you're shipping a
+customer-facing AI feature, SherpaKeys is for **building** that feature —
+not for the runtime that ships to your users.
 
 ---
 
@@ -278,6 +309,4 @@ on this, a link back to SherpaKeys is appreciated but not required.
 
 ---
 
-*SherpaKeys is built for the people who shipped a real app the first time
-out — with Claude, Cursor, Codex, or Bolt. The credentials OS for the new
-generation of indie builders.*
+*Secured and still usable as you vibe code. No fear.*
