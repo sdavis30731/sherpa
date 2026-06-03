@@ -47,10 +47,12 @@ they execute. Reads stream through silently. You stay in flow; SherpaKeys
 stays in the loop.
 
 Under the hood: AES-256-GCM ciphertext, Argon2id key derivation, BIP-39
-recovery codes, zero-knowledge architecture. The server never sees your
-passphrase, your vault key, or your plaintext secrets. If our database
-leaked tomorrow, the attacker would walk away with a list of email
-addresses and an unreadable pile of bytes.
+recovery codes. The vault is **zero-knowledge** — the server never sees
+your passphrase, your vault key, or your plaintext secrets. The agent
+bridge is **mediated** — for the brief moment an AI agent makes a call,
+the server decrypts that one credential server-side, makes the call,
+and zeros the key. The model never receives plaintext. The full
+architecture is documented in [SECURITY.md](./SECURITY.md).
 
 ### 2. Organized — one vault, one source of truth
 

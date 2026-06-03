@@ -9,7 +9,6 @@ import {
   Clock,
   GitCompare,
   Github,
-  Sparkles,
 } from "lucide-react";
 import { EnvAnalyzer } from "./_components/env-analyzer";
 import { TopNav } from "./_components/top-nav";
@@ -96,7 +95,7 @@ export default function HomePage() {
               </div>
               <p className="mt-6 inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700 ring-1 ring-emerald-200">
                 <ShieldCheck className="h-3.5 w-3.5" />
-                Zero-knowledge. We can&apos;t see your keys either.
+                Browser-encrypted vault. AI never sees plaintext secrets.
               </p>
             </div>
 
@@ -111,19 +110,39 @@ export default function HomePage() {
       </div>
 
       {/* ============================================================
-          PILLAR-INTRO STRIP — names the three pillars before any of them
-          so the visitor has the map before scrolling. Sits on top of the
-          Headaches section's slate-50 background.
+          PILLAR-INTRO STRIP — Secured leads (it's the wedge); Organized
+          and Maintained are the supporting depth below at smaller weight.
+          Visual hierarchy reinforces the "one thing, with two reinforcements"
+          read instead of "three equal pillars."
           ============================================================ */}
       <div className="border-t border-slate-200 bg-white">
         <div className="mx-auto max-w-6xl px-6 py-10 sm:py-14">
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
-            <PillarChip
-              order="1"
-              title="Secured"
-              body="Usable by your AI. Never visible to it."
-              anchor="#secured"
-            />
+          {/* Lead — Secured (the wedge) */}
+          <Link
+            href="#secured"
+            className="group flex items-start gap-5 rounded-3xl border-2 border-sherpa-200 bg-gradient-to-br from-sherpa-50/70 to-white p-6 transition hover:border-sherpa-300 hover:from-sherpa-50 sm:p-7"
+          >
+            <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-sherpa-500 to-sherpa-600 text-white shadow-md shadow-sherpa-500/30 sm:h-12 sm:w-12">
+              <ShieldCheck className="h-5 w-5 sm:h-6 sm:w-6" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-sherpa-600">
+                The wedge · Pillar 1
+              </div>
+              <div className="mt-1 text-xl font-bold leading-tight text-slate-900 sm:text-2xl">
+                Secured — your AI gets the answer, never the key
+              </div>
+              <div className="mt-1.5 text-sm leading-relaxed text-slate-600 sm:text-base">
+                The MCP firewall is what SherpaKeys is built around. Claude,
+                Cursor, Cowork, and Codex call your APIs through it — and
+                never see the secret.
+              </div>
+            </div>
+            <ArrowRight className="ml-auto hidden h-5 w-5 shrink-0 text-sherpa-400 transition group-hover:text-sherpa-600 sm:block" />
+          </Link>
+
+          {/* Supporting — Organized + Maintained */}
+          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
             <PillarChip
               order="2"
               title="Organized"
@@ -394,8 +413,9 @@ export default function HomePage() {
       </section>
 
       {/* ============================================================
-          PRICING — three tiers. Lifetime paused (SHRP-054) so its CTA
-          goes to the early-access waitlist instead of Stripe.
+          PRICING (SHRP-061) — four tiers + Team/Enterprise footer note.
+          $19 Lifetime is gone; subscription-only signals seriousness.
+          All paid tiers route to /pro-waitlist?tier=X until LLC is live.
           ============================================================ */}
       <section id="pricing" className="scroll-mt-24 bg-white">
         <div className="mx-auto max-w-6xl px-6 py-24 sm:py-32">
@@ -404,22 +424,20 @@ export default function HomePage() {
               Pricing
             </p>
             <h2 className="mt-3 text-balance text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">
-              Free forever. Pay once. Or scale up.
+              Free for one app. Real prices when you scale.
             </h2>
             <p className="mx-auto mt-5 max-w-2xl text-lg leading-relaxed text-slate-600">
-              The core is free for one app, permanently. Same zero-knowledge
-              encryption on every tier.
+              Browser-encrypted vault on every tier. The free tier is full
+              protection for your first project — not a teaser.
             </p>
           </div>
 
-          <div className="mt-14 grid grid-cols-1 gap-6 lg:grid-cols-3">
+          <div className="mt-14 grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-4">
             {/* Free */}
-            <div className="group relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-7 shadow-sm transition hover:shadow-lg">
+            <div className="flex flex-col rounded-3xl border border-slate-200 bg-white p-7 shadow-sm transition hover:shadow-md">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-bold text-slate-900">
-                  Free forever
-                </h3>
-                <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-200">
+                <h3 className="text-lg font-bold text-slate-900">Free</h3>
+                <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-200">
                   No card
                 </span>
               </div>
@@ -430,117 +448,186 @@ export default function HomePage() {
                 <span className="text-sm text-slate-500">/ forever</span>
               </div>
               <p className="mt-3 text-sm text-slate-600">
-                Be launch-ready on one app, permanently.
+                For your first real app, permanently.
               </p>
               <ul className="mt-6 space-y-2.5 text-sm text-slate-700">
                 <PriceBullet>1 project, unlimited credentials</PriceBullet>
-                <PriceBullet>All playbooks + Go-Live Check</PriceBullet>
-                <PriceBullet>AI firewall (write-action approval)</PriceBullet>
-                <PriceBullet>100 MCP agent calls / month</PriceBullet>
-                <PriceBullet>7-day audit log retention</PriceBullet>
-                <PriceBullet>Zero-knowledge encryption</PriceBullet>
+                <PriceBullet>AI firewall + write-action approvals</PriceBullet>
+                <PriceBullet>100 MCP calls / month</PriceBullet>
+                <PriceBullet>7-day audit log</PriceBullet>
+                <PriceBullet>BIP-39 recovery</PriceBullet>
               </ul>
               <Link
                 href="/signup"
-                className="mt-7 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-b from-sherpa-500 to-sherpa-600 px-4 py-3 text-sm font-semibold text-white shadow-sm shadow-sherpa-500/30 transition hover:shadow-md hover:shadow-sherpa-500/40"
+                className="mt-auto inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-b from-sherpa-500 to-sherpa-600 px-4 py-3 text-sm font-semibold text-white shadow-sm shadow-sherpa-500/30 transition hover:shadow-md hover:shadow-sherpa-500/40"
               >
                 <KeyRound className="h-4 w-4" /> Start free
               </Link>
             </div>
 
-            {/* Hacker Lifetime (paused) */}
-            <div className="group relative overflow-hidden rounded-3xl border-2 border-sherpa-400 bg-gradient-to-br from-sherpa-50 via-white to-white p-7 shadow-lg shadow-sherpa-500/10 transition hover:shadow-xl hover:shadow-sherpa-500/20">
-              <div className="absolute -top-3 right-6 rounded-full bg-gradient-to-b from-sherpa-500 to-sherpa-600 px-3 py-1 text-xs font-semibold text-white shadow-md shadow-sherpa-500/40">
-                Coming with v1.1
-              </div>
-              <div className="relative">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-bold text-slate-900">
-                    Hacker Lifetime
-                  </h3>
-                  <span className="rounded-full bg-sherpa-100 px-2.5 py-0.5 text-xs font-semibold text-sherpa-700 ring-1 ring-sherpa-200">
-                    Pay once
-                  </span>
-                </div>
-                <div className="mt-4 flex items-baseline gap-2">
-                  <span className="bg-gradient-to-br from-sherpa-600 to-sherpa-700 bg-clip-text text-5xl font-bold tracking-tight text-transparent">
-                    $19
-                  </span>
-                  <span className="text-sm text-slate-500">one-time</span>
-                </div>
-                <p className="mt-3 text-sm text-slate-600">
-                  Launch insurance for every app you&apos;ll ever build.
-                </p>
-                <ul className="mt-6 space-y-2.5 text-sm text-slate-700">
-                  <PriceBullet color="sherpa">
-                    <strong>Everything in Free</strong>, plus:
-                  </PriceBullet>
-                  <PriceBullet color="sherpa">Unlimited projects</PriceBullet>
-                  <PriceBullet color="sherpa">
-                    Unlimited MCP agent tokens
-                  </PriceBullet>
-                  <PriceBullet color="sherpa">
-                    5,000 MCP agent calls / month
-                  </PriceBullet>
-                  <PriceBullet color="sherpa">
-                    90-day audit log retention
-                  </PriceBullet>
-                  <PriceBullet color="sherpa">
-                    Priority email support
-                  </PriceBullet>
-                </ul>
-                <Link
-                  href="/pro-waitlist?tier=lifetime"
-                  className="mt-7 inline-flex w-full items-center justify-center gap-2 rounded-xl border-2 border-sherpa-500 bg-white px-4 py-3 text-sm font-semibold text-sherpa-600 transition hover:bg-sherpa-50"
-                >
-                  <Sparkles className="h-4 w-4" /> Join the early-access list
-                </Link>
-              </div>
-            </div>
-
-            {/* Pro (coming soon) */}
-            <div className="group relative overflow-hidden rounded-3xl border border-slate-300 bg-slate-50 p-7 shadow-sm transition hover:shadow-md">
-              <div className="absolute -top-3 right-6 rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold text-white shadow-md">
-                Coming with v1.1
-              </div>
+            {/* Solo */}
+            <div className="flex flex-col rounded-3xl border border-slate-200 bg-white p-7 shadow-sm transition hover:shadow-md">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-bold text-slate-900">Pro</h3>
-                <span className="rounded-full bg-slate-200 px-2.5 py-0.5 text-xs font-semibold text-slate-700">
-                  Teams
+                <h3 className="text-lg font-bold text-slate-900">Solo</h3>
+                <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-semibold text-slate-700">
+                  Indie
                 </span>
               </div>
               <div className="mt-4 flex items-baseline gap-2">
                 <span className="text-5xl font-bold tracking-tight text-slate-900">
-                  $12
+                  $19
                 </span>
-                <span className="text-sm text-slate-500">
-                  / mo billed annually
-                </span>
+                <span className="text-sm text-slate-500">/ month</span>
               </div>
+              <p className="mt-1 text-xs text-slate-500">
+                or $190 / year (save $38)
+              </p>
               <p className="mt-3 text-sm text-slate-600">
-                For teams and apps where AI agents are doing real work.
+                The indie founder running one real app with AI.
               </p>
               <ul className="mt-6 space-y-2.5 text-sm text-slate-700">
                 <PriceBullet>
-                  <strong>Everything in Lifetime</strong>, plus:
+                  <strong>Everything in Free</strong>, plus:
                 </PriceBullet>
-                <PriceBullet>Unlimited MCP agent calls</PriceBullet>
-                <PriceBullet>Team vaults — invite collaborators</PriceBullet>
-                <PriceBullet>SSO (Google, GitHub, Microsoft)</PriceBullet>
-                <PriceBullet>Unlimited audit log + CSV export</PriceBullet>
-                <PriceBullet>Priority email + chat support</PriceBullet>
+                <PriceBullet>Unlimited projects</PriceBullet>
+                <PriceBullet>5,000 MCP calls / month</PriceBullet>
+                <PriceBullet>30-day audit log</PriceBullet>
+                <PriceBullet>Rotation reminders</PriceBullet>
+                <PriceBullet>Email support</PriceBullet>
               </ul>
               <Link
-                href="/pro-waitlist"
-                className="mt-7 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-400 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+                href="/pro-waitlist?tier=solo"
+                className="mt-auto inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
               >
-                Join the early-access list
+                Join waitlist
+              </Link>
+            </div>
+
+            {/* Pro — most popular */}
+            <div className="relative flex flex-col rounded-3xl border-2 border-sherpa-500 bg-gradient-to-br from-sherpa-50/70 via-white to-white p-7 shadow-xl shadow-sherpa-500/15 transition hover:shadow-2xl hover:shadow-sherpa-500/25">
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-b from-sherpa-500 to-sherpa-600 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-white shadow-md shadow-sherpa-500/40">
+                Most popular
+              </div>
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-bold text-slate-900">Pro</h3>
+                <span className="rounded-full bg-sherpa-100 px-2.5 py-0.5 text-[11px] font-semibold text-sherpa-700 ring-1 ring-sherpa-200">
+                  Power user
+                </span>
+              </div>
+              <div className="mt-4 flex items-baseline gap-2">
+                <span className="bg-gradient-to-br from-sherpa-600 to-sherpa-700 bg-clip-text text-5xl font-bold tracking-tight text-transparent">
+                  $49
+                </span>
+                <span className="text-sm text-slate-500">/ month</span>
+              </div>
+              <p className="mt-1 text-xs text-slate-500">
+                or $490 / year (save $98)
+              </p>
+              <p className="mt-3 text-sm text-slate-600">
+                When AI is operating real production systems for you.
+              </p>
+              <ul className="mt-6 space-y-2.5 text-sm text-slate-700">
+                <PriceBullet color="sherpa">
+                  <strong>Everything in Solo</strong>, plus:
+                </PriceBullet>
+                <PriceBullet color="sherpa">Unlimited MCP calls</PriceBullet>
+                <PriceBullet color="sherpa">90-day audit log</PriceBullet>
+                <PriceBullet color="sherpa">Priority approvals</PriceBullet>
+                <PriceBullet color="sherpa">
+                  Auto-rotation (v1.1)
+                </PriceBullet>
+                <PriceBullet color="sherpa">
+                  Env-var sync (v1.1)
+                </PriceBullet>
+                <PriceBullet color="sherpa">Priority support</PriceBullet>
+              </ul>
+              <Link
+                href="/pro-waitlist?tier=pro"
+                className="mt-auto inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-b from-sherpa-500 to-sherpa-600 px-4 py-3 text-sm font-semibold text-white shadow-sm shadow-sherpa-500/30 transition hover:shadow-md hover:shadow-sherpa-500/40"
+              >
+                Join waitlist
+              </Link>
+            </div>
+
+            {/* Agency */}
+            <div className="flex flex-col rounded-3xl border border-slate-300 bg-slate-50 p-7 shadow-sm transition hover:shadow-md">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-bold text-slate-900">Agency</h3>
+                <span className="rounded-full bg-slate-900 px-2.5 py-0.5 text-[11px] font-semibold text-white">
+                  For agencies
+                </span>
+              </div>
+              <div className="mt-4 flex items-baseline gap-2">
+                <span className="text-5xl font-bold tracking-tight text-slate-900">
+                  $299
+                </span>
+                <span className="text-sm text-slate-500">/ month</span>
+              </div>
+              <p className="mt-1 text-xs text-slate-500">
+                or $2,990 / year (save $598)
+              </p>
+              <p className="mt-3 text-sm text-slate-600">
+                Building for clients, not just yourself.
+              </p>
+              <ul className="mt-6 space-y-2.5 text-sm text-slate-700">
+                <PriceBullet>
+                  <strong>Everything in Pro</strong>, plus:
+                </PriceBullet>
+                <PriceBullet>Multi-client workspaces</PriceBullet>
+                <PriceBullet>White-label branding</PriceBullet>
+                <PriceBullet>Branded Go-Live Reports (PDF)</PriceBullet>
+                <PriceBullet>1-year audit log</PriceBullet>
+                <PriceBullet>Priority response</PriceBullet>
+              </ul>
+              <Link
+                href="/pro-waitlist?tier=agency"
+                className="mt-auto inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-400 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+              >
+                Talk to us
               </Link>
             </div>
           </div>
 
-          <p className="mt-10 text-center text-xs text-slate-500">
-            We&apos;re an indie team, not a subscription factory.
+          {/* Team + Enterprise — soft mention below the four main tiers */}
+          <div className="mx-auto mt-10 max-w-3xl rounded-2xl border border-slate-200 bg-slate-50 p-6 sm:p-7">
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+              <div>
+                <div className="flex items-baseline gap-2">
+                  <h4 className="text-sm font-bold text-slate-900">Team</h4>
+                  <span className="text-xs text-slate-500">
+                    $19 / seat / mo · 3-seat min
+                  </span>
+                </div>
+                <p className="mt-1.5 text-xs leading-relaxed text-slate-600">
+                  Shared vaults, SSO (Google · GitHub · Microsoft), team
+                  policies, 1-year audit log.
+                </p>
+              </div>
+              <div>
+                <div className="flex items-baseline gap-2">
+                  <h4 className="text-sm font-bold text-slate-900">
+                    Enterprise
+                  </h4>
+                  <span className="text-xs text-slate-500">Custom</span>
+                </div>
+                <p className="mt-1.5 text-xs leading-relaxed text-slate-600">
+                  On-prem deployment, SAML, compliance reviews, dedicated
+                  support, custom retention.
+                </p>
+              </div>
+            </div>
+            <Link
+              href="/pro-waitlist?tier=team"
+              className="mt-5 inline-flex items-center gap-1 text-sm font-semibold text-sherpa-600 hover:text-sherpa-700"
+            >
+              Talk to us about Team or Enterprise
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+
+          <p className="mt-8 text-center text-xs text-slate-500">
+            Paid tiers join the waitlist while SherpaKeys LLC finalizes
+            setup. Free is live today.
           </p>
         </div>
       </section>

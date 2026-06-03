@@ -13,7 +13,7 @@ import {
 export const metadata = {
   title: "Security — SherpaKeys",
   description:
-    "How SherpaKeys' zero-knowledge architecture protects your API keys, webhook secrets, and DNS records. AES-256-GCM, Argon2id, BIP-39 recovery, and an MCP agent bridge that never lets models see plaintext.",
+    "How SherpaKeys protects your API keys: a zero-knowledge browser-encrypted vault, plus a mediated MCP agent bridge that decrypts server-side only long enough to make a call and never lets AI models see plaintext. AES-256-GCM, Argon2id, BIP-39 recovery.",
 };
 
 export default function SecurityPage() {
@@ -44,17 +44,25 @@ export default function SecurityPage() {
       {/* Hero */}
       <section className="mt-8">
         <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">
-          <ShieldCheck className="h-3.5 w-3.5" /> Zero-knowledge architecture
+          <ShieldCheck className="h-3.5 w-3.5" /> Zero-knowledge vault ·
+          Mediated agent bridge
         </div>
         <h1 className="text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">
-          We can&apos;t read your keys. Here&apos;s how.
+          We can&apos;t read your vault.
+          <br />
+          <span className="text-slate-500">
+            We mediate every agent call.
+          </span>
         </h1>
         <p className="mt-5 max-w-3xl text-lg text-slate-600">
-          SherpaKeys is built so that even our own database administrators
-          can&apos;t decrypt your credentials. This page walks through the
-          actual cryptography — partly because some of you will want to verify
-          our claims, and partly because security pages with no math
-          deserve no trust.
+          SherpaKeys is built two ways at once. The <strong>vault</strong> is
+          zero-knowledge — even our own database administrators can&apos;t
+          decrypt your credentials. The <strong>agent bridge</strong> is
+          mediated — when Claude or Cursor needs to call Stripe through us,
+          we decrypt server-side only long enough to make the call, then
+          zero the key. The model never sees plaintext. This page walks
+          through both — because security pages with no math deserve no
+          trust.
         </p>
       </section>
 
@@ -262,8 +270,8 @@ export default function SecurityPage() {
           Ready to put your keys somewhere safe?
         </h2>
         <p className="mt-2 text-slate-600">
-          Free forever. Same zero-knowledge encryption on the paid tier as
-          the free one.
+          Free for your first app, permanently. Same browser-encryption on
+          every tier.
         </p>
         <Link
           href="/signup"
