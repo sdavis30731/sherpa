@@ -41,6 +41,18 @@ export default function HomePage() {
   return (
     <main className="min-h-full overflow-x-hidden bg-white">
       {/* ============================================================
+          STICKY TOP NAV — stays in view as the visitor anchor-jumps
+          between sections. Translucent white with a backdrop blur so
+          content underneath softly shows through. The thin border
+          appears against any section background.
+          ============================================================ */}
+      <header className="sticky top-0 z-50 border-b border-slate-200/60 bg-white/85 backdrop-blur-md">
+        <div className="mx-auto max-w-6xl px-6">
+          <TopNav />
+        </div>
+      </header>
+
+      {/* ============================================================
           HERO + ANALYZER
           ============================================================ */}
       <div className="relative isolate">
@@ -49,8 +61,6 @@ export default function HomePage() {
           className="absolute inset-0 -z-10 bg-gradient-to-b from-sherpa-50/70 via-white to-white"
         />
         <div className="mx-auto max-w-6xl px-6">
-          <TopNav />
-
           <section className="grid grid-cols-1 gap-12 pt-10 pb-20 sm:pt-16 sm:pb-28 lg:grid-cols-12 lg:gap-12">
             {/* Pitch column */}
             <div className="lg:col-span-7 lg:pt-6">
@@ -139,7 +149,7 @@ export default function HomePage() {
           ============================================================ */}
       <section
         id="headaches"
-        className="scroll-mt-20 border-y border-slate-200 bg-slate-50"
+        className="scroll-mt-24 border-y border-slate-200 bg-slate-50"
       >
         <div className="mx-auto max-w-6xl px-6 py-24 sm:py-32">
           <div className="mx-auto max-w-3xl text-center">
@@ -183,7 +193,7 @@ export default function HomePage() {
       {/* ============================================================
           PILLAR 1 — SECURED  (the AI firewall + crypto facts + boundary)
           ============================================================ */}
-      <section id="secured" className="scroll-mt-20 bg-white">
+      <section id="secured" className="scroll-mt-24 bg-white">
         <div className="mx-auto max-w-6xl px-6 py-24 sm:py-32">
           <div className="grid grid-cols-1 items-start gap-12 lg:grid-cols-12 lg:gap-16">
             <div className="lg:col-span-6">
@@ -252,7 +262,7 @@ export default function HomePage() {
           ============================================================ */}
       <section
         id="organized"
-        className="scroll-mt-20 border-y border-slate-200 bg-slate-50"
+        className="scroll-mt-24 border-y border-slate-200 bg-slate-50"
       >
         <div className="mx-auto max-w-6xl px-6 py-24 sm:py-32">
           <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-12 lg:gap-16">
@@ -299,7 +309,7 @@ export default function HomePage() {
       {/* ============================================================
           PILLAR 3 — MAINTAINED  (rotation, audit, env-sync)
           ============================================================ */}
-      <section id="maintained" className="scroll-mt-20 bg-white">
+      <section id="maintained" className="scroll-mt-24 bg-white">
         <div className="mx-auto max-w-6xl px-6 py-24 sm:py-32">
           <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-12 lg:gap-16">
             <div className="lg:col-span-6">
@@ -349,7 +359,7 @@ export default function HomePage() {
           ============================================================ */}
       <section
         id="opensource"
-        className="scroll-mt-20 relative isolate overflow-hidden bg-slate-900 text-white"
+        className="scroll-mt-24 relative isolate overflow-hidden bg-slate-900 text-white"
       >
         <div
           aria-hidden
@@ -391,7 +401,7 @@ export default function HomePage() {
           PRICING — three tiers. Lifetime paused (SHRP-054) so its CTA
           goes to the early-access waitlist instead of Stripe.
           ============================================================ */}
-      <section id="pricing" className="scroll-mt-20 bg-white">
+      <section id="pricing" className="scroll-mt-24 bg-white">
         <div className="mx-auto max-w-6xl px-6 py-24 sm:py-32">
           <div className="text-center">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-sherpa-600">
