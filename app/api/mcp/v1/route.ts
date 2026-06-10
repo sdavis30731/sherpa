@@ -49,9 +49,18 @@ const SERVER_INFO = {
 
 const TOOLS = [
   {
+    name: "sherpa_get_context",
+    description:
+      "Identify which SherpaKeys project this MCP connection is scoped to. Returns the project's id, name, and a brief description of what credentials it holds. ALWAYS call this first in a new conversation so you know which vault you're operating on — for agencies managing multiple client workspaces, confidently operating on the wrong vault is the exact disaster the firewall is meant to prevent. Takes no arguments.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {},
+    },
+  },
+  {
     name: "sherpa_list_services",
     description:
-      "List the services that have credentials stored in this Sherpa project. Returns metadata only — no secret values. The agent never sees the keys themselves.",
+      "List the services that have credentials stored in this Sherpa project. Returns metadata only — no secret values. The agent never sees the keys themselves. Response includes the project's id and name so you can confirm you're looking at the right vault.",
     inputSchema: {
       type: "object" as const,
       properties: {},
@@ -158,6 +167,92 @@ function fail(
   data?: unknown,
 ): JsonRpcError {
   return { jsonrpc: "2.0", id: id ?? null, error: { code, message, data } };
+}
+
+/**
+ * SHRP-089 — typed, structured error codes the agent can match
+ * programmatically. The message text is for humans/the model; the code is
+ * for the agent's logic layer ("if code === 'not_authorized', surface the
+ * authorize-agents call-to-action"). Document the vocabulary here so
+ * adding a new code requires a deliberate edit, not a stringly-typed
+ * sprinkle in the middle of a tool handler.
+ */
+const ERROR_CODES = {
+  // Auth & session
+  NOT_AUTHORIZED: "not_authorized",
+  TOKEN_NO_SCOPE: "token_no_scope",
+  TOKEN_NO_PERMISSION: "token_no_permission",
+  // Credentials
+  CREDENTIAL_NOT_FOUND: "credential_not_found",
+  CREDENTIAL_UNAVAILABLE: "credential_unavailable",
+  CREDENTIAL_PROJECT_MISMATCH: "credential_project_mismatch",
+  // Service / provider
+  SERVICE_UNSUPPORTED: "service_unsupported",
+  PROVIDER_TIMEOUT: "provider_timeout",
+  PROVIDER_ERROR: "provider_error",
+  // Write actions / approvals
+  WRITE_BLOCKED: "write_blocked",
+  WRITE_OVER_CAP: "write_over_cap",
+  APPROVAL_NOT_FOUND: "approval_not_found",
+  APPROVAL_EXPIRED: "approval_expired",
+  APPROVAL_REJECTED: "approval_rejected",
+  // Rate limit
+  RATE_LIMITED: "rate_limited",
+  // Misc
+  INVALID_ARGUMENTS: "invalid_arguments",
+  INTERNAL_ERROR: "internal_error",
+} as const;
+type ErrorCode = (typeof ERROR_CODES)[keyof typeof ERROR_CODES];
+
+/**
+ * SHRP-083 — surface tool-internal errors INSIDE the tool/call result
+ * (with isError: true) rather than as top-level JSON-RPC errors. The
+ * MCP SDK collapses top-level errors to a generic "tool execution failed"
+ * message on the agent side, which strips our descriptive text.
+ *
+ * SHRP-089 — every tool error now carries a machine-readable `code` in
+ * structuredContent so agents can match programmatically. The human
+ * message goes in content[0].text for the model; the code goes in
+ * structuredContent.code for the agent's logic layer.
+ *
+ * Use this for tool-internal failures: no active agent session, credential
+ * not found, provider rejected the call, etc. Reserve fail() for true
+ * protocol errors (E_PARSE, E_METHOD_NOT_FOUND, E_INVALID_PARAMS when the
+ * RPC itself is malformed).
+ */
+function toolError(
+  id: string | number | null | undefined,
+  code: ErrorCode,
+  message: string,
+  data?: Record<string, unknown>,
+): JsonRpcSuccess {
+  return success(id, {
+    content: [{ type: "text", text: message }],
+    isError: true,
+    structuredContent: { code, ...(data ?? {}) },
+  });
+}
+
+/**
+ * SHRP-081 — every successful tool response carries the project context
+ * (id + name) in structuredContent so the agent always knows which vault
+ * it's looking at. Critical for multi-client agency workflows: an agent
+ * accidentally operating on Client A's vault thinking it's Client B's is
+ * exactly the disaster the firewall is meant to prevent.
+ */
+async function fetchProjectContext(
+  supabase: ReturnType<typeof createAdminClient>,
+  projectId: string,
+): Promise<{ project_id: string; project_name: string }> {
+  const { data } = await supabase
+    .from("projects")
+    .select("name")
+    .eq("id", projectId)
+    .maybeSingle();
+  return {
+    project_id: projectId,
+    project_name: (data as { name?: string } | null)?.name ?? "(unknown)",
+  };
 }
 
 // Standard JSON-RPC error codes
@@ -277,6 +372,8 @@ async function handleToolsCall(
   }
 
   switch (params.name) {
+    case "sherpa_get_context":
+      return tool_getContext(req, session);
     case "sherpa_list_services":
       return tool_listServices(req, session);
     case "sherpa_rotate":
@@ -288,6 +385,39 @@ async function handleToolsCall(
     default:
       return fail(req.id, E_METHOD_NOT_FOUND, `Unknown tool: ${params.name}`);
   }
+}
+
+// SHRP-081 — return project identity so the agent can confirm scope.
+async function tool_getContext(
+  req: JsonRpcRequest,
+  session: AuthedSession,
+): Promise<JsonRpcSuccess | JsonRpcError> {
+  const supabase = createAdminClient();
+  const ctx = await fetchProjectContext(supabase, session.projectId);
+
+  // Count credentials for a friendly summary line.
+  const { count: credCount } = await supabase
+    .from("credentials")
+    .select("id", { count: "exact", head: true })
+    .eq("project_id", session.projectId)
+    .is("deleted_at", null);
+
+  const text =
+    `Project: ${ctx.project_name} (id: ${ctx.project_id})\n` +
+    `Token permission: ${session.permission}\n` +
+    `Credentials available in this vault: ${credCount ?? 0}\n` +
+    `\nALWAYS confirm this is the correct project before acting on its credentials. ` +
+    `If the project name doesn't match what the user expects, stop and ask — ` +
+    `operating on the wrong client's vault is the worst outcome the firewall is designed to prevent.`;
+
+  return success(req.id, {
+    content: [{ type: "text", text }],
+    structuredContent: {
+      project: ctx,
+      token_permission: session.permission,
+      credential_count: credCount ?? 0,
+    },
+  });
 }
 
 // ---- tool implementations ----
@@ -343,19 +473,28 @@ async function tool_listServices(
     };
   });
 
+  // SHRP-081 — fetch project context so the agent always knows which
+  // vault these credentials belong to. The first line of the text response
+  // is a project banner so even a model that skips structuredContent sees
+  // which vault it's looking at before reading any credentials.
+  const ctx = await fetchProjectContext(supabase, session.projectId);
+
   // MCP tools return a CallToolResult, which carries a `content` array of
   // text/image/resource blocks. We use a single text block carrying the
   // JSON-encoded list so non-MCP-aware clients (or human debuggers) can
   // still read the output, and also a `structuredContent` field for
   // agents that prefer machine-parseable output.
+  const textBody =
+    `# Project: ${ctx.project_name} (id: ${ctx.project_id})\n` +
+    `# Credentials in this vault (${items.length}):\n\n` +
+    JSON.stringify(items, null, 2);
+
   return success(req.id, {
-    content: [
-      {
-        type: "text",
-        text: JSON.stringify(items, null, 2),
-      },
-    ],
-    structuredContent: { services: items },
+    content: [{ type: "text", text: textBody }],
+    structuredContent: {
+      project: ctx,
+      services: items,
+    },
   });
 }
 
@@ -504,8 +643,12 @@ async function tool_rotate(
       "Present these steps to the user as numbered instructions. After they complete the rotation, the user should paste the new value into Sherpa using the deep link above — that re-encrypts the stored value and resets the rotation timer.",
   };
 
+  // SHRP-081 — include project context so the agent confirms scope.
+  const ctx = await fetchProjectContext(supabase, session.projectId);
+
   // A text rendering for clients that don't read structuredContent.
   const text =
+    `# Project: ${ctx.project_name} (id: ${ctx.project_id})\n` +
     `Rotation guide for ${guide.title} (${credential.label}):\n\n` +
     (guide.warning ? `⚠️  ${guide.warning}\n\n` : "") +
     guide.steps.map((s, i) => `${i + 1}. ${s}`).join("\n") +
@@ -514,7 +657,7 @@ async function tool_rotate(
 
   return success(req.id, {
     content: [{ type: "text", text }],
-    structuredContent: result,
+    structuredContent: { project: ctx, ...result },
   });
 }
 
@@ -717,10 +860,16 @@ async function tool_callApi(
       .maybeSingle();
     const activeSession = preCheckSession.data as PreCheckSessionRow | null;
     if (!activeSession) {
-      return fail(
+      // SHRP-083 / SHRP-089: tool-level error with a structured code so the
+      // agent can branch programmatically AND see the actionable text.
+      return toolError(
         req.id,
-        E_INVALID_REQUEST,
-        "Write action queueing blocked: no active agent session for this project. The user must go to SherpaKeys → project settings → AI Agent access and click 'Authorize agents' before write actions can be approved.",
+        ERROR_CODES.NOT_AUTHORIZED,
+        "Write action blocked: no active agent session for this project. Open https://sherpakeys.com → project settings → AI Agent access → 'Authorize agents' (1 or 8 hours), then retry. Write actions require an open authorization window.",
+        {
+          recovery: "authorize_agents",
+          project_id: session.projectId,
+        },
       );
     }
     const preCheckCred = await supabase
@@ -730,10 +879,15 @@ async function tool_callApi(
       .eq("credential_id", credentialId)
       .maybeSingle();
     if (!preCheckCred.data) {
-      return fail(
+      // SHRP-083 / SHRP-089: tool-level error with structured code.
+      return toolError(
         req.id,
-        E_INVALID_REQUEST,
-        "Write action queueing blocked: this credential is not included in the current agent session. The user must re-authorize agents and check this credential in the list, then retry.",
+        ERROR_CODES.CREDENTIAL_UNAVAILABLE,
+        "Write action blocked: this credential isn't included in the current agent session. Re-authorize agents in project settings and make sure this credential is checked, then retry.",
+        {
+          recovery: "reauthorize_with_credential",
+          credential_id: credentialId,
+        },
       );
     }
 
@@ -848,14 +1002,17 @@ async function tool_callApi(
         `Then, while you wait for them: automatically call sherpa_get_approval_result with approval_id="${approvalId}" every 5 seconds, up to 60 attempts, until status changes from 'pending'. Do NOT wait for the user to tell you to check — poll on your own. If status becomes 'approved', return result.body to the user. If 'rejected' or 'expired', tell the user clearly and stop polling.`,
       ].join(" "),
     };
+    // SHRP-081 — include project context on the queued-approval response too.
+    const ctx = await fetchProjectContext(supabase, session.projectId);
     return success(req.id, {
       content: [
         {
           type: "text",
-          text: JSON.stringify(responseContent, null, 2),
+          text: `# Project: ${ctx.project_name} (id: ${ctx.project_id})\n\n` +
+            JSON.stringify(responseContent, null, 2),
         },
       ],
-      structuredContent: responseContent,
+      structuredContent: { project: ctx, ...responseContent },
     });
   }
 
@@ -877,10 +1034,18 @@ async function tool_callApi(
     .maybeSingle();
   const agentSession = sessionResult.data as SessionRow | null;
   if (!agentSession) {
-    return fail(
+    // SHRP-083 / SHRP-089: surface as a tool-level error with a structured
+    // code so the agent can match programmatically AND see the actionable
+    // text instead of being collapsed by the MCP SDK to a generic message.
+    return toolError(
       req.id,
-      E_INVALID_REQUEST,
-      "Agents not currently authorized for this project. The user must go to Sherpa → project settings → AI Agent access and click 'Authorize agents'.",
+      ERROR_CODES.NOT_AUTHORIZED,
+      "Agents not currently authorized for this project. Open https://sherpakeys.com → project settings → AI Agent access → 'Authorize agents' (pick 1 hour or 8 hours), then retry the call. The authorization window must be open for sherpa_call_api to decrypt credentials.",
+      {
+        recovery: "authorize_agents",
+        project_id: session.projectId,
+        docs: "https://sherpakeys.com/security#agent-bridge",
+      },
     );
   }
 
@@ -1006,14 +1171,17 @@ async function tool_callApi(
     body: responseBody,
   };
 
+  // SHRP-081 — include project context on the read-success response.
+  const ctx = await fetchProjectContext(supabase, session.projectId);
   return success(req.id, {
     content: [
       {
         type: "text",
-        text: JSON.stringify(summary, null, 2),
+        text: `# Project: ${ctx.project_name} (id: ${ctx.project_id})\n\n` +
+          JSON.stringify(summary, null, 2),
       },
     ],
-    structuredContent: summary,
+    structuredContent: { project: ctx, ...summary },
   });
 }
 
@@ -1126,14 +1294,17 @@ async function tool_getApprovalResult(
         : null,
   };
 
+  // SHRP-081 — include project context on the approval-result response.
+  const ctx = await fetchProjectContext(supabase, session.projectId);
   return success(req.id, {
     content: [
       {
         type: "text",
-        text: JSON.stringify(responseContent, null, 2),
+        text: `# Project: ${ctx.project_name} (id: ${ctx.project_id})\n\n` +
+          JSON.stringify(responseContent, null, 2),
       },
     ],
-    structuredContent: responseContent,
+    structuredContent: { project: ctx, ...responseContent },
   });
 }
 
