@@ -13,6 +13,14 @@ const nextConfig = {
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },
+  async redirects() {
+    return [
+      // SHRP-093 — /agencies was the agency landing page before we
+      // promoted that positioning to the homepage. Permanent redirect
+      // preserves any external links and bookmarks.
+      { source: "/agencies", destination: "/", permanent: true },
+    ];
+  },
 };
 
 export default nextConfig;

@@ -1,50 +1,49 @@
 import Link from "next/link";
 import {
   ShieldCheck,
-  KeyRound,
   CheckCircle2,
   ArrowRight,
+  FileCheck2,
+  Users,
+  Github,
   Search,
   Bot,
   Clock,
   GitCompare,
-  Github,
+  AlertTriangle,
+  Lock,
+  ClipboardList,
+  KeyRound,
 } from "lucide-react";
 import { EnvAnalyzer } from "./_components/env-analyzer";
 import { TopNav } from "./_components/top-nav";
 
 /**
- * Homepage (SHRP-058) — three-pillar spine.
+ * Homepage (SHRP-093) — agency-positioned.
  *
- * Why does SherpaKeys exist?
- *   To empower you with organized, maintained, and secured credentials
- *   you can use as you build.
- *
- * Wedge: secured and still usable as you vibe code. No fear.
+ * Promoted from /agencies; the vibe-coder pitch is gone. The wedge is
+ * one sentence: "Take on client credentials. Not client risk."
  *
  * Page structure:
- *   1. Hero       — "Vibe code without fear." + analyzer wedge
- *   2. Headaches  — four pains every solo founder shipping with AI knows
- *   3. Secured    — pillar 1: AI firewall + zero-knowledge crypto
- *   4. Organized  — pillar 2: one vault, one source of truth
- *   5. Maintained — pillar 3: rotation, audit log, env-sync
- *   6. Open source— the firewall is MIT on GitHub
- *   7. Pricing    — three tiers (lifetime paused, see SHRP-054)
- *   8. Footer
+ *   1. Sticky top nav with anchor links to each section below
+ *   2. Hero — pitch (left) + .env analyzer (right, reframed for agencies)
+ *   3. Pillar chips — Build safely · Hand off cleanly · Prove it
+ *   4. Headaches — 4 cards in agency voice
+ *   5. Workflow — Intake → Build → Handoff
+ *   6. Custody Record — the deliverable
+ *   7. Trust block — honest tradeoff disclosure (mediated agent bridge)
+ *   8. Founding cohort — 10-agency apply CTA
+ *   9. Open source — dark beat ("your client's security person can audit")
+ *  10. Pricing — Free for 1 workspace + Agency $299/mo
+ *  11. Footer
  *
- * Anchor IDs match the labels in app/_components/top-nav.tsx so the
- * desktop nav links and mobile menu both jump to the right section.
+ * Anchor IDs match TopNav's NAV_LINKS exactly.
  */
 
 export default function HomePage() {
   return (
     <main className="min-h-full overflow-x-clip bg-white">
-      {/* ============================================================
-          STICKY TOP NAV — stays in view as the visitor anchor-jumps
-          between sections. Translucent white with a backdrop blur so
-          content underneath softly shows through. The thin border
-          appears against any section background.
-          ============================================================ */}
+      {/* Sticky top nav */}
       <header className="sticky top-0 z-50 border-b border-slate-200/60 bg-white/85 backdrop-blur-md">
         <div className="mx-auto max-w-6xl px-6">
           <TopNav />
@@ -64,33 +63,34 @@ export default function HomePage() {
             {/* Pitch column */}
             <div className="lg:col-span-7 lg:pt-6">
               <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-sherpa-200 bg-white/80 px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-sherpa-700 shadow-sm backdrop-blur-sm">
-                <KeyRound className="h-3.5 w-3.5" /> The AI firewall for vibe
-                coders
+                <Users className="h-3.5 w-3.5" /> Credential infrastructure for
+                client work
               </div>
               <h1 className="text-balance text-5xl font-bold leading-[1.02] tracking-tight text-slate-900 sm:text-6xl lg:text-7xl">
-                Vibe code{" "}
-                <span className="bg-gradient-to-br from-sherpa-500 to-sherpa-700 bg-clip-text text-transparent">
-                  without fear
-                </span>
-                .
+                Take on client credentials.
+                <br />
+                <span className="text-slate-400">Not client risk.</span>
               </h1>
               <p className="mt-6 max-w-xl text-balance text-xl leading-tight tracking-tight text-slate-600 sm:text-2xl">
-                Your Stripe key, your Supabase service_role, your AWS
-                credentials — usable by Claude, Cursor, and Cowork. Never
-                visible to them.
+                Your client&apos;s Stripe key, Supabase service_role, AWS
+                credentials — usable by Claude, Cursor, and Codex while you
+                build. Never visible to them. Fully accounted for when you
+                hand off.
               </p>
               <div className="mt-8 flex flex-wrap items-center gap-3">
                 <Link
-                  href="/signup"
+                  href="/pro-waitlist?tier=agency"
                   className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-b from-sherpa-500 to-sherpa-600 px-5 py-3 text-sm font-semibold text-white shadow-md shadow-sherpa-500/30 transition hover:shadow-lg hover:shadow-sherpa-500/40"
                 >
-                  Join the waitlist <ArrowRight className="h-4 w-4" />
+                  <ClipboardList className="h-4 w-4" /> Apply to founding
+                  cohort <ArrowRight className="h-4 w-4" />
                 </Link>
                 <Link
-                  href="#secured"
+                  href="/sample-custody-record.html"
                   className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
                 >
-                  See it work
+                  <FileCheck2 className="h-4 w-4" /> See a sample Custody
+                  Record
                 </Link>
               </div>
               <p className="mt-6 inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700 ring-1 ring-emerald-200">
@@ -99,27 +99,31 @@ export default function HomePage() {
               </p>
             </div>
 
-            {/* Analyzer column — the live wedge demo */}
+            {/* Analyzer column — reframed for agency voice */}
             <div className="lg:col-span-5">
+              <div className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-sherpa-600">
+                Run it on a client&apos;s .env
+              </div>
               <div className="rounded-3xl border border-slate-200/70 bg-white p-5 shadow-xl shadow-slate-900/[0.04] ring-1 ring-slate-900/5 sm:p-6">
                 <EnvAnalyzer />
               </div>
+              <p className="mt-3 text-xs leading-relaxed text-slate-500">
+                Pre-handoff diagnostic. Runs in the browser — nothing
+                uploaded. The same engine powers the Go-Live Custody Record.
+              </p>
             </div>
           </section>
         </div>
       </div>
 
       {/* ============================================================
-          PILLAR-INTRO STRIP — Secured leads (it's the wedge); Organized
-          and Maintained are the supporting depth below at smaller weight.
-          Visual hierarchy reinforces the "one thing, with two reinforcements"
-          read instead of "three equal pillars."
+          PILLAR CHIPS — Build safely leads, the other two support
           ============================================================ */}
       <div className="border-t border-slate-200 bg-white">
         <div className="mx-auto max-w-6xl px-6 py-10 sm:py-14">
-          {/* Lead — Secured (the wedge) */}
+          {/* Lead — Build safely */}
           <Link
-            href="#secured"
+            href="#workflow"
             className="group flex items-start gap-5 rounded-3xl border-2 border-sherpa-200 bg-gradient-to-br from-sherpa-50/70 to-white p-6 transition hover:border-sherpa-300 hover:from-sherpa-50 sm:p-7"
           >
             <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-sherpa-500 to-sherpa-600 text-white shadow-md shadow-sherpa-500/30 sm:h-12 sm:w-12">
@@ -130,37 +134,37 @@ export default function HomePage() {
                 The wedge · Pillar 1
               </div>
               <div className="mt-1 text-xl font-bold leading-tight text-slate-900 sm:text-2xl">
-                Secured — your AI gets the answer, never the key
+                Build safely — your AI gets the answer, never the key
               </div>
               <div className="mt-1.5 text-sm leading-relaxed text-slate-600 sm:text-base">
-                The MCP firewall is what SherpaKeys is built around. Claude,
-                Cursor, Cowork, and Codex call your APIs through it — and
-                never see the secret.
+                Your team ships with Claude, Cursor, and Codex through the
+                SherpaKeys firewall. The AI sees the API response. It never
+                sees the secret.
               </div>
             </div>
             <ArrowRight className="ml-auto hidden h-5 w-5 shrink-0 text-sherpa-400 transition group-hover:text-sherpa-600 sm:block" />
           </Link>
 
-          {/* Supporting — Organized + Maintained */}
+          {/* Supporting — Hand off cleanly + Prove it */}
           <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
             <PillarChip
               order="2"
-              title="Organized"
-              body="One vault. One source of truth."
-              anchor="#organized"
+              title="Hand off cleanly"
+              body="Branded Go-Live Custody Record. The client signs off knowing exactly what happened."
+              anchor="#custody"
             />
             <PillarChip
               order="3"
-              title="Maintained"
-              body="Rotation, audit, env-sync — handled."
-              anchor="#maintained"
+              title="Prove it"
+              body="Open-source firewall on GitHub. Audit log of every access, every actor, every minute."
+              anchor="#opensource"
             />
           </div>
         </div>
       </div>
 
       {/* ============================================================
-          HEADACHES — four pains every solo founder knows
+          HEADACHES
           ============================================================ */}
       <section
         id="headaches"
@@ -169,66 +173,174 @@ export default function HomePage() {
         <div className="mx-auto max-w-6xl px-6 py-24 sm:py-32">
           <div className="mx-auto max-w-3xl text-center">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-sherpa-600">
-              Coder headaches
+              Client-work headaches
             </p>
             <h2 className="mt-3 text-balance text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">
-              You came here because of one of these.
+              You&apos;ve lived at least one of these.
             </h2>
             <p className="mt-5 text-lg leading-relaxed text-slate-600">
-              Every solo founder shipping with AI knows these moments.
-              SherpaKeys removes them before they happen.
+              Most agency owners we talk to laugh and then go quiet at three
+              of the four. Normal agency chaos. The kind a process fixes once,
+              and then never again.
             </p>
           </div>
 
           <div className="mt-14 grid grid-cols-1 gap-5 sm:grid-cols-2">
             <HeadacheCard
               icon={Search}
-              title="Where did I put that key?"
-              body=".env files, 1Password, a Slack DM to yourself, that screenshot you saved just in case. Now your build's broken and the prod key is anywhere but here."
+              title="The client emailed us their live Stripe key."
+              body="It&rsquo;s in their sent folder, your inbox, and your contractor&rsquo;s forwarded thread. Forever. There is no professional way to un-send a secret."
             />
             <HeadacheCard
               icon={Bot}
-              title="Can I trust Claude with my Stripe key?"
-              body="You need AI to ship faster. You also know what happens if a service_role key ends up in a chat log, an issue comment, or a public repo."
+              title="Did your AI tools see our keys?"
+              body="The client read an article about AI agents leaking credentials. You ship with Claude every day. You need a better answer than &ldquo;we&rsquo;re careful.&rdquo;"
             />
             <HeadacheCard
               icon={Clock}
-              title="Did I rotate that one in time?"
-              body="The breach notice said 'rotate immediately.' Three weeks later you're still hoping nobody guessed which keys you forgot."
+              title="Handoff day. No receipts."
+              body="The project&rsquo;s done. The client asks what was accessed, what was rotated, and what you still have. Right now the honest answer is a shrug and a Notion page."
             />
             <HeadacheCard
               icon={GitCompare}
-              title="Why does it work locally and not on Vercel?"
-              body="The variable is there. Just with a different name. Or a stale value. Or it's missing. Or you set it in Preview but not Production."
+              title="Three clients. Thirty keys. One folder of .env files."
+              body="Client A&rsquo;s keys one tab away from Client B&rsquo;s. One wrong paste in one wrong chat, and you&rsquo;re writing the worst email of your year."
             />
           </div>
         </div>
       </section>
 
       {/* ============================================================
-          PILLAR 1 — SECURED  (the AI firewall + crypto facts + boundary)
+          WORKFLOW — Intake → Build → Handoff
           ============================================================ */}
-      <section id="secured" className="scroll-mt-24 bg-white">
+      <section id="workflow" className="scroll-mt-24 bg-white">
         <div className="mx-auto max-w-6xl px-6 py-24 sm:py-32">
           <div className="grid grid-cols-1 items-start gap-12 lg:grid-cols-12 lg:gap-16">
-            <div className="lg:col-span-6">
+            <div className="lg:col-span-5">
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-sherpa-600">
-                Pillar 1 · Secured
+                The workflow
               </p>
               <h2 className="mt-3 text-balance text-4xl font-bold leading-[1.05] tracking-tight text-slate-900 sm:text-5xl">
-                Your AI gets the answer.
+                Client keeps control.
                 <br />
-                <span className="text-slate-400">It never gets the key.</span>
+                <span className="text-slate-400">You keep moving.</span>
+                <br />
+                Everyone keeps receipts.
               </h2>
               <p className="mt-6 text-lg leading-relaxed text-slate-600">
-                Claude — or Cursor, or Cowork, or Codex — asks SherpaKeys to
-                call Stripe, Supabase, GitHub. SherpaKeys uses your credential
-                server-side, returns the response, and zeros it back out.
+                Three stages, designed so the credential graph stays clean
+                from kickoff to launch — without slowing your team down on
+                the inside.
               </p>
-              <p className="mt-4 text-lg leading-relaxed text-slate-600">
-                Write actions — anything that costs money or moves data —
-                pause for your approval first. Reads stream through silently.
-                You stay in flow; SherpaKeys stays in the loop.
+            </div>
+
+            <div className="lg:col-span-7">
+              <ol className="space-y-6">
+                <FlowStep
+                  step={1}
+                  title="Intake"
+                  body="The client adds their credentials to a dedicated client workspace — encrypted in their browser before anything leaves it — or you run intake together on a call. Either way: no keys in email, Slack, or a shared doc, ever."
+                />
+                <FlowStep
+                  step={2}
+                  title="Build"
+                  body="Your team ships with Claude, Cursor, or Codex through the SherpaKeys firewall. The AI asks for the API call; SherpaKeys makes it server-side and returns the response. Reads flow silently. Anything that moves money or data pauses for your approval. Every call lands in the audit log with a timestamp and an actor."
+                />
+                <FlowStep
+                  step={3}
+                  title="Handoff"
+                  body="On go-live day you deliver a branded Go-Live Custody Record: every credential inventoried, risk-scored, accounted for. Rotation done, your access revoked, the audit log exported. The client signs off knowing exactly what happened — because it's all written down."
+                />
+              </ol>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ============================================================
+          CUSTODY RECORD — the deliverable
+          ============================================================ */}
+      <section
+        id="custody"
+        className="scroll-mt-24 border-y border-slate-200 bg-slate-50"
+      >
+        <div className="mx-auto max-w-6xl px-6 py-24 sm:py-32">
+          <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-12 lg:gap-16">
+            {/* Mock document preview */}
+            <div className="order-2 lg:order-1 lg:col-span-6">
+              <CustodyRecordPreview />
+            </div>
+
+            <div className="order-1 lg:order-2 lg:col-span-6">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-sherpa-600">
+                The Go-Live Custody Record
+              </p>
+              <h2 className="mt-3 text-balance text-4xl font-bold leading-[1.05] tracking-tight text-slate-900 sm:text-5xl">
+                The handoff document that makes you look like
+                <br />
+                <span className="text-slate-400">the bigger agency.</span>
+              </h2>
+              <p className="mt-6 text-lg leading-relaxed text-slate-600">
+                Every project ends with a signed, dated, branded document the
+                client can file, forward to their accountant, or show their
+                next developer. It&apos;s the difference between &ldquo;trust
+                us, we cleaned up&rdquo; and an artifact.
+              </p>
+              <ul className="mt-8 space-y-3 text-sm text-slate-700">
+                <BulletCheck>
+                  <strong>Your branding, not ours</strong> — white-label
+                  reports on the Agency tier
+                </BulletCheck>
+                <BulletCheck>
+                  Per-credential inventory with risk scoring — the same engine
+                  as the analyzer in the hero
+                </BulletCheck>
+                <BulletCheck>
+                  Rotation + revocation checklist, completed and timestamped
+                </BulletCheck>
+                <BulletCheck>
+                  Full audit log export — every access, every approval, every
+                  actor
+                </BulletCheck>
+              </ul>
+              <Link
+                href="/sample-custody-record.html"
+                className="mt-8 inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-white hover:shadow-md"
+              >
+                <FileCheck2 className="h-4 w-4" /> See a sample report{" "}
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ============================================================
+          TRUST BLOCK — honest tradeoff disclosure
+          ============================================================ */}
+      <section className="bg-white">
+        <div className="mx-auto max-w-6xl px-6 py-24 sm:py-32">
+          <div className="grid grid-cols-1 gap-12 lg:grid-cols-12 lg:gap-16">
+            <div className="lg:col-span-5">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-sherpa-600">
+                Straight answers
+              </p>
+              <h2 className="mt-3 text-balance text-4xl font-bold leading-[1.05] tracking-tight text-slate-900 sm:text-5xl">
+                We&apos;ll tell you exactly what we can
+                <br />
+                <span className="text-slate-400">and can&apos;t see.</span>
+              </h2>
+            </div>
+            <div className="lg:col-span-7">
+              <p className="text-lg leading-relaxed text-slate-600">
+                The firewall, the cryptography, and the approval flow are
+                MIT-licensed on GitHub — your client&apos;s security person
+                can read every line. Credentials are encrypted in the browser;
+                at rest, the vault is zero-knowledge. During an active agent
+                call, the server decrypts that one credential just long enough
+                to make the request, then zeros it. The model never sees
+                plaintext. That&apos;s the honest tradeoff, and it&apos;s
+                documented in full in our threat model.
               </p>
 
               <div className="mt-8 grid grid-cols-2 gap-3 text-sm">
@@ -242,164 +354,109 @@ export default function HomePage() {
                 />
               </div>
 
-              {/* The honest threat-model carve-out for active agent sessions.
-                  Steve's call: don't bury this — the buyer should see it
-                  on the homepage, not just on /security. */}
-              <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-5">
-                <div className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                  Active agent sessions — the honest tradeoff
-                </div>
-                <p className="mt-2 text-sm leading-relaxed text-slate-700">
-                  When your AI agent makes a call, the server decrypts that one
-                  credential server-side just long enough to make the request,
-                  then zeros the key. The model never sees plaintext. But for
-                  the brief moment of that call, the server <em>can</em> read
-                  that one credential — so active sessions trust our server
-                  more than your at-rest vault does. Every call is logged,
-                  rate-limited, and revocable instantly. Full threat model on{" "}
-                  <Link
-                    href="/security"
-                    className="font-semibold text-sherpa-600 hover:text-sherpa-700"
-                  >
-                    /security
-                  </Link>
-                  .
-                </p>
+              <div className="mt-8 flex flex-wrap gap-4 text-sm">
+                <Link
+                  href="/security"
+                  className="inline-flex items-center gap-1.5 font-semibold text-sherpa-600 hover:text-sherpa-700"
+                >
+                  <Lock className="h-4 w-4" /> Read the full threat model{" "}
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
               </div>
 
-              {/* The boundary — what we explicitly are not */}
-              <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-5">
+              {/* What this is — and isn't */}
+              <div className="mt-10 rounded-2xl border border-slate-200 bg-slate-50 p-5">
                 <div className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                  What SherpaKeys is not
+                  What this is — and isn&apos;t
                 </div>
-                <p className="mt-2 text-sm leading-relaxed text-slate-700">
-                  Not for your customer-facing AI runtime. Not a password
-                  manager for human passwords. Not an AI agent itself.
-                  SherpaKeys sits between your AI tools and the APIs you&apos;d
-                  never paste your secret keys into — for when you&apos;re
-                  building, not for what you ship.
-                </p>
-              </div>
-
-              <Link
-                href="/security"
-                className="mt-8 inline-flex items-center gap-1 text-sm font-semibold text-sherpa-600 hover:text-sherpa-700"
-              >
-                Read the full security architecture
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </div>
-
-            <div className="lg:col-span-6">
-              <FirewallStoryboard />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ============================================================
-          PILLAR 2 — ORGANIZED  (one vault)
-          ============================================================ */}
-      <section
-        id="organized"
-        className="scroll-mt-24 border-y border-slate-200 bg-slate-50"
-      >
-        <div className="mx-auto max-w-6xl px-6 py-24 sm:py-32">
-          <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-12 lg:gap-16">
-            <div className="order-2 lg:order-1 lg:col-span-6">
-              <VaultMockup />
-            </div>
-            <div className="order-1 lg:order-2 lg:col-span-6">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-sherpa-600">
-                Pillar 2 · Organized
-              </p>
-              <h2 className="mt-3 text-balance text-4xl font-bold leading-[1.05] tracking-tight text-slate-900 sm:text-5xl">
-                One vault.
-                <br />
-                <span className="text-slate-400">One source of truth.</span>
-              </h2>
-              <p className="mt-6 text-lg leading-relaxed text-slate-600">
-                Paste your .env once. SherpaKeys detects which key belongs to
-                which service, flags the ones AI should never see in plain
-                text, and organizes everything by project. The
-                .env-file-archaeology stops.
-              </p>
-              <ul className="mt-8 space-y-3 text-sm text-slate-700">
-                <BulletCheck>
-                  Auto-detects Stripe, Supabase, GitHub, AWS, OpenAI,
-                  Anthropic, Resend, Vercel, and more
-                </BulletCheck>
-                <BulletCheck>
-                  Risk badges flag credentials that should never reach an AI
-                  chat in clear text
-                </BulletCheck>
-                <BulletCheck>
-                  Copy with auto-clear — clipboard wipes after 30 seconds
-                </BulletCheck>
-                <BulletCheck>
-                  Recovery phrase (12 words) — lose your password, keep your
-                  vault
-                </BulletCheck>
-              </ul>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ============================================================
-          PILLAR 3 — MAINTAINED  (rotation, audit, env-sync)
-          ============================================================ */}
-      <section id="maintained" className="scroll-mt-24 bg-white">
-        <div className="mx-auto max-w-6xl px-6 py-24 sm:py-32">
-          <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-12 lg:gap-16">
-            <div className="lg:col-span-6">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-sherpa-600">
-                Pillar 3 · Maintained
-              </p>
-              <h2 className="mt-3 text-balance text-4xl font-bold leading-[1.05] tracking-tight text-slate-900 sm:text-5xl">
-                Keys age.
-                <br />
-                <span className="text-slate-400">
-                  SherpaKeys ages them for you.
-                </span>
-              </h2>
-              <p className="mt-6 text-lg leading-relaxed text-slate-600">
-                Rotation reminders. Lifecycle tracking. Env-var sync between
-                your laptop, Vercel, Railway, and Render. The maintenance you
-                forget about until it bites — SherpaKeys remembers and nudges.
-              </p>
-              <ul className="mt-8 space-y-3 text-sm text-slate-700">
-                <BulletCheck>
-                  Step-by-step rotation playbooks — Stripe, Supabase, GitHub,
-                  Vercel, more
-                </BulletCheck>
-                <BulletCheck>
-                  Audit log — every access, approval, and rotation,
-                  timestamped
-                </BulletCheck>
-                <BulletCheck>
-                  <span>
-                    Auto-rotation{" "}
-                    <span className="rounded-md bg-amber-100 px-1.5 py-0.5 text-xs font-semibold text-amber-800">
-                      v1.1
-                    </span>{" "}
-                    · env-var sync across Vercel/Railway/Render{" "}
-                    <span className="rounded-md bg-slate-100 px-1.5 py-0.5 text-xs font-semibold text-slate-700">
-                      v1.2
+                <ul className="mt-3 space-y-2.5 text-sm leading-relaxed text-slate-700">
+                  <li className="flex items-start gap-2.5">
+                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" />
+                    <span>
+                      <strong>It is a controlled handoff workflow.</strong>{" "}
+                      Your client keeps ownership of their credentials; you
+                      keep a logged, revocable working window — and proof of
+                      both.
                     </span>
-                  </span>
-                </BulletCheck>
-              </ul>
-            </div>
-            <div className="lg:col-span-6">
-              <LifecycleMockup />
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
+                    <span>
+                      <strong>
+                        It is not a compliance certification.
+                      </strong>{" "}
+                      The Custody Record documents what happened in
+                      SherpaKeys — it doesn&apos;t audit your client&apos;s
+                      whole stack, and it isn&apos;t a SOC 2.
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
+                    <span>
+                      <strong>It is not for what you ship.</strong>{" "}
+                      SherpaKeys sits between your AI tools and the client&apos;s
+                      APIs while you build — it&apos;s not a runtime secrets
+                      manager for the app you deliver.
+                    </span>
+                  </li>
+                </ul>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
       {/* ============================================================
-          OPEN SOURCE — dark beat, GitHub call
+          FOUNDING COHORT
+          ============================================================ */}
+      <section className="border-y border-slate-200 bg-slate-50">
+        <div className="mx-auto max-w-5xl px-6 py-20 sm:py-28">
+          <div className="overflow-hidden rounded-3xl border border-sherpa-200 bg-gradient-to-br from-sherpa-50 via-white to-white p-8 shadow-lg shadow-sherpa-500/5 sm:p-12">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-sherpa-600">
+              Limited · first cohort
+            </p>
+            <h2 className="mt-3 text-balance text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">
+              We&apos;re onboarding 10 founding agencies.
+            </h2>
+            <p className="mt-5 max-w-2xl text-lg leading-relaxed text-slate-700">
+              Use SherpaKeys on a real client project. Get Agency-tier
+              features — multi-client workspaces, white-label branding,
+              branded Custody Records — free for 3 months, and a
+              founding-agency price after. In exchange: a 30-minute call
+              after your first handoff, and honest feedback on the report
+              your client received.
+            </p>
+            <ul className="mt-7 space-y-2.5 text-base text-slate-800">
+              <Bullet>
+                Built for 2–8 person shops that take possession of client
+                production credentials and ship with AI tools.
+              </Bullet>
+              <Bullet>
+                Agency tier is normally $299 / month. Founding agencies lock
+                a lower rate, permanently.
+              </Bullet>
+              <Bullet>
+                Direct line to the founder during the cohort. We listen and
+                we ship.
+              </Bullet>
+            </ul>
+            <Link
+              href="/pro-waitlist?tier=agency"
+              className="mt-8 inline-flex items-center gap-2 rounded-xl bg-gradient-to-b from-sherpa-500 to-sherpa-600 px-6 py-3.5 text-base font-semibold text-white shadow-md shadow-sherpa-500/30 transition hover:shadow-lg hover:shadow-sherpa-500/40"
+            >
+              <ClipboardList className="h-4 w-4" /> Apply as a founding agency{" "}
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+            <p className="mt-4 text-xs text-slate-500">
+              We&apos;ll ask about your team, the AI tools you ship with, and
+              how you currently receive client credentials. Take 3 minutes.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* ============================================================
+          OPEN SOURCE — dark beat
           ============================================================ */}
       <section
         id="opensource"
@@ -416,13 +473,15 @@ export default function HomePage() {
           <h2 className="mt-6 text-balance text-4xl font-bold leading-[1.05] tracking-tight sm:text-5xl">
             The firewall is open source.
             <br />
-            <span className="text-slate-400">So you can audit it yourself.</span>
+            <span className="text-slate-400">
+              So your client&apos;s security person can audit it.
+            </span>
           </h2>
           <p className="mx-auto mt-6 max-w-2xl text-balance text-lg leading-relaxed text-slate-300">
             The MCP firewall, the cryptography, the approval flow — all
-            MIT-licensed on GitHub. If you can&apos;t trust a closed-source
-            key vault, you can read every line of the part that talks to
-            your AI.
+            MIT-licensed on GitHub. When a client asks how the AI gets the
+            answer without seeing the key, you can send them the code instead
+            of a marketing page.
           </p>
           <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
             <Link
@@ -442,28 +501,26 @@ export default function HomePage() {
       </section>
 
       {/* ============================================================
-          PRICING (SHRP-061) — four tiers + Team/Enterprise footer note.
-          $19 Lifetime is gone; subscription-only signals seriousness.
-          All paid tiers route to /pro-waitlist?tier=X until LLC is live.
+          PRICING — Free + Agency (Solo/Pro killed in SHRP-093)
           ============================================================ */}
       <section id="pricing" className="scroll-mt-24 bg-white">
-        <div className="mx-auto max-w-6xl px-6 py-24 sm:py-32">
+        <div className="mx-auto max-w-5xl px-6 py-24 sm:py-32">
           <div className="text-center">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-sherpa-600">
               Pricing
             </p>
             <h2 className="mt-3 text-balance text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">
-              Free for one app. Real prices when you scale.
+              Free for one client. Agency rate after that.
             </h2>
             <p className="mx-auto mt-5 max-w-2xl text-lg leading-relaxed text-slate-600">
-              Browser-encrypted vault on every tier. The free tier is full
-              protection for your first project — not a teaser.
+              Built for 2–8 person shops, not subscription-factory teams.
+              Same browser-encrypted vault on every tier.
             </p>
           </div>
 
-          <div className="mt-14 grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-14 grid grid-cols-1 gap-6 md:grid-cols-2">
             {/* Free */}
-            <div className="flex flex-col rounded-3xl border border-slate-200 bg-white p-7 shadow-sm transition hover:shadow-md">
+            <div className="flex flex-col rounded-3xl border border-slate-200 bg-white p-8 shadow-sm transition hover:shadow-md">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-bold text-slate-900">Free</h3>
                 <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-200">
@@ -477,117 +534,38 @@ export default function HomePage() {
                 <span className="text-sm text-slate-500">/ forever</span>
               </div>
               <p className="mt-3 text-sm text-slate-600">
-                For your first real app, permanently.
+                One real client workspace, permanently. Try it on your next
+                project before you commit.
               </p>
               <ul className="mt-6 space-y-2.5 text-sm text-slate-700">
-                <PriceBullet>1 project, unlimited credentials</PriceBullet>
+                <PriceBullet>1 client workspace</PriceBullet>
                 <PriceBullet>AI firewall + write-action approvals</PriceBullet>
                 <PriceBullet>100 MCP calls / month</PriceBullet>
-                <PriceBullet>7-day audit log</PriceBullet>
+                <PriceBullet>30-day audit log</PriceBullet>
+                <PriceBullet>Standard Custody Record template</PriceBullet>
                 <PriceBullet>BIP-39 recovery</PriceBullet>
               </ul>
               <Link
                 href="/signup"
                 className="mt-auto inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-b from-sherpa-500 to-sherpa-600 px-4 py-3 text-sm font-semibold text-white shadow-sm shadow-sherpa-500/30 transition hover:shadow-md hover:shadow-sherpa-500/40"
               >
-                <KeyRound className="h-4 w-4" /> Join the waitlist
-              </Link>
-            </div>
-
-            {/* Solo */}
-            <div className="flex flex-col rounded-3xl border border-slate-200 bg-white p-7 shadow-sm transition hover:shadow-md">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-bold text-slate-900">Solo</h3>
-                <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-semibold text-slate-700">
-                  Indie
-                </span>
-              </div>
-              <div className="mt-4 flex items-baseline gap-2">
-                <span className="text-5xl font-bold tracking-tight text-slate-900">
-                  $19
-                </span>
-                <span className="text-sm text-slate-500">/ month</span>
-              </div>
-              <p className="mt-1 text-xs text-slate-500">
-                or $190 / year (save $38)
-              </p>
-              <p className="mt-3 text-sm text-slate-600">
-                The indie founder running one real app with AI.
-              </p>
-              <ul className="mt-6 space-y-2.5 text-sm text-slate-700">
-                <PriceBullet>
-                  <strong>Everything in Free</strong>, plus:
-                </PriceBullet>
-                <PriceBullet>Unlimited projects</PriceBullet>
-                <PriceBullet>5,000 MCP calls / month</PriceBullet>
-                <PriceBullet>30-day audit log</PriceBullet>
-                <PriceBullet>Rotation reminders</PriceBullet>
-                <PriceBullet>Email support</PriceBullet>
-              </ul>
-              <Link
-                href="/pro-waitlist?tier=solo"
-                className="mt-auto inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
-              >
-                Join waitlist
-              </Link>
-            </div>
-
-            {/* Pro — most popular */}
-            <div className="relative flex flex-col rounded-3xl border-2 border-sherpa-500 bg-gradient-to-br from-sherpa-50/70 via-white to-white p-7 shadow-xl shadow-sherpa-500/15 transition hover:shadow-2xl hover:shadow-sherpa-500/25">
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-b from-sherpa-500 to-sherpa-600 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-white shadow-md shadow-sherpa-500/40">
-                Most popular
-              </div>
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-bold text-slate-900">Pro</h3>
-                <span className="rounded-full bg-sherpa-100 px-2.5 py-0.5 text-[11px] font-semibold text-sherpa-700 ring-1 ring-sherpa-200">
-                  Power user
-                </span>
-              </div>
-              <div className="mt-4 flex items-baseline gap-2">
-                <span className="bg-gradient-to-br from-sherpa-600 to-sherpa-700 bg-clip-text text-5xl font-bold tracking-tight text-transparent">
-                  $49
-                </span>
-                <span className="text-sm text-slate-500">/ month</span>
-              </div>
-              <p className="mt-1 text-xs text-slate-500">
-                or $490 / year (save $98)
-              </p>
-              <p className="mt-3 text-sm text-slate-600">
-                When AI is operating real production systems for you.
-              </p>
-              <ul className="mt-6 space-y-2.5 text-sm text-slate-700">
-                <PriceBullet color="sherpa">
-                  <strong>Everything in Solo</strong>, plus:
-                </PriceBullet>
-                <PriceBullet color="sherpa">Unlimited MCP calls</PriceBullet>
-                <PriceBullet color="sherpa">90-day audit log</PriceBullet>
-                <PriceBullet color="sherpa">Priority approvals</PriceBullet>
-                <PriceBullet color="sherpa">
-                  Auto-rotation (v1.1)
-                </PriceBullet>
-                <PriceBullet color="sherpa">
-                  Env-var sync (v1.2)
-                </PriceBullet>
-                <PriceBullet color="sherpa">Priority support</PriceBullet>
-              </ul>
-              <Link
-                href="/pro-waitlist?tier=pro"
-                className="mt-auto inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-b from-sherpa-500 to-sherpa-600 px-4 py-3 text-sm font-semibold text-white shadow-sm shadow-sherpa-500/30 transition hover:shadow-md hover:shadow-sherpa-500/40"
-              >
-                Join waitlist
+                <KeyRound className="h-4 w-4" /> Join waitlist
               </Link>
             </div>
 
             {/* Agency */}
-            <div className="flex flex-col rounded-3xl border border-slate-300 bg-slate-50 p-7 shadow-sm transition hover:shadow-md">
+            <div className="relative flex flex-col rounded-3xl border-2 border-sherpa-500 bg-gradient-to-br from-sherpa-50/70 via-white to-white p-8 shadow-xl shadow-sherpa-500/15 transition hover:shadow-2xl hover:shadow-sherpa-500/25">
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-b from-sherpa-500 to-sherpa-600 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-white shadow-md shadow-sherpa-500/40">
+                For agencies
+              </div>
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-bold text-slate-900">Agency</h3>
-                <span className="rounded-full bg-slate-900 px-2.5 py-0.5 text-[11px] font-semibold text-white">
-                  For agencies
+                <span className="rounded-full bg-sherpa-100 px-2.5 py-0.5 text-[11px] font-semibold text-sherpa-700 ring-1 ring-sherpa-200">
+                  Client work
                 </span>
               </div>
               <div className="mt-4 flex items-baseline gap-2">
-                <span className="text-5xl font-bold tracking-tight text-slate-900">
+                <span className="bg-gradient-to-br from-sherpa-600 to-sherpa-700 bg-clip-text text-5xl font-bold tracking-tight text-transparent">
                   $299
                 </span>
                 <span className="text-sm text-slate-500">/ month</span>
@@ -596,67 +574,41 @@ export default function HomePage() {
                 or $2,990 / year (save $598)
               </p>
               <p className="mt-3 text-sm text-slate-600">
-                Building for clients, not just yourself.
+                Multi-client workspaces, white-label, branded Custody Records.
+                Built for the shop that holds other people&apos;s keys.
               </p>
               <ul className="mt-6 space-y-2.5 text-sm text-slate-700">
-                <PriceBullet>
-                  <strong>Everything in Pro</strong>, plus:
+                <PriceBullet color="sherpa">
+                  <strong>Everything in Free</strong>, plus:
                 </PriceBullet>
-                <PriceBullet>Multi-client workspaces</PriceBullet>
-                <PriceBullet>White-label branding</PriceBullet>
-                <PriceBullet>Branded Go-Live Reports (PDF)</PriceBullet>
-                <PriceBullet>1-year audit log</PriceBullet>
-                <PriceBullet>Priority response</PriceBullet>
+                <PriceBullet color="sherpa">
+                  Unlimited client workspaces
+                </PriceBullet>
+                <PriceBullet color="sherpa">Unlimited MCP calls</PriceBullet>
+                <PriceBullet color="sherpa">1-year audit log</PriceBullet>
+                <PriceBullet color="sherpa">
+                  White-label Custody Records (your logo)
+                </PriceBullet>
+                <PriceBullet color="sherpa">
+                  Reusable client intake templates
+                </PriceBullet>
+                <PriceBullet color="sherpa">Priority support</PriceBullet>
               </ul>
               <Link
                 href="/pro-waitlist?tier=agency"
-                className="mt-auto inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-400 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+                className="mt-auto inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-b from-sherpa-500 to-sherpa-600 px-4 py-3 text-sm font-semibold text-white shadow-sm shadow-sherpa-500/30 transition hover:shadow-md hover:shadow-sherpa-500/40"
               >
-                Talk to us
+                Apply to founding cohort
               </Link>
+              <p className="mt-3 text-center text-[11px] text-slate-500">
+                Founding cohort: 3 months free + locked-in lower rate
+              </p>
             </div>
           </div>
 
-          {/* Team + Enterprise — soft mention below the four main tiers */}
-          <div className="mx-auto mt-10 max-w-3xl rounded-2xl border border-slate-200 bg-slate-50 p-6 sm:p-7">
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-              <div>
-                <div className="flex items-baseline gap-2">
-                  <h4 className="text-sm font-bold text-slate-900">Team</h4>
-                  <span className="text-xs text-slate-500">
-                    $19 / seat / mo · 3-seat min
-                  </span>
-                </div>
-                <p className="mt-1.5 text-xs leading-relaxed text-slate-600">
-                  Shared vaults, SSO (Google · GitHub · Microsoft), team
-                  policies, 1-year audit log.
-                </p>
-              </div>
-              <div>
-                <div className="flex items-baseline gap-2">
-                  <h4 className="text-sm font-bold text-slate-900">
-                    Enterprise
-                  </h4>
-                  <span className="text-xs text-slate-500">Custom</span>
-                </div>
-                <p className="mt-1.5 text-xs leading-relaxed text-slate-600">
-                  On-prem deployment, SAML, compliance reviews, dedicated
-                  support, custom retention.
-                </p>
-              </div>
-            </div>
-            <Link
-              href="/pro-waitlist?tier=team"
-              className="mt-5 inline-flex items-center gap-1 text-sm font-semibold text-sherpa-600 hover:text-sherpa-700"
-            >
-              Talk to us about Team or Enterprise
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          </div>
-
-          <p className="mt-8 text-center text-xs text-slate-500">
-            Paid tiers join the waitlist while SherpaKeys LLC finalizes
-            setup. Free is live today.
+          <p className="mt-10 text-center text-xs text-slate-500">
+            Signups paused while SherpaKeys LLC finalizes setup. Founding
+            cohort applications open today.
           </p>
         </div>
       </section>
@@ -671,7 +623,8 @@ export default function HomePage() {
             <span className="text-sherpa-500">Keys</span>
           </div>
           <p className="text-sm text-slate-500">
-            Secured and still usable as you vibe code. No fear.
+            Built for the shops that hold other people&apos;s keys — and want
+            to be able to prove they held them well.
           </p>
           <div className="mt-5 flex flex-wrap items-center justify-center gap-4 text-xs text-slate-500">
             <Link href="/security" className="hover:text-slate-700">
@@ -685,12 +638,16 @@ export default function HomePage() {
               Open source
             </Link>
             <span aria-hidden>·</span>
-            <Link href="/login" className="hover:text-slate-700">
-              Log in
+            <Link href="/sample-custody-record.html" className="hover:text-slate-700">
+              Sample Custody Record
             </Link>
             <span aria-hidden>·</span>
-            <Link href="/signup" className="hover:text-slate-700">
-              Sign up
+            <Link href="/launch-readiness" className="hover:text-slate-700">
+              Go-Live Test
+            </Link>
+            <span aria-hidden>·</span>
+            <Link href="/login" className="hover:text-slate-700">
+              Log in
             </Link>
           </div>
         </div>
@@ -748,8 +705,37 @@ function HeadacheCard({
       <h3 className="mt-5 text-lg font-bold tracking-tight text-slate-900">
         &ldquo;{title}&rdquo;
       </h3>
-      <p className="mt-2 text-sm leading-relaxed text-slate-600">{body}</p>
+      <p
+        className="mt-2 text-sm leading-relaxed text-slate-600"
+        dangerouslySetInnerHTML={{ __html: body }}
+      />
     </div>
+  );
+}
+
+function FlowStep({
+  step,
+  title,
+  body,
+}: {
+  step: number;
+  title: string;
+  body: string;
+}) {
+  return (
+    <li className="flex items-start gap-5 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-sherpa-500 to-sherpa-600 text-lg font-bold text-white shadow-md shadow-sherpa-500/30">
+        {step}
+      </span>
+      <div className="min-w-0">
+        <h3 className="text-lg font-bold tracking-tight text-slate-900">
+          {title}
+        </h3>
+        <p className="mt-1.5 text-sm leading-relaxed text-slate-600">
+          {body}
+        </p>
+      </div>
+    </li>
   );
 }
 
@@ -757,6 +743,15 @@ function BulletCheck({ children }: { children: React.ReactNode }) {
   return (
     <li className="flex items-start gap-2.5">
       <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-sherpa-500" />
+      <span>{children}</span>
+    </li>
+  );
+}
+
+function Bullet({ children }: { children: React.ReactNode }) {
+  return (
+    <li className="flex items-start gap-3">
+      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" />
       <span>{children}</span>
     </li>
   );
@@ -813,339 +808,88 @@ function SecurityFact({
 }
 
 /* ============================================================
-   Mockups — one per pillar
+   Mock visual — Custody Record preview
+   A miniature "this is what your client receives" thumbnail
+   that nods at the real sample without re-rendering the whole thing.
    ============================================================ */
-
-function FirewallStoryboard() {
+function CustodyRecordPreview() {
   return (
-    <div className="space-y-3">
-      {/* Step 1 — email arrives */}
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-900/10">
-        <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-4 py-2 text-[10px] font-medium uppercase tracking-wider text-slate-400">
-          <span>Inbox · 1 new</span>
-          <span>2:14 pm</span>
-        </div>
-        <div className="px-4 py-3">
-          <div className="flex items-start gap-2.5">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-sherpa-500 to-sherpa-600 text-[10px] font-bold text-white">
-              SK
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="flex items-baseline justify-between gap-2">
-                <div className="truncate text-[12px] font-semibold text-slate-900">
-                  SherpaKeys
-                </div>
-                <div className="shrink-0 text-[10px] text-slate-400">
-                  noreply@sherpakeys.com
-                </div>
-              </div>
-              <div className="mt-0.5 truncate text-[13px] font-semibold text-slate-800">
-                Approve write action: stripe/customers
-              </div>
-              <div className="mt-0.5 truncate text-[11px] text-slate-500">
-                An AI agent wants to do something. Approve in your browser?
-              </div>
-              <div className="mt-2.5 inline-flex items-center gap-1.5 rounded-md bg-gradient-to-b from-sherpa-500 to-sherpa-600 px-2.5 py-1 text-[10px] font-semibold text-white shadow-sm">
-                Review and approve →
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+    <div className="relative">
+      {/* Stacked-paper shadow */}
+      <div
+        aria-hidden
+        className="absolute inset-0 translate-x-3 translate-y-3 rounded-2xl border border-slate-200 bg-white shadow-md"
+      />
+      <div
+        aria-hidden
+        className="absolute inset-0 translate-x-1.5 translate-y-1.5 rounded-2xl border border-slate-200 bg-white shadow-md"
+      />
 
-      <div className="ml-4 flex items-center gap-2 pl-1 text-[10px] font-medium uppercase tracking-wider text-slate-400">
-        <span className="h-3 w-px bg-slate-300" />
-        <span>You click the email</span>
-      </div>
-
-      {/* Step 2 — approval page */}
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-900/10">
-        <div className="flex items-center gap-1.5 border-b border-slate-100 bg-slate-50 px-3 py-1.5">
-          <span className="h-2 w-2 rounded-full bg-red-300" />
-          <span className="h-2 w-2 rounded-full bg-amber-300" />
-          <span className="h-2 w-2 rounded-full bg-emerald-300" />
-          <div className="ml-2 truncate rounded bg-white px-2 py-0.5 text-[9px] text-slate-500 ring-1 ring-slate-200">
-            sherpakeys.com/approve/9a0a4ecf…
-          </div>
-        </div>
-        <div className="bg-amber-50 px-3 py-1 text-[9px] font-semibold uppercase tracking-wider text-amber-800">
-          ⏱ Awaiting your decision · 58 min left
-        </div>
-        <div className="px-4 py-4">
-          <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-            Proposed action
-          </div>
-          <div className="mt-1.5 rounded-lg bg-slate-50 p-2.5 font-mono text-[11px] text-slate-900 ring-1 ring-slate-200">
-            POST stripe/customers
-            <br />
-            <span className="text-slate-500">
-              email = sarah@example.com
+      {/* Cover page */}
+      <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-900/10">
+        {/* Top gradient band */}
+        <div className="relative h-48 overflow-hidden bg-gradient-to-br from-sherpa-700 via-sherpa-600 to-sherpa-500 p-5 text-white">
+          <div className="flex items-center gap-2">
+            <span className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-white/15 text-[10px] font-bold ring-1 ring-white/30">
+              NS
+            </span>
+            <span className="text-xs font-semibold opacity-90">
+              Northshore Studio
             </span>
           </div>
-          <div className="mt-3 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-            Amount
+          <div className="mt-5 inline-flex rounded-full bg-white/15 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.15em]">
+            Go-Live Credential Custody Record
           </div>
-          <div className="mt-0.5 text-xl font-bold tracking-tight text-red-700">
-            $48.00
-          </div>
-          <div className="mt-4 grid grid-cols-2 gap-2">
-            <div className="inline-flex items-center justify-center gap-1 rounded-lg border-2 border-slate-300 bg-white py-1.5 text-[11px] font-semibold text-slate-700">
-              Reject
-            </div>
-            <div className="inline-flex items-center justify-center gap-1 rounded-lg bg-gradient-to-b from-emerald-500 to-emerald-600 py-1.5 text-[11px] font-semibold text-white shadow-sm">
-              <CheckCircle2 className="h-3 w-3" />
-              Approve & execute
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="ml-4 flex items-center gap-2 pl-1 text-[10px] font-medium uppercase tracking-wider text-slate-400">
-        <span className="h-3 w-px bg-slate-300" />
-        <span>SherpaKeys decrypts key server-side, makes the call</span>
-      </div>
-
-      {/* Step 3 — approved + executed */}
-      <div className="overflow-hidden rounded-2xl border border-emerald-200 bg-emerald-50 shadow-md shadow-emerald-500/10">
-        <div className="flex items-center gap-1.5 border-b border-emerald-100 bg-emerald-100/60 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-emerald-800">
-          <CheckCircle2 className="h-3 w-3" /> Approved · Executed
-        </div>
-        <div className="px-4 py-3">
-          <div className="font-mono text-[11px] leading-relaxed text-emerald-900">
-            <span className="text-emerald-600">200 OK</span> ·
-            <span className="ml-1 text-slate-500">created customer</span>
+          <div className="mt-2 text-xl font-bold leading-tight">
+            Brushfire Coffee
             <br />
-            id: cus_UcqBi541zF9OqV
-            <br />
-            email: sarah@example.com
-          </div>
-          <div className="mt-2 text-[10px] italic text-emerald-700">
-            Claude got the response. Claude never saw your Stripe key.
+            DTC Launch
           </div>
         </div>
-      </div>
-    </div>
-  );
-}
 
-function VaultMockup() {
-  return (
-    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-900/10">
-      <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-4 py-2.5">
-        <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-          sherpakeys-app · production
-        </div>
-        <div className="inline-flex items-center gap-1 rounded-md bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 ring-1 ring-emerald-200">
-          <ShieldCheck className="h-3 w-3" /> Encrypted
-        </div>
-      </div>
-      <div className="divide-y divide-slate-100">
-        <VaultRow
-          mark="ST"
-          name="STRIPE_SECRET_KEY"
-          value="sk_live_•••••••••••JK"
-          risk="critical"
-        />
-        <VaultRow
-          mark="SB"
-          name="SUPABASE_SERVICE_ROLE"
-          value="eyJhbGc•••••••••••0xQ"
-          risk="critical"
-        />
-        <VaultRow
-          mark="GH"
-          name="GITHUB_PAT"
-          value="ghp_•••••••••••MnP"
-          risk="high"
-        />
-        <VaultRow
-          mark="OA"
-          name="OPENAI_API_KEY"
-          value="sk-proj-•••••••••2Xy"
-          risk="high"
-        />
-        <VaultRow
-          mark="RS"
-          name="RESEND_API_KEY"
-          value="re_•••••••••••wQ"
-          risk="medium"
-        />
-        <VaultRow
-          mark="SB"
-          name="SUPABASE_ANON_KEY"
-          value="eyJhbGc•••••••••••dF8"
-          risk="public"
-        />
-      </div>
-      <div className="border-t border-slate-100 bg-slate-50 px-4 py-2 text-[10px] font-medium text-slate-500">
-        6 credentials · 2 critical · 2 high · 1 medium · 1 public-by-design
-      </div>
-    </div>
-  );
-}
-
-function VaultRow({
-  mark,
-  name,
-  value,
-  risk,
-}: {
-  mark: string;
-  name: string;
-  value: string;
-  risk: "critical" | "high" | "medium" | "public";
-}) {
-  const riskStyle = {
-    critical: "bg-red-50 text-red-700 ring-red-200",
-    high: "bg-orange-50 text-orange-700 ring-orange-200",
-    medium: "bg-amber-50 text-amber-700 ring-amber-200",
-    public: "bg-emerald-50 text-emerald-700 ring-emerald-200",
-  }[risk];
-  const riskLabel = {
-    critical: "Critical",
-    high: "High",
-    medium: "Medium",
-    public: "Public",
-  }[risk];
-
-  return (
-    <div className="flex items-center gap-3 px-4 py-3">
-      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-[10px] font-bold text-slate-700">
-        {mark}
-      </div>
-      <div className="min-w-0 flex-1">
-        <div className="truncate font-mono text-[12px] font-semibold text-slate-900">
-          {name}
-        </div>
-        <div className="truncate font-mono text-[11px] text-slate-500">
-          {value}
-        </div>
-      </div>
-      <span
-        className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1 ${riskStyle}`}
-      >
-        {riskLabel}
-      </span>
-    </div>
-  );
-}
-
-function LifecycleMockup() {
-  return (
-    <div className="space-y-3">
-      {/* Rotation reminder */}
-      <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 shadow-md shadow-amber-500/10">
-        <div className="flex items-start gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-700 ring-1 ring-amber-200">
-            <Clock className="h-5 w-5" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <div className="text-[10px] font-semibold uppercase tracking-wider text-amber-800">
-              Rotation overdue · 7 days
+        {/* Score card */}
+        <div className="-mt-8 mx-5 mb-5 rounded-xl bg-white p-4 shadow-md ring-1 ring-slate-900/5">
+          <div className="flex items-baseline gap-3">
+            <div className="text-3xl font-bold leading-none text-slate-900">
+              89<span className="text-base text-slate-400">/100</span>
             </div>
-            <div className="mt-1 font-mono text-sm font-semibold text-slate-900">
-              STRIPE_SECRET_KEY
-            </div>
-            <div className="mt-1 text-xs leading-relaxed text-amber-900">
-              Last rotated 97 days ago. Stripe recommends 90 days for
-              production keys.
-            </div>
-            <div className="mt-3 inline-flex items-center gap-1.5 rounded-md bg-white px-2.5 py-1 text-[11px] font-semibold text-amber-700 ring-1 ring-amber-200">
-              Start rotation playbook <ArrowRight className="h-3 w-3" />
+            <div>
+              <div className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-emerald-700">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-600" />
+                Green · Launch-ready
+              </div>
+              <div className="mt-0.5 text-[10px] leading-snug text-slate-500">
+                7 services. 2 documented exceptions. 3 personnel revocations.
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Audit log */}
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-md shadow-slate-900/5">
-        <div className="border-b border-slate-100 bg-slate-50 px-4 py-2 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-          Audit log · today
-        </div>
-        <div className="divide-y divide-slate-100">
-          <AuditRow
-            time="2:14 pm"
-            actor="Claude (Cowork)"
-            action="Approved"
-            target="POST stripe/customers"
-            tone="ok"
-          />
-          <AuditRow
-            time="1:47 pm"
-            actor="You"
-            action="Rotated"
-            target="GITHUB_PAT"
-            tone="info"
-          />
-          <AuditRow
-            time="11:02 am"
-            actor="Cursor"
-            action="Read"
-            target="OPENAI_API_KEY"
-            tone="muted"
-          />
-          <AuditRow
-            time="9:18 am"
-            actor="Claude (Desktop)"
-            action="Read"
-            target="SUPABASE_ANON_KEY"
-            tone="muted"
-          />
-        </div>
-      </div>
-
-      {/* Env sync — coming soon */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <GitCompare className="h-4 w-4 text-sherpa-500" />
-            <div className="text-sm font-semibold text-slate-900">
-              Env-var sync
-            </div>
+        {/* Mini section list */}
+        <div className="border-t border-slate-100 px-5 py-3">
+          <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+            Includes
           </div>
-          <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700">
-            Coming v1.2
-          </span>
+          <ul className="mt-2 space-y-1.5 text-[11px] text-slate-700">
+            {[
+              "Stripe · Supabase · GitHub",
+              "Vercel · OpenAI · Resend · Cloudflare",
+              "Audit log (19 events, timestamped)",
+              "Signed methodology + agency principal",
+            ].map((line) => (
+              <li key={line} className="flex items-center gap-1.5">
+                <span className="inline-flex h-3 w-3 items-center justify-center rounded-full bg-emerald-100">
+                  <CheckCircle2 className="h-2 w-2 text-emerald-700" />
+                </span>
+                {line}
+              </li>
+            ))}
+          </ul>
         </div>
-        <p className="mt-2 text-xs leading-relaxed text-slate-600">
-          Push the same source-of-truth values to Vercel, Railway, and Render
-          — one click, no more &ldquo;works locally&rdquo; mysteries.
-        </p>
-      </div>
-    </div>
-  );
-}
 
-function AuditRow({
-  time,
-  actor,
-  action,
-  target,
-  tone,
-}: {
-  time: string;
-  actor: string;
-  action: string;
-  target: string;
-  tone: "ok" | "info" | "muted";
-}) {
-  const actionStyle = {
-    ok: "text-emerald-700",
-    info: "text-sherpa-700",
-    muted: "text-slate-500",
-  }[tone];
-
-  return (
-    <div className="flex items-center gap-3 px-4 py-2.5 text-[11px]">
-      <div className="w-14 shrink-0 text-slate-400">{time}</div>
-      <div className="w-28 shrink-0 truncate font-medium text-slate-700 sm:w-32">
-        {actor}
-      </div>
-      <div className={`w-16 shrink-0 font-semibold ${actionStyle}`}>
-        {action}
-      </div>
-      <div className="min-w-0 flex-1 truncate font-mono text-slate-600">
-        {target}
+        <div className="border-t border-slate-100 bg-slate-50 px-5 py-2 text-[9px] uppercase tracking-wider text-slate-400">
+          11 pages · Generated with SherpaKeys
+        </div>
       </div>
     </div>
   );

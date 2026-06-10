@@ -16,9 +16,9 @@ import Link from "next/link";
 import { Menu, X } from "lucide-react";
 
 const NAV_LINKS: ReadonlyArray<{ href: string; label: string }> = [
-  { href: "/agencies", label: "For agencies" },
   { href: "/#headaches", label: "Headaches" },
-  { href: "/#secured", label: "Secured" },
+  { href: "/#workflow", label: "Workflow" },
+  { href: "/#custody", label: "Custody Record" },
   { href: "/#opensource", label: "Open source" },
   { href: "/#pricing", label: "Pricing" },
 ];
