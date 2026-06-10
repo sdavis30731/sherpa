@@ -713,6 +713,34 @@
     color: var(--muted);
   }
 
+  /* Screen viewing — give each page a centered "sheet" look in the
+     browser. The PDF rendering is unaffected because these rules are
+     scoped to @media screen. */
+  @media screen {
+    html {
+      background: #e2e8f0;
+    }
+    body {
+      padding: 28px 16px;
+    }
+    body > section {
+      max-width: 8.5in;
+      margin: 0 auto 20px auto;
+      background: #fff;
+      border-radius: 6px;
+      box-shadow: 0 6px 24px rgba(15, 23, 42, 0.10);
+      overflow: hidden;
+    }
+    body > section.page-section {
+      padding: 0.85in 0.7in;
+      page-break-before: auto;
+    }
+    body > section.page-section:first-of-type {
+      padding-top: 0.85in;
+    }
+    /* Cover already has its own padding from .cover class — leave it. */
+  }
+
   /* Print hardening */
   @media print {
     html, body {
