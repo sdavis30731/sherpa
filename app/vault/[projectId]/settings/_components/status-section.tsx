@@ -87,10 +87,18 @@ export function EngagementStatusSection({
         .update({ status })
         .eq("id", projectId);
       if (upErr) throw upErr;
+      // Pick the most specific audit action so the activity log reads
+      // naturally — "Engagement launched" rather than "status changed".
+      const action =
+        status === "launched"
+          ? "engagement_launched"
+          : status === "archived"
+            ? "engagement_archived"
+            : "engagement_status_changed";
       await supabase.from("audit_log").insert({
         user_id: user.id,
         project_id: projectId,
-        action: "engagement_status_changed",
+        action,
         actor: "user",
         metadata: { from: initialStatus, to: status },
       });

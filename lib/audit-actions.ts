@@ -29,6 +29,10 @@ import {
   Settings,
   AlertTriangle,
   Activity,
+  FileText,
+  CircleDot,
+  CheckCircle2,
+  Archive as ArchiveIcon,
 } from "lucide-react";
 
 export type AuditSeverity = "info" | "success" | "notable" | "warning" | "danger";
@@ -133,6 +137,40 @@ const REGISTRY: Record<string, AuditActionMeta> = {
     description: "Hard-deleted with all credentials and tokens.",
     icon: FolderX,
     severity: "danger",
+    category: "project",
+  },
+
+  // ----- Engagement lifecycle (SHRP-096) -----
+  // Status flips fire one of these three so the timeline reads naturally.
+  // The audit_log row uses the legacy `engagement_status_changed` action
+  // string; we map every from/to combination back to the same metadata
+  // here. Per-status icons differentiate the row in the viewer.
+  engagement_status_changed: {
+    label: "Engagement status changed",
+    description: "Active / Launched / Archived lifecycle update.",
+    icon: CircleDot,
+    severity: "info",
+    category: "project",
+  },
+  engagement_launched: {
+    label: "Engagement launched",
+    description: "Marked launched — Custody Record becomes the deliverable.",
+    icon: CheckCircle2,
+    severity: "success",
+    category: "project",
+  },
+  engagement_archived: {
+    label: "Engagement archived",
+    description: "Marked archived — no longer active work.",
+    icon: ArchiveIcon,
+    severity: "info",
+    category: "project",
+  },
+  custody_record_saved: {
+    label: "Custody Record saved",
+    description: "Ownership assertions saved for this engagement.",
+    icon: FileText,
+    severity: "success",
     category: "project",
   },
 

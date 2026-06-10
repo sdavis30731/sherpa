@@ -128,10 +128,9 @@ export default async function CustodyViewPage({
         </div>
       </div>
 
-      {/* Inline CSS — agency-color theme + print rules. Keep in the page
+      {/* Inline CSS — agency-color theme + print rules. Kept in the page
           so we don't have to plumb dynamic CSS variables through Tailwind. */}
       <style
-        // eslint-disable-next-line react/no-unknown-property
         dangerouslySetInnerHTML={{
           __html: buildCss({
             primary: agency.primary_color || "#1f6feb",
