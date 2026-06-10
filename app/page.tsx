@@ -51,70 +51,84 @@ export default function HomePage() {
       </header>
 
       {/* ============================================================
-          HERO + ANALYZER
+          HERO — pitch only. Crisp, single-column, no side-by-side
+          analyzer (the analyzer used to make the hero too tall and
+          left a big visual gap under the pitch, SHRP-094 fix).
           ============================================================ */}
       <div className="relative isolate">
         <div
           aria-hidden
           className="absolute inset-0 -z-10 bg-gradient-to-b from-sherpa-50/70 via-white to-white"
         />
-        <div className="mx-auto max-w-6xl px-6">
-          <section className="grid grid-cols-1 gap-12 pt-10 pb-20 sm:pt-16 sm:pb-28 lg:grid-cols-12 lg:gap-12">
-            {/* Pitch column */}
-            <div className="lg:col-span-7 lg:pt-6">
-              <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-sherpa-200 bg-white/80 px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-sherpa-700 shadow-sm backdrop-blur-sm">
-                <Users className="h-3.5 w-3.5" /> Credential infrastructure for
-                client work
-              </div>
-              <h1 className="text-balance text-5xl font-bold leading-[1.02] tracking-tight text-slate-900 sm:text-6xl lg:text-7xl">
-                Take on client credentials.
-                <br />
-                <span className="text-slate-400">Not client risk.</span>
-              </h1>
-              <p className="mt-6 max-w-xl text-balance text-xl leading-tight tracking-tight text-slate-600 sm:text-2xl">
-                Your client&apos;s Stripe key, Supabase service_role, AWS
-                credentials — usable by Claude, Cursor, and Codex while you
-                build. Never visible to them. Fully accounted for when you
-                hand off.
-              </p>
-              <div className="mt-8 flex flex-wrap items-center gap-3">
-                <Link
-                  href="/pro-waitlist?tier=agency"
-                  className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-b from-sherpa-500 to-sherpa-600 px-5 py-3 text-sm font-semibold text-white shadow-md shadow-sherpa-500/30 transition hover:shadow-lg hover:shadow-sherpa-500/40"
-                >
-                  <ClipboardList className="h-4 w-4" /> Apply to founding
-                  cohort <ArrowRight className="h-4 w-4" />
-                </Link>
-                <Link
-                  href="/sample-custody-record.html"
-                  className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
-                >
-                  <FileCheck2 className="h-4 w-4" /> See a sample Custody
-                  Record
-                </Link>
-              </div>
-              <p className="mt-6 inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700 ring-1 ring-emerald-200">
-                <ShieldCheck className="h-3.5 w-3.5" />
-                Browser-encrypted vault. AI never sees plaintext secrets.
-              </p>
+        <div className="mx-auto max-w-3xl px-6">
+          <section className="pt-12 pb-14 sm:pt-20 sm:pb-20">
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-sherpa-200 bg-white/80 px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-sherpa-700 shadow-sm backdrop-blur-sm">
+              <Users className="h-3.5 w-3.5" /> Credential infrastructure for
+              client work
             </div>
-
-            {/* Analyzer column — reframed for agency voice */}
-            <div className="lg:col-span-5">
-              <div className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-sherpa-600">
-                Run it on a client&apos;s .env
-              </div>
-              <div className="rounded-3xl border border-slate-200/70 bg-white p-5 shadow-xl shadow-slate-900/[0.04] ring-1 ring-slate-900/5 sm:p-6">
-                <EnvAnalyzer />
-              </div>
-              <p className="mt-3 text-xs leading-relaxed text-slate-500">
-                Pre-handoff diagnostic. Runs in the browser — nothing
-                uploaded. The same engine powers the Go-Live Custody Record.
-              </p>
+            <h1 className="text-balance text-5xl font-bold leading-[1.02] tracking-tight text-slate-900 sm:text-6xl lg:text-7xl">
+              Take on client credentials.
+              <br />
+              <span className="text-slate-400">Not client risk.</span>
+            </h1>
+            <p className="mt-6 max-w-2xl text-balance text-xl leading-tight tracking-tight text-slate-600 sm:text-2xl">
+              Your client&apos;s Stripe key, Supabase service_role, AWS
+              credentials — usable by Claude, Cursor, and Codex while you
+              build. Never visible to them. Fully accounted for when you
+              hand off.
+            </p>
+            <div className="mt-8 flex flex-wrap items-center gap-3">
+              <Link
+                href="/pro-waitlist?tier=agency"
+                className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-b from-sherpa-500 to-sherpa-600 px-5 py-3 text-sm font-semibold text-white shadow-md shadow-sherpa-500/30 transition hover:shadow-lg hover:shadow-sherpa-500/40"
+              >
+                <ClipboardList className="h-4 w-4" /> Apply to founding cohort{" "}
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+              <Link
+                href="/sample-custody-record.html"
+                className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+              >
+                <FileCheck2 className="h-4 w-4" /> See a sample Custody Record
+              </Link>
             </div>
+            <p className="mt-6 inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700 ring-1 ring-emerald-200">
+              <ShieldCheck className="h-3.5 w-3.5" />
+              Browser-encrypted vault. AI never sees plaintext secrets.
+            </p>
           </section>
         </div>
       </div>
+
+      {/* ============================================================
+          ANALYZER — its own beat, centered. Headline + analyzer card
+          + caption stacked vertically so the tall analyzer doesn't
+          create awkward whitespace next to the hero pitch.
+          ============================================================ */}
+      <section className="border-y border-slate-200 bg-slate-50">
+        <div className="mx-auto max-w-3xl px-6 py-16 sm:py-20">
+          <div className="text-center">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-sherpa-600">
+              Pre-handoff diagnostic
+            </p>
+            <h2 className="mt-3 text-balance text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
+              Run it on a client&apos;s .env.
+              <br />
+              <span className="text-slate-400">
+                Get a Go-Live Check in 30 seconds.
+              </span>
+            </h2>
+            <p className="mx-auto mt-4 max-w-xl text-base leading-relaxed text-slate-600">
+              The same engine that drives the Custody Record. Runs entirely
+              in your browser — nothing uploaded, no signup, no PII captured.
+            </p>
+          </div>
+
+          <div className="mt-10 rounded-3xl border border-slate-200/70 bg-white p-5 shadow-xl shadow-slate-900/[0.04] ring-1 ring-slate-900/5 sm:p-6">
+            <EnvAnalyzer />
+          </div>
+        </div>
+      </section>
 
       {/* ============================================================
           PILLAR CHIPS — Build safely leads, the other two support
