@@ -14,7 +14,7 @@ import {
 export const metadata = {
   title: "SherpaKeys for Agencies — Take on client credentials. Not client risk.",
   description:
-    "Your client's Stripe, Supabase, and AWS keys — usable by Claude, Cursor, and Codex while you build. Never visible to them. Fully accounted for at handoff, with a branded Go-Live Report your client can actually trust.",
+    "Your client's Stripe, Supabase, and AWS keys — usable by Claude, Cursor, and Codex while you build. Never visible to them. Fully accounted for at handoff, with a branded Go-Live Custody Record your client can actually trust.",
 };
 
 export default function AgenciesPage() {
@@ -66,10 +66,10 @@ export default function AgenciesPage() {
             <KeyRound className="h-4 w-4" /> Start a client workspace — free
           </Link>
           <Link
-            href="/pro-waitlist?tier=agency"
+            href="/sample-custody-record.html"
             className="inline-flex items-center justify-center gap-2 rounded-md border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50"
           >
-            <FileCheck2 className="h-4 w-4" /> Request a sample Go-Live Report
+            <FileCheck2 className="h-4 w-4" /> See a sample Go-Live Custody Record
           </Link>
         </div>
         <p className="mt-4 text-sm text-slate-500">
@@ -126,14 +126,14 @@ export default function AgenciesPage() {
           <FlowStep
             step={3}
             title="Handoff"
-            body="On go-live day you deliver a branded Go-Live Report: every credential inventoried, risk-scored, and accounted for. Rotation done, your access revoked, the audit log exported. The client signs off knowing exactly what happened — because it's all written down."
+            body="On go-live day you deliver a branded Go-Live Custody Record: every credential inventoried, risk-scored, and accounted for. Rotation done, your access revoked, the audit log exported. The client signs off knowing exactly what happened — because it's all written down."
           />
         </ol>
       </Section>
 
       {/* The deliverable */}
       <Section
-        eyebrow="The Go-Live Report"
+        eyebrow="The Go-Live Custody Record"
         title="The handoff document that makes you look like the bigger agency."
       >
         <p>
@@ -168,10 +168,10 @@ export default function AgenciesPage() {
           </Bullet>
         </ul>
         <Link
-          href="/pro-waitlist?tier=agency"
+          href="/sample-custody-record.html"
           className="mt-6 inline-flex items-center justify-center gap-2 rounded-md border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50"
         >
-          <FileCheck2 className="h-4 w-4" /> Request a sample report
+          <FileCheck2 className="h-4 w-4" /> See a sample report
         </Link>
       </Section>
 
@@ -254,7 +254,7 @@ export default function AgenciesPage() {
             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
             <span>
               <strong>It is not a compliance certification.</strong> The
-              Go-Live Report documents what happened in SherpaKeys — it
+              Go-Live Custody Record documents what happened in SherpaKeys — it
               doesn&apos;t audit your client&apos;s whole stack, and it
               isn&apos;t a SOC 2.
             </span>
@@ -289,10 +289,10 @@ export default function AgenciesPage() {
             <KeyRound className="h-4 w-4" /> Start a client workspace — free
           </Link>
           <Link
-            href="/pro-waitlist?tier=agency"
+            href="/sample-custody-record.html"
             className="inline-flex items-center justify-center gap-2 rounded-md border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50"
           >
-            Request a sample report
+            See a sample report
           </Link>
         </div>
       </section>
