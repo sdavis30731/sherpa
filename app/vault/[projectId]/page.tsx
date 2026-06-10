@@ -18,6 +18,8 @@ import {
   Archive,
   Sparkles,
   Eye,
+  FileText,
+  ArrowRight,
 } from "lucide-react";
 import { Suspense } from "react";
 
@@ -112,6 +114,18 @@ export default async function ProjectPage({
       typeof project.custody_assertions === "object" &&
       (project.custody_assertions as { is_sample?: unknown }).is_sample === true,
   );
+  // "Custody Record issued" = the form has been saved at least once and
+  // stamped an issued_at. We don't use isComplete() here because partial
+  // saves still produce a viewable record (rendered as Draft).
+  const custodyIssuedAt =
+    project.custody_assertions &&
+    typeof project.custody_assertions === "object"
+      ? ((project.custody_assertions as { issued_at?: unknown }).issued_at as
+          | string
+          | undefined)
+      : undefined;
+  const hasCustody = Boolean(custodyIssuedAt);
+  const isLaunched = project.status === "launched";
 
   return (
     <PlaybookProvider>
@@ -185,6 +199,17 @@ export default async function ProjectPage({
             </Callout>
           </div>
         )}
+
+        {/* Custody Record entry. Three states:
+              - Has issued: View + Edit.
+              - Launched but no record yet: prominent "Generate now" nudge.
+              - Otherwise: subtle "Start Custody Record" CTA. */}
+        <CustodyCard
+          projectId={project.id}
+          hasCustody={hasCustody}
+          custodyIssuedAt={custodyIssuedAt}
+          isLaunched={isLaunched}
+        />
 
         {grouped.length === 0 ? (
           <Card>
@@ -292,6 +317,123 @@ function StatusPill({ status }: { status: EngagementRow["status"] }) {
       <CircleDot className="h-3 w-3" />
       Active
     </span>
+  );
+}
+
+/**
+ * SHRP-096 Day 9-11 — Custody Record entry point. Three states:
+ *   - hasCustody: show "View" + "Edit" buttons. The user can keep
+ *     iterating on the record after launch.
+ *   - isLaunched && !hasCustody: prominent emerald nudge — generating
+ *     the Custody Record is the deliverable for a launched engagement.
+ *   - otherwise: subtle "Start" CTA. Available before launch so the
+ *     agency can pre-fill ownership as they go.
+ */
+function CustodyCard({
+  projectId,
+  hasCustody,
+  custodyIssuedAt,
+  isLaunched,
+}: {
+  projectId: string;
+  hasCustody: boolean;
+  custodyIssuedAt: string | undefined;
+  isLaunched: boolean;
+}) {
+  if (hasCustody) {
+    return (
+      <div className="mb-6 flex items-center justify-between gap-3 rounded-2xl border border-sherpa-200 bg-sherpa-50/60 p-4">
+        <div className="flex items-center gap-3 min-w-0">
+          <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-sherpa-500 text-white">
+            <FileText className="h-4 w-4" />
+          </span>
+          <div className="min-w-0">
+            <div className="text-sm font-semibold text-slate-900">
+              Custody Record issued
+            </div>
+            <div className="truncate text-xs text-slate-600">
+              {custodyIssuedAt
+                ? `Last saved ${new Date(custodyIssuedAt).toLocaleString(undefined, {
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                    hour: "numeric",
+                    minute: "2-digit",
+                  })}`
+                : "Saved"}
+            </div>
+          </div>
+        </div>
+        <div className="flex shrink-0 items-center gap-2">
+          <Link
+            href={`/vault/${projectId}/custody/edit`}
+            className="inline-flex items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm hover:bg-slate-50"
+          >
+            Edit
+          </Link>
+          <Link
+            href={`/vault/${projectId}/custody/view`}
+            className="inline-flex items-center gap-1.5 rounded-md bg-sherpa-500 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-sherpa-600"
+          >
+            View
+            <ArrowRight className="h-3 w-3" />
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (isLaunched) {
+    return (
+      <div className="mb-6 flex items-center justify-between gap-3 rounded-2xl border border-emerald-200 bg-emerald-50/70 p-4">
+        <div className="flex items-center gap-3 min-w-0">
+          <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-emerald-500 text-white">
+            <FileText className="h-4 w-4" />
+          </span>
+          <div className="min-w-0">
+            <div className="text-sm font-semibold text-slate-900">
+              You launched — now generate the Custody Record.
+            </div>
+            <div className="text-xs text-slate-700">
+              A signed record of who owns each account and what was rotated
+              at handoff. This is the deliverable.
+            </div>
+          </div>
+        </div>
+        <Link
+          href={`/vault/${projectId}/custody/edit`}
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700"
+        >
+          Start Custody Record
+          <ArrowRight className="h-3 w-3" />
+        </Link>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mb-6 flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-4">
+      <div className="flex items-center gap-3 min-w-0">
+        <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-slate-100 text-slate-500">
+          <FileText className="h-4 w-4" />
+        </span>
+        <div className="min-w-0">
+          <div className="text-sm font-semibold text-slate-900">
+            Custody Record
+          </div>
+          <div className="text-xs text-slate-500">
+            Pre-fill ownership now, or wait until launch.
+          </div>
+        </div>
+      </div>
+      <Link
+        href={`/vault/${projectId}/custody/edit`}
+        className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm hover:bg-slate-50"
+      >
+        Start
+        <ArrowRight className="h-3 w-3" />
+      </Link>
+    </div>
   );
 }
 
