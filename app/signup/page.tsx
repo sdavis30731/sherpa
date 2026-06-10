@@ -30,7 +30,26 @@ import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/card";
 import { Callout } from "@/components/ui/callout";
 import { ShieldCheck, KeyRound, Bot, Clock } from "lucide-react";
 
+// Next.js requires useSearchParams() to be wrapped in a Suspense boundary
+// so static generation can bail out cleanly. The default export wraps the
+// actual gate in <Suspense>; the gate itself reads ?intent=import.
 export default function SignupPage() {
+  return (
+    <React.Suspense fallback={<SignupGateFallback />}>
+      <SignupGate />
+    </React.Suspense>
+  );
+}
+
+function SignupGateFallback() {
+  return (
+    <main className="mx-auto flex min-h-full max-w-md flex-col justify-center px-6 py-16">
+      <div className="text-center text-sm text-slate-500">Loading…</div>
+    </main>
+  );
+}
+
+function SignupGate() {
   const params = useSearchParams();
   const cameFromImport = params.get("intent") === "import";
 
