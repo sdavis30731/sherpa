@@ -12,7 +12,6 @@ import {
   GitCompare,
   AlertTriangle,
   Lock,
-  ClipboardList,
   KeyRound,
 } from "lucide-react";
 import { EnvAnalyzer } from "./_components/env-analyzer";
@@ -79,10 +78,10 @@ export default function HomePage() {
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <Link
-                href="/pro-waitlist?tier=agency"
+                href="/signup"
                 className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-b from-sherpa-500 to-sherpa-600 px-5 py-3 text-sm font-semibold text-white shadow-md shadow-sherpa-500/30 transition hover:shadow-lg hover:shadow-sherpa-500/40"
               >
-                <ClipboardList className="h-4 w-4" /> Apply to founding cohort{" "}
+                <KeyRound className="h-4 w-4" /> Start free{" "}
                 <ArrowRight className="h-4 w-4" />
               </Link>
               <Link
@@ -92,6 +91,10 @@ export default function HomePage() {
                 <FileCheck2 className="h-4 w-4" /> See a sample Custody Record
               </Link>
             </div>
+            <p className="mt-4 text-xs text-slate-500">
+              Free for your first two client projects. No credit card. No
+              waitlist.
+            </p>
             <p className="mt-6 inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700 ring-1 ring-emerald-200">
               <ShieldCheck className="h-3.5 w-3.5" />
               Browser-encrypted vault. AI never sees plaintext secrets.
@@ -420,54 +423,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ============================================================
-          FOUNDING COHORT
-          ============================================================ */}
-      <section className="border-y border-slate-200 bg-slate-50">
-        <div className="mx-auto max-w-5xl px-6 py-20 sm:py-28">
-          <div className="overflow-hidden rounded-3xl border border-sherpa-200 bg-gradient-to-br from-sherpa-50 via-white to-white p-8 shadow-lg shadow-sherpa-500/5 sm:p-12">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-sherpa-600">
-              Limited · first cohort
-            </p>
-            <h2 className="mt-3 text-balance text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">
-              We&apos;re onboarding 10 founding agencies.
-            </h2>
-            <p className="mt-5 max-w-2xl text-lg leading-relaxed text-slate-700">
-              Use SherpaKeys on a real client project. Get Agency-tier
-              features — multi-client workspaces, white-label branding,
-              branded Custody Records — free for 3 months, and a
-              founding-agency price after. In exchange: a 30-minute call
-              after your first handoff, and honest feedback on the report
-              your client received.
-            </p>
-            <ul className="mt-7 space-y-2.5 text-base text-slate-800">
-              <Bullet>
-                Built for 2–8 person shops that take possession of client
-                production credentials and ship with AI tools.
-              </Bullet>
-              <Bullet>
-                Agency tier is normally $299 / month. Founding agencies lock
-                a lower rate, permanently.
-              </Bullet>
-              <Bullet>
-                Direct line to the founder during the cohort. We listen and
-                we ship.
-              </Bullet>
-            </ul>
-            <Link
-              href="/pro-waitlist?tier=agency"
-              className="mt-8 inline-flex items-center gap-2 rounded-xl bg-gradient-to-b from-sherpa-500 to-sherpa-600 px-6 py-3.5 text-base font-semibold text-white shadow-md shadow-sherpa-500/30 transition hover:shadow-lg hover:shadow-sherpa-500/40"
-            >
-              <ClipboardList className="h-4 w-4" /> Apply as a founding agency{" "}
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-            <p className="mt-4 text-xs text-slate-500">
-              We&apos;ll ask about your team, the AI tools you ship with, and
-              how you currently receive client credentials. Take 3 minutes.
-            </p>
-          </div>
-        </div>
-      </section>
 
       {/* ============================================================
           OPEN SOURCE — dark beat
@@ -515,26 +470,33 @@ export default function HomePage() {
       </section>
 
       {/* ============================================================
-          PRICING — Free + Agency (Solo/Pro killed in SHRP-093)
+          PRICING — Free for agencies, pay only when you scale.
+          One Free card + a "When you grow" table that names the two
+          paid units (per-project subscription, per-report charge).
+          Founding cohort is now a callout below pricing, not a gate.
           ============================================================ */}
       <section id="pricing" className="scroll-mt-24 bg-white">
-        <div className="mx-auto max-w-5xl px-6 py-24 sm:py-32">
+        <div className="mx-auto max-w-4xl px-6 py-24 sm:py-32">
           <div className="text-center">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-sherpa-600">
               Pricing
             </p>
             <h2 className="mt-3 text-balance text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">
-              Free for one client. Agency rate after that.
+              Free for agencies. Pay only when you scale.
             </h2>
             <p className="mx-auto mt-5 max-w-2xl text-lg leading-relaxed text-slate-600">
-              Built for 2–8 person shops, not subscription-factory teams.
-              Same browser-encrypted vault on every tier.
+              No subscription factory. No bundle the agency owner has to
+              justify on a slow month. You pay per active project and per
+              report — and you keep whatever margin you bill your client.
             </p>
           </div>
 
-          <div className="mt-14 grid grid-cols-1 gap-6 md:grid-cols-2">
-            {/* Free */}
-            <div className="flex flex-col rounded-3xl border border-slate-200 bg-white p-8 shadow-sm transition hover:shadow-md">
+          {/* ─── Free card (single, centered) ─── */}
+          <div className="mx-auto mt-14 max-w-xl">
+            <div className="relative flex flex-col rounded-3xl border-2 border-sherpa-500 bg-gradient-to-br from-sherpa-50/70 via-white to-white p-8 shadow-xl shadow-sherpa-500/15 sm:p-10">
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-b from-sherpa-500 to-sherpa-600 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-white shadow-md shadow-sherpa-500/40">
+                Free forever · for agencies
+              </div>
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-bold text-slate-900">Free</h3>
                 <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-200">
@@ -542,88 +504,126 @@ export default function HomePage() {
                 </span>
               </div>
               <div className="mt-4 flex items-baseline gap-2">
-                <span className="text-5xl font-bold tracking-tight text-slate-900">
+                <span className="bg-gradient-to-br from-sherpa-600 to-sherpa-700 bg-clip-text text-6xl font-bold tracking-tight text-transparent">
                   $0
                 </span>
                 <span className="text-sm text-slate-500">/ forever</span>
               </div>
-              <p className="mt-3 text-sm text-slate-600">
-                One real client workspace, permanently. Try it on your next
-                project before you commit.
+              <p className="mt-3 text-sm text-slate-700">
+                Two active client projects included. Everything you need to
+                run them properly, free, forever.
               </p>
               <ul className="mt-6 space-y-2.5 text-sm text-slate-700">
-                <PriceBullet>1 client workspace</PriceBullet>
-                <PriceBullet>AI firewall + write-action approvals</PriceBullet>
-                <PriceBullet>100 MCP calls / month</PriceBullet>
-                <PriceBullet>30-day audit log</PriceBullet>
-                <PriceBullet>Standard Custody Record template</PriceBullet>
-                <PriceBullet>BIP-39 recovery</PriceBullet>
+                <PriceBullet color="sherpa">
+                  <strong>2 client projects</strong> included
+                </PriceBullet>
+                <PriceBullet color="sherpa">
+                  AI firewall + write-action approvals
+                </PriceBullet>
+                <PriceBullet color="sherpa">
+                  Browser-encrypted vault · zero-knowledge at rest
+                </PriceBullet>
+                <PriceBullet color="sherpa">
+                  Audit log of every access
+                </PriceBullet>
+                <PriceBullet color="sherpa">
+                  Standard Custody Record template
+                </PriceBullet>
+                <PriceBullet color="sherpa">
+                  BIP-39 recovery, MIT-licensed firewall
+                </PriceBullet>
               </ul>
               <Link
                 href="/signup"
-                className="mt-auto inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-b from-sherpa-500 to-sherpa-600 px-4 py-3 text-sm font-semibold text-white shadow-sm shadow-sherpa-500/30 transition hover:shadow-md hover:shadow-sherpa-500/40"
+                className="mt-8 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-b from-sherpa-500 to-sherpa-600 px-4 py-3.5 text-base font-semibold text-white shadow-md shadow-sherpa-500/30 transition hover:shadow-lg hover:shadow-sherpa-500/40"
               >
-                <KeyRound className="h-4 w-4" /> Join waitlist
-              </Link>
-            </div>
-
-            {/* Agency */}
-            <div className="relative flex flex-col rounded-3xl border-2 border-sherpa-500 bg-gradient-to-br from-sherpa-50/70 via-white to-white p-8 shadow-xl shadow-sherpa-500/15 transition hover:shadow-2xl hover:shadow-sherpa-500/25">
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-b from-sherpa-500 to-sherpa-600 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-white shadow-md shadow-sherpa-500/40">
-                For agencies
-              </div>
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-bold text-slate-900">Agency</h3>
-                <span className="rounded-full bg-sherpa-100 px-2.5 py-0.5 text-[11px] font-semibold text-sherpa-700 ring-1 ring-sherpa-200">
-                  Client work
-                </span>
-              </div>
-              <div className="mt-4 flex items-baseline gap-2">
-                <span className="bg-gradient-to-br from-sherpa-600 to-sherpa-700 bg-clip-text text-5xl font-bold tracking-tight text-transparent">
-                  $299
-                </span>
-                <span className="text-sm text-slate-500">/ month</span>
-              </div>
-              <p className="mt-1 text-xs text-slate-500">
-                or $2,990 / year (save $598)
-              </p>
-              <p className="mt-3 text-sm text-slate-600">
-                Multi-client workspaces, white-label, branded Custody Records.
-                Built for the shop that holds other people&apos;s keys.
-              </p>
-              <ul className="mt-6 space-y-2.5 text-sm text-slate-700">
-                <PriceBullet color="sherpa">
-                  <strong>Everything in Free</strong>, plus:
-                </PriceBullet>
-                <PriceBullet color="sherpa">
-                  Unlimited client workspaces
-                </PriceBullet>
-                <PriceBullet color="sherpa">Unlimited MCP calls</PriceBullet>
-                <PriceBullet color="sherpa">1-year audit log</PriceBullet>
-                <PriceBullet color="sherpa">
-                  White-label Custody Records (your logo)
-                </PriceBullet>
-                <PriceBullet color="sherpa">
-                  Reusable client intake templates
-                </PriceBullet>
-                <PriceBullet color="sherpa">Priority support</PriceBullet>
-              </ul>
-              <Link
-                href="/pro-waitlist?tier=agency"
-                className="mt-auto inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-b from-sherpa-500 to-sherpa-600 px-4 py-3 text-sm font-semibold text-white shadow-sm shadow-sherpa-500/30 transition hover:shadow-md hover:shadow-sherpa-500/40"
-              >
-                Apply to founding cohort
+                <KeyRound className="h-4 w-4" /> Start free{" "}
+                <ArrowRight className="h-4 w-4" />
               </Link>
               <p className="mt-3 text-center text-[11px] text-slate-500">
-                Founding cohort: 3 months free + locked-in lower rate
+                No credit card. No waitlist.
               </p>
             </div>
           </div>
 
-          <p className="mt-10 text-center text-xs text-slate-500">
-            Signups paused while SherpaKeys LLC finalizes setup. Founding
-            cohort applications open today.
-          </p>
+          {/* ─── "When you grow" — pay-as-you-grow add-ons ─── */}
+          <div className="mx-auto mt-10 max-w-2xl">
+            <div className="text-center">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                When you grow
+              </p>
+              <p className="mt-2 text-sm text-slate-600">
+                Two add-ons. That&apos;s the whole pricing book.
+              </p>
+            </div>
+            <div className="mt-5 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+              <div className="grid grid-cols-1 divide-y divide-slate-200 sm:grid-cols-2 sm:divide-y-0 sm:divide-x">
+                <div className="p-6 sm:p-7">
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-3xl font-bold tracking-tight text-slate-900">
+                      $19
+                    </span>
+                    <span className="text-xs text-slate-500">
+                      / month / project
+                    </span>
+                  </div>
+                  <div className="mt-1.5 text-sm font-semibold text-slate-900">
+                    Each additional client project
+                  </div>
+                  <div className="mt-1.5 text-xs leading-relaxed text-slate-600">
+                    Beyond the 2 included. Add and remove projects as you
+                    take on new clients and offboard old ones — only pay
+                    for active ones.
+                  </div>
+                </div>
+                <div className="p-6 sm:p-7">
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-3xl font-bold tracking-tight text-slate-900">
+                      $99
+                    </span>
+                    <span className="text-xs text-slate-500">
+                      / Custody Record
+                    </span>
+                  </div>
+                  <div className="mt-1.5 text-sm font-semibold text-slate-900">
+                    Each Go-Live Custody Record
+                  </div>
+                  <div className="mt-1.5 text-xs leading-relaxed text-slate-600">
+                    Bill your client whatever you want for the launch
+                    closeout — typically $750 to $2,500. You keep the
+                    markup. SherpaKeys takes one fixed price.
+                  </div>
+                </div>
+              </div>
+            </div>
+            <p className="mt-3 text-center text-xs text-slate-500">
+              That&apos;s it. No seat licenses. No platform fees. No
+              negotiation.
+            </p>
+          </div>
+
+          {/* ─── Founding cohort callout ─── */}
+          <div className="mx-auto mt-12 max-w-2xl rounded-2xl border border-sherpa-200 bg-sherpa-50/40 p-6 sm:p-7">
+            <div className="flex items-start gap-4">
+              <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-sherpa-500 to-sherpa-600 text-white shadow-md shadow-sherpa-500/30">
+                <Users className="h-5 w-5" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <div className="text-xs font-semibold uppercase tracking-[0.18em] text-sherpa-700">
+                  Founding cohort
+                </div>
+                <h3 className="mt-1 text-base font-bold text-slate-900 sm:text-lg">
+                  First 10 agencies who sign up lock founder rates for life.
+                </h3>
+                <p className="mt-2 text-sm leading-relaxed text-slate-700">
+                  $14 / month / project · $79 / Custody Record · direct line
+                  to the founder during build. We&apos;re selecting the first
+                  10 from the free signups based on engagement — no separate
+                  application, no apply form. Just start your first project.
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -757,15 +757,6 @@ function BulletCheck({ children }: { children: React.ReactNode }) {
   return (
     <li className="flex items-start gap-2.5">
       <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-sherpa-500" />
-      <span>{children}</span>
-    </li>
-  );
-}
-
-function Bullet({ children }: { children: React.ReactNode }) {
-  return (
-    <li className="flex items-start gap-3">
-      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" />
       <span>{children}</span>
     </li>
   );
