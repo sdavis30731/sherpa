@@ -89,8 +89,8 @@ export function ProjectActions({ projectId }: { projectId: string }) {
       <Link
         href={`/vault/${projectId}/settings`}
         className="inline-flex h-9 items-center gap-1 rounded-md border border-slate-300 bg-white px-3 text-sm font-medium text-slate-600 shadow-sm hover:bg-slate-50 hover:text-slate-900"
-        title="Project settings"
-        aria-label="Project settings"
+        title="Engagement settings"
+        aria-label="Engagement settings"
       >
         <Settings className="h-4 w-4" />
       </Link>

@@ -6,6 +6,18 @@ import { ChevronLeft, Bot, ArrowRight } from "lucide-react";
 import { RenameProjectForm } from "./_components/rename-form";
 import { ArchiveProjectSection } from "./_components/archive-section";
 import { DeleteProjectSection } from "./_components/delete-section";
+import { EngagementStatusSection } from "./_components/status-section";
+
+type EngagementRow = {
+  id: string;
+  name: string;
+  description: string | null;
+  client_name: string | null;
+  launch_date: string | null;
+  status: "active" | "launched" | "archived";
+  archived_at: string | null;
+  created_at: string;
+};
 
 export default async function ProjectSettingsPage({
   params,
@@ -18,15 +30,16 @@ export default async function ProjectSettingsPage({
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect(`/login?next=/vault/${projectId}/settings`);
 
-  const { data: project } = await supabase
+  const { data: projectRaw } = await supabase
     .from("projects")
-    .select("id, name, description, archived_at, created_at")
+    .select(
+      "id, name, description, client_name, launch_date, status, archived_at, created_at",
+    )
     .eq("id", projectId)
     .maybeSingle();
-  if (!project) notFound();
+  if (!projectRaw) notFound();
+  const project = projectRaw as EngagementRow;
 
-  // Snapshot of related counts (purely informational, used by the delete
-  // section so the user knows what they're about to wipe).
   const [{ count: credentialCount }, { count: tokenCount }] = await Promise.all([
     supabase
       .from("credentials")
@@ -40,18 +53,20 @@ export default async function ProjectSettingsPage({
       .is("revoked_at", null),
   ]);
 
+  const displayName = project.client_name?.trim() || project.name;
+
   return (
     <main className="mx-auto max-w-2xl px-6 py-10">
       <Link
         href={`/vault/${projectId}`}
         className="mb-3 inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-800"
       >
-        <ChevronLeft className="h-4 w-4" /> Back to {project.name}
+        <ChevronLeft className="h-4 w-4" /> Back to {displayName}
       </Link>
 
-      <h1 className="mb-1 text-2xl font-bold text-slate-900">Project settings</h1>
+      <h1 className="mb-1 text-2xl font-bold text-slate-900">Engagement settings</h1>
       <p className="mb-8 text-sm text-slate-600">
-        Rename, archive, or delete <strong>{project.name}</strong>.
+        Edit the engagement details, change its lifecycle status, or archive it.
       </p>
 
       <div className="space-y-6">
@@ -69,7 +84,7 @@ export default async function ProjectSettingsPage({
               </div>
               <p className="text-sm text-slate-600">
                 Generate MCP tokens to let Claude, Cursor, or Cowork use this
-                project&apos;s credentials — without seeing them.
+                engagement&apos;s credentials — without seeing them.
               </p>
             </div>
             <ArrowRight className="h-4 w-4 shrink-0 text-sherpa-500" />
@@ -78,13 +93,27 @@ export default async function ProjectSettingsPage({
 
         <Card>
           <CardHeader>
-            <CardTitle>Rename</CardTitle>
+            <CardTitle>Details</CardTitle>
           </CardHeader>
           <CardBody>
             <RenameProjectForm
               projectId={project.id}
               initialName={project.name}
               initialDescription={project.description ?? ""}
+              initialClientName={project.client_name ?? ""}
+              initialLaunchDate={project.launch_date ?? ""}
+            />
+          </CardBody>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Status</CardTitle>
+          </CardHeader>
+          <CardBody>
+            <EngagementStatusSection
+              projectId={project.id}
+              initialStatus={project.status}
             />
           </CardBody>
         </Card>

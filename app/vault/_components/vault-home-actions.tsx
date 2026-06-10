@@ -28,7 +28,7 @@ export function VaultHomeActions() {
   return (
     <>
       <Button onClick={() => setOpen(true)}>
-        <Plus className="h-4 w-4" /> New project
+        <Plus className="h-4 w-4" /> New engagement
       </Button>
       <CreateProjectDialog open={open} onOpenChange={setOpen} />
     </>
