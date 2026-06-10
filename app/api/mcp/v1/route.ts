@@ -1181,24 +1181,56 @@ async function tool_callApi(
     }
   }
 
-  // Make the request.
+  // SHRP-084 — Hard timeout on the outbound call. Fable's dogfood
+  // session surfaced 4+ minute hangs with no response; suspect was the
+  // Claude Desktop local-proxy layer dropping responses on the floor.
+  // We can't fix that hop, but we CAN guarantee the server itself fails
+  // loudly when a provider takes more than PROVIDER_TIMEOUT_MS to
+  // respond. Single AbortController is passed to fetch and inherited by
+  // the response body stream, so a hang in text() also gets cancelled.
+  const PROVIDER_TIMEOUT_MS = 30_000;
+  const controller = new AbortController();
+  const timeoutHandle = setTimeout(
+    () => controller.abort(),
+    PROVIDER_TIMEOUT_MS,
+  );
+
   let providerResponse: Response;
+  let responseText: string;
   try {
     providerResponse = await fetch(url, {
       method,
       headers: outboundHeaders,
       body: outboundBody,
+      signal: controller.signal,
     });
+    responseText = await providerResponse.text();
   } catch (err) {
-    return fail(
+    const isAbort =
+      err instanceof Error &&
+      (err.name === "AbortError" || err.message.includes("aborted"));
+    if (isAbort) {
+      return toolError(
+        req.id,
+        ERROR_CODES.PROVIDER_TIMEOUT,
+        `Upstream ${provider.displayName} didn't respond within ${PROVIDER_TIMEOUT_MS / 1000}s. The credential is fine; the upstream provider is just slow or down. Retry — providers usually recover on the next attempt. If this is happening to multiple calls in a row, check the provider's status page.`,
+        {
+          service: credential.service,
+          method,
+          path,
+          timeout_ms: PROVIDER_TIMEOUT_MS,
+        },
+      );
+    }
+    return toolError(
       req.id,
-      E_INTERNAL,
+      ERROR_CODES.PROVIDER_ERROR,
       `Outbound request to ${provider.displayName} failed: ${err instanceof Error ? err.message : "unknown"}`,
+      { service: credential.service, method, path },
     );
+  } finally {
+    clearTimeout(timeoutHandle);
   }
-
-  // Read the response body.
-  const responseText = await providerResponse.text();
   let responseBody: unknown = responseText;
   const responseContentType = providerResponse.headers.get("content-type") ?? "";
   if (responseContentType.includes("application/json")) {

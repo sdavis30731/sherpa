@@ -314,34 +314,60 @@ export async function POST(
     }
   }
 
+  // SHRP-084 — Hard timeout on the outbound call so the approve route
+  // can't hang waiting on a slow provider. The approve route is more
+  // forgiving than the MCP call (we already gave the human a moment to
+  // approve), so a 45s timeout — slightly looser than the 30s on
+  // sherpa_call_api reads, accommodating writes that legitimately take
+  // longer to process upstream.
+  const PROVIDER_TIMEOUT_MS = 45_000;
+  const controller = new AbortController();
+  const timeoutHandle = setTimeout(
+    () => controller.abort(),
+    PROVIDER_TIMEOUT_MS,
+  );
+
   let providerResponse: Response;
+  let responseText: string;
   try {
     providerResponse = await fetch(url, {
       method: approval.method.toUpperCase(),
       headers: outboundHeaders,
       body: outboundBody,
+      signal: controller.signal,
     });
+    responseText = await providerResponse.text();
   } catch (err) {
-    const reason = err instanceof Error ? err.message : "unknown";
-    // Persist the failure so the agent can see what happened — note the
-    // row is already marked 'approved' at this point, so this is a real
+    const isAbort =
+      err instanceof Error &&
+      (err.name === "AbortError" || err.message.includes("aborted"));
+    const reason = isAbort
+      ? `Provider timeout after ${PROVIDER_TIMEOUT_MS / 1000}s`
+      : err instanceof Error
+        ? err.message
+        : "unknown";
+    // Persist the failure so the agent can see what happened — the row
+    // is already marked 'approved' at this point, so this is a real
     // approved-but-execution-failed state, which IS legitimate (network
-    // glitch, upstream service down, etc.) and should be visible.
+    // glitch, upstream service down, hung connection, etc.) and should
+    // be visible.
     await supabase
       .from("pending_approvals")
       .update({
         result_status_code: 0,
-        result_body: `Network error: ${reason}`,
+        result_body: isAbort
+          ? `provider_timeout: ${reason}`
+          : `Network error: ${reason}`,
         executed_at: new Date().toISOString(),
       } as never)
       .eq("id", id);
     return NextResponse.json(
       { error: `Outbound request failed: ${reason}` },
-      { status: 502 },
+      { status: isAbort ? 504 : 502 },
     );
+  } finally {
+    clearTimeout(timeoutHandle);
   }
-
-  const responseText = await providerResponse.text();
 
   // ============================================================
   // 9) Persist the result + audit log
