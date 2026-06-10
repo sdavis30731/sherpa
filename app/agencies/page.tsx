@@ -22,9 +22,26 @@ export default function AgenciesPage() {
     <main className="mx-auto min-h-full max-w-4xl px-6 pb-24">
       {/* Top nav */}
       <nav className="flex items-center justify-between py-5">
-        <Link href="/" className="text-lg font-bold tracking-tight">
-          <span className="text-slate-900">Sherpa</span>
-          <span className="text-sherpa-500">Keys</span>
+        <Link
+          href="/"
+          className="flex items-center gap-2 text-lg font-bold tracking-tight"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            className="h-6 w-6 text-sherpa-500"
+            fill="currentColor"
+            aria-hidden="true"
+          >
+            <path
+              fillRule="evenodd"
+              clipRule="evenodd"
+              d="M12 2.4 L22.6 20.8 H1.4 Z M12 8.4 a2.6 2.6 0 0 1 1.2 4.9 L14.4 17.8 H9.6 L10.8 13.3 A2.6 2.6 0 0 1 12 8.4 Z"
+            />
+          </svg>
+          <span>
+            <span className="text-slate-900">Sherpa</span>
+            <span className="text-sherpa-500">Keys</span>
+          </span>
         </Link>
         <div className="flex items-center gap-4 text-sm">
           <Link
