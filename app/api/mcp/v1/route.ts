@@ -1016,36 +1016,17 @@ async function tool_callApi(
       },
     } as never);
 
-    // Look up the user's email so we can notify them. The auth.admin
-    // path is the safest way to read this server-side.
-    let emailSent: { sent: boolean; reason?: string } = {
+    // SHRP-097 — the initial notification is deferred to the cron sweep
+    // at /api/cron/approval-reminders (runs every minute). The row's
+    // notify_after defaults to now() + 60s; if the user opens the
+    // dashboard within that window and claims the row, the cron skips
+    // the email entirely. If they don't, the email fires after the
+    // window passes. Saves an email per approval for dashboard-active
+    // users with no UX regression for away-from-desk users.
+    const emailSent: { sent: boolean; reason?: string } = {
       sent: false,
-      reason: "not_attempted",
+      reason: "deferred_to_cron",
     };
-    try {
-      const adminUser = await supabase.auth.admin.getUserById(session.userId);
-      const toEmail = adminUser.data.user?.email;
-      if (toEmail) {
-        emailSent = await sendApprovalEmail({
-          to: toEmail,
-          approvalUrl,
-          summary,
-          service: credential.service,
-          endpoint,
-          method,
-          dollarAmountCents: dollarCents,
-          expiresAt,
-          agentPrompt: null,
-        });
-      } else {
-        emailSent = { sent: false, reason: "no_email_on_user_row" };
-      }
-    } catch (err) {
-      emailSent = {
-        sent: false,
-        reason: err instanceof Error ? err.message : "lookup_failed",
-      };
-    }
 
     // Return a structured "pending approval" response so the agent
     // knows what to tell the user — AND automatically polls until the

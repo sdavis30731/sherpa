@@ -1,17 +1,17 @@
 /**
- * GET /api/cron/approval-reminders  (SHRP-086)
+ * GET /api/cron/approval-reminders
  *
- * Vercel cron sweep. Runs every 5 minutes (see vercel.json). Finds
- * pending_approvals rows that are still 'pending', that haven't been
- * reminded yet, and whose expires_at is within the next 15 minutes —
- * then sends a reminder email and marks reminder_sent_at.
+ * Vercel cron sweep. Runs every minute (see vercel.json). Does two
+ * passes over pending_approvals:
  *
- * The original approval email might have been buried (Gmail's Important
- * folder, spam, the user simply not at their desk). A reminder 15 min
- * before expiry catches the cases where the human just hasn't seen it
- * yet. Without this, the most common failure mode is "the agent did
- * exactly what we told it to and the user didn't notice until it was
- * too late" — which killed Fable's first /agencies commit attempt.
+ *   1. Initial notification (SHRP-097). pending + notified_via IS NULL
+ *      + now() > notify_after — the dashboard hasn't claimed it within
+ *      its 60s window, so we send the email and mark notified_via='email'.
+ *
+ *   2. 15-min reminder (SHRP-086). pending + reminder_sent_at IS NULL +
+ *      expires_at within next 15 min — sends a reminder for approvals
+ *      that the user hasn't acted on yet. Catches the "I saw the email,
+ *      meant to look at it, got distracted" case.
  *
  * Auth: Vercel cron jobs automatically include
  *   Authorization: Bearer <CRON_SECRET>
@@ -39,8 +39,6 @@ interface ApprovalRow {
 }
 
 export async function GET(request: NextRequest) {
-  // Auth — Vercel cron sends Bearer <CRON_SECRET>. If CRON_SECRET isn't
-  // configured, refuse to run; we don't want a no-auth cron loose.
   const expectedAuth = process.env.CRON_SECRET
     ? `Bearer ${process.env.CRON_SECRET}`
     : null;
@@ -51,39 +49,131 @@ export async function GET(request: NextRequest) {
 
   const supabase = createAdminClient();
   const now = new Date();
+  const nowIso = now.toISOString();
   const reminderCutoff = new Date(now.getTime() + REMINDER_WINDOW_MS);
+  const baseUrl =
+    process.env.NEXT_PUBLIC_SITE_URL ?? "https://sherpakeys.com";
 
-  const { data: candidatesData, error: queryErr } = await supabase
+  // ─────────────── Pass 1: initial notification (SHRP-097) ───────────────
+  // Predicate covered by partial index pending_approvals_notify_pending_idx.
+  const { data: initialData, error: initialErr } = await supabase
     .from("pending_approvals")
     .select(
       "id, user_id, action_summary, service, endpoint, method, dollar_amount_cents, agent_prompt, expires_at",
     )
     .eq("status", "pending")
-    .gt("expires_at", now.toISOString())
-    .lt("expires_at", reminderCutoff.toISOString())
-    .is("reminder_sent_at", null);
-
-  if (queryErr) {
+    .gt("expires_at", nowIso)
+    .is("notified_via", null)
+    .lt("notify_after", nowIso);
+  if (initialErr) {
     return NextResponse.json(
-      { error: `query failed: ${queryErr.message}` },
+      { error: `initial query failed: ${initialErr.message}` },
       { status: 500 },
     );
   }
+  const initialCandidates = (initialData ?? []) as ApprovalRow[];
 
-  const candidates = (candidatesData ?? []) as ApprovalRow[];
-  const baseUrl =
-    process.env.NEXT_PUBLIC_SITE_URL ?? "https://sherpakeys.com";
+  let initialSent = 0;
+  let initialFailed = 0;
+  const initialResults: Array<{ id: string; status: string; reason?: string }> = [];
 
-  let sent = 0;
-  let failed = 0;
-  const results: Array<{ id: string; status: string; reason?: string }> = [];
-
-  for (const row of candidates) {
+  for (const row of initialCandidates) {
     const userResult = await supabase.auth.admin.getUserById(row.user_id);
     const toEmail = userResult.data.user?.email;
     if (!toEmail) {
-      failed++;
-      results.push({
+      initialFailed++;
+      initialResults.push({
+        id: row.id,
+        status: "skipped",
+        reason: "no_email_for_user",
+      });
+      continue;
+    }
+    const approvalUrl = `${baseUrl.replace(/\/+$/, "")}/approve/${row.id}`;
+
+    // Race-tolerant claim — only send if notified_via is still null. If
+    // the dashboard claimed in the last few hundred ms, we skip.
+    const { error: claimErr, count } = await supabase
+      .from("pending_approvals")
+      .update(
+        {
+          notified_via: "email",
+          claimed_at: nowIso,
+        } as never,
+        { count: "exact" },
+      )
+      .eq("id", row.id)
+      .eq("status", "pending")
+      .is("notified_via", null);
+    if (claimErr || (count ?? 0) === 0) {
+      initialResults.push({
+        id: row.id,
+        status: "skipped",
+        reason: claimErr ? claimErr.message : "lost_race_to_dashboard",
+      });
+      continue;
+    }
+
+    const result = await sendApprovalEmail({
+      to: toEmail,
+      approvalUrl,
+      summary: row.action_summary,
+      service: row.service,
+      endpoint: row.endpoint,
+      method: row.method,
+      dollarAmountCents: row.dollar_amount_cents,
+      expiresAt: new Date(row.expires_at),
+      agentPrompt: row.agent_prompt,
+    });
+
+    if (result.sent) {
+      initialSent++;
+      initialResults.push({ id: row.id, status: "notified" });
+    } else {
+      // Email send failed. Roll back the claim so a later sweep can
+      // retry. If we don't, the row stays "notified_via=email" but no
+      // email actually arrived — the user is unreachable until expiry.
+      await supabase
+        .from("pending_approvals")
+        .update({ notified_via: null, claimed_at: null } as never)
+        .eq("id", row.id);
+      initialFailed++;
+      initialResults.push({
+        id: row.id,
+        status: "email_failed",
+        reason: result.reason,
+      });
+    }
+  }
+
+  // ─────────────── Pass 2: 15-min reminder (SHRP-086) ───────────────
+  const { data: reminderData, error: reminderErr } = await supabase
+    .from("pending_approvals")
+    .select(
+      "id, user_id, action_summary, service, endpoint, method, dollar_amount_cents, agent_prompt, expires_at",
+    )
+    .eq("status", "pending")
+    .gt("expires_at", nowIso)
+    .lt("expires_at", reminderCutoff.toISOString())
+    .is("reminder_sent_at", null);
+  if (reminderErr) {
+    return NextResponse.json(
+      { error: `reminder query failed: ${reminderErr.message}` },
+      { status: 500 },
+    );
+  }
+  const reminderCandidates = (reminderData ?? []) as ApprovalRow[];
+
+  let reminderSent = 0;
+  let reminderFailed = 0;
+  const reminderResults: Array<{ id: string; status: string; reason?: string }> = [];
+
+  for (const row of reminderCandidates) {
+    const userResult = await supabase.auth.admin.getUserById(row.user_id);
+    const toEmail = userResult.data.user?.email;
+    if (!toEmail) {
+      reminderFailed++;
+      reminderResults.push({
         id: row.id,
         status: "skipped",
         reason: "no_email_for_user",
@@ -109,24 +199,22 @@ export async function GET(request: NextRequest) {
     if (result.sent) {
       const { error: updateErr } = await supabase
         .from("pending_approvals")
-        .update({ reminder_sent_at: now.toISOString() } as never)
+        .update({ reminder_sent_at: nowIso } as never)
         .eq("id", row.id);
       if (updateErr) {
-        // Email was sent but we couldn't mark it — log and move on. Worst
-        // case the next sweep sends a duplicate; that's acceptable.
-        failed++;
-        results.push({
+        reminderFailed++;
+        reminderResults.push({
           id: row.id,
           status: "sent_but_not_marked",
           reason: updateErr.message,
         });
       } else {
-        sent++;
-        results.push({ id: row.id, status: "reminded" });
+        reminderSent++;
+        reminderResults.push({ id: row.id, status: "reminded" });
       }
     } else {
-      failed++;
-      results.push({
+      reminderFailed++;
+      reminderResults.push({
         id: row.id,
         status: "email_failed",
         reason: result.reason,
@@ -135,10 +223,18 @@ export async function GET(request: NextRequest) {
   }
 
   return NextResponse.json({
-    swept_at: now.toISOString(),
-    candidate_count: candidates.length,
-    sent,
-    failed,
-    results,
+    swept_at: nowIso,
+    initial: {
+      candidate_count: initialCandidates.length,
+      sent: initialSent,
+      failed: initialFailed,
+      results: initialResults,
+    },
+    reminder: {
+      candidate_count: reminderCandidates.length,
+      sent: reminderSent,
+      failed: reminderFailed,
+      results: reminderResults,
+    },
   });
 }

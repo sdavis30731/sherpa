@@ -3,7 +3,7 @@
   "crons": [
     {
       "path": "/api/cron/approval-reminders",
-      "schedule": "*/5 * * * *"
+      "schedule": "* * * * *"
     }
   ]
 }

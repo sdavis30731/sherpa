@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Settings } from "lucide-react";
+import { ApprovalsChip } from "./_components/approvals-chip";
 
 /**
  * Vault layout — gates every /vault/* route.
@@ -45,6 +46,16 @@ export default async function VaultLayout({ children }: { children: React.ReactN
     .maybeSingle();
   const hasPassphrase = Boolean(profile?.argon_salt && profile?.sentinel_ciphertext);
 
+  // Initial pending-approvals count for the chip. The chip subscribes
+  // to Supabase Realtime once mounted and updates live from there —
+  // this seed just makes the first paint correct.
+  const nowIso = new Date().toISOString();
+  const { count: pendingApprovalsCount } = await supabase
+    .from("pending_approvals")
+    .select("id", { count: "exact", head: true })
+    .eq("status", "pending")
+    .gt("expires_at", nowIso);
+
   const agencyName = agencyProfile.name?.trim() || "Your agency";
   const logoUrl = agencyProfile.logo_url;
 
@@ -69,6 +80,10 @@ export default async function VaultLayout({ children }: { children: React.ReactN
             </span>
           </div>
           <div className="flex items-center gap-4">
+            <ApprovalsChip
+              userId={user.id}
+              initialCount={pendingApprovalsCount ?? 0}
+            />
             <Link
               href="/agency/settings"
               className="inline-flex items-center gap-1.5 text-sm text-slate-600 hover:text-slate-900"
