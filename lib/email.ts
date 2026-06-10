@@ -110,6 +110,8 @@ export async function sendApprovalEmail(args: {
   dollarAmountCents: number | null;
   expiresAt: Date;
   agentPrompt: string | null;
+  /** SHRP-086 — when true, framed as an expiry reminder rather than a fresh request. */
+  isReminder?: boolean;
 }): Promise<SendResult> {
   const dollarLine =
     args.dollarAmountCents !== null
@@ -127,14 +129,28 @@ export async function sendApprovalEmail(args: {
     Math.round((args.expiresAt.getTime() - Date.now()) / 60000),
   );
 
+  const reminderBanner = args.isReminder
+    ? `<tr><td style="padding: 0 32px;">
+        <div style="background: #fef3c7; border: 1px solid #fcd34d; border-left: 4px solid #b45309; border-radius: 8px; padding: 12px 16px; margin-bottom: 12px;">
+          <p style="margin: 0; font-size: 11px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: #b45309;">⏰ Reminder · expires in ${minutesLeft} minute${minutesLeft === 1 ? "" : "s"}</p>
+          <p style="margin: 4px 0 0; font-size: 13px; color: #78350f; line-height: 1.45;">An approval you previously received is about to expire. Approving now keeps the AI agent's work on track.</p>
+        </div>
+      </td></tr>`
+    : "";
+
+  const headlineText = args.isReminder
+    ? "Reminder: an approval is about to expire."
+    : "An AI agent wants to do something. Approve?";
+
   const html = `<!DOCTYPE html>
 <html>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f1f5f9; padding: 32px 16px; margin: 0;">
   <table cellpadding="0" cellspacing="0" border="0" style="max-width: 540px; margin: 0 auto; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.06);">
     <tr><td style="padding: 28px 32px 20px;">
       <p style="margin: 0 0 4px; font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #1F6FEB;">SherpaKeys · AI Firewall</p>
-      <h1 style="margin: 0; font-size: 22px; color: #0f172a; font-weight: 700;">An AI agent wants to do something. Approve?</h1>
+      <h1 style="margin: 0; font-size: 22px; color: #0f172a; font-weight: 700;">${headlineText}</h1>
     </td></tr>
+    ${reminderBanner}
     <tr><td style="padding: 0 32px 8px;">
       <p style="margin: 16px 0 4px; font-size: 13px; color: #64748b;">Proposed action</p>
       <p style="margin: 0; font-family: 'SF Mono', Menlo, monospace; font-size: 14px; color: #0f172a; background: #f1f5f9; padding: 10px 12px; border-radius: 8px; word-break: break-all;">${escapeHtml(args.summary)}</p>
@@ -151,7 +167,20 @@ export async function sendApprovalEmail(args: {
 </body>
 </html>`;
 
-  const text = `SherpaKeys — AI Firewall
+  const text = args.isReminder
+    ? `SherpaKeys — AI Firewall
+
+REMINDER: Approval expires in about ${minutesLeft} minutes.
+
+Action: ${args.summary}
+${args.dollarAmountCents !== null ? `Amount: $${(args.dollarAmountCents / 100).toFixed(2)}\n` : ""}${args.agentPrompt ? `Prompt that triggered it: "${args.agentPrompt}"\n` : ""}
+Review and approve here:
+${args.approvalUrl}
+
+If you didn't request this, you can safely ignore — the action will expire automatically.
+
+— SherpaKeys`
+    : `SherpaKeys — AI Firewall
 
 An AI agent wants to do something. Approve?
 
@@ -164,9 +193,13 @@ If you didn't request this, you can safely ignore this email — the action will
 
 — SherpaKeys`;
 
+  const subjectPrefix = args.isReminder
+    ? "[SherpaKeys ⏰ Reminder]"
+    : "[SherpaKeys]";
+
   return sendEmail({
     to: args.to,
-    subject: `[SherpaKeys] Approve write action: ${args.service}/${args.endpoint ?? extractEndpoint("/")}`,
+    subject: `${subjectPrefix} Approve write action: ${args.service}/${args.endpoint ?? extractEndpoint("/")}`,
     html,
     text,
   });

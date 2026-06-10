@@ -85,7 +85,7 @@ const TOOLS = [
   {
     name: "sherpa_call_api",
     description:
-      "Call a third-party API on the user's behalf. SherpaKeys server-side injects the credential into the outbound request; the agent never sees the secret value. Requires an active agent authorization session (the user explicitly authorizes agent access from the SherpaKeys UI for a time window). Read actions execute immediately; write actions (as classified by SherpaKeys' AI Firewall) queue for user approval and return a pending_approval response — the agent should then poll sherpa_get_approval_result with the returned approval_id. Available services: stripe, github, openai, anthropic, resend, cloudflare, replicate.",
+      "Call a third-party API on the user's behalf. SherpaKeys server-side injects the credential into the outbound request; the agent never sees the secret value. Requires an active agent authorization session (the user explicitly authorizes agent access from the SherpaKeys UI for a time window). Read actions execute immediately; write actions (as classified by SherpaKeys' AI Firewall) queue for user approval and return a pending_approval response — the agent should then poll sherpa_get_approval_result with the returned approval_id. For write actions, supply a stable client_request_id so retries (after transport hangs or network blips) return the same approval row instead of double-queuing. Available services: stripe, github, openai, anthropic, resend, cloudflare, replicate.",
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -112,6 +112,11 @@ const TOOLS = [
           type: "object",
           description:
             "Optional additional headers (e.g. Idempotency-Key). Auth headers are injected by SherpaKeys and cannot be overridden.",
+        },
+        client_request_id: {
+          type: "string",
+          description:
+            "SHRP-085 — Idempotency key for write actions. If you call sherpa_call_api with the same client_request_id twice (e.g. after a transport hang where you can't tell if the call queued), the second call returns the existing approval row instead of queuing a new one. Recommended pattern: generate a UUID per logical write action you want to perform. Optional but strongly recommended for any write that costs money or moves data.",
         },
       },
       required: ["credential_id", "method", "path"],
@@ -669,6 +674,8 @@ interface CallApiArgs {
   path?: string;
   body?: unknown;
   extra_headers?: Record<string, string>;
+  /** SHRP-085 idempotency key supplied by the agent. */
+  client_request_id?: string;
 }
 
 const ALLOWED_METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE"] as const;
@@ -891,6 +898,66 @@ async function tool_callApi(
       );
     }
 
+    // ===========================================================
+    // SHRP-085 — Idempotency check. If the agent supplied a
+    // client_request_id and we've seen it before for this token,
+    // return the existing approval row instead of queuing a new one.
+    // Prevents double-queuing when transport hangs and the agent
+    // retries without knowing if the first call landed.
+    // ===========================================================
+    if (args.client_request_id) {
+      const { data: existing } = await supabase
+        .from("pending_approvals")
+        .select(
+          "id, status, expires_at, executed_at, result_status_code, result_body, action_summary, dollar_amount_cents",
+        )
+        .eq("token_id", session.tokenId)
+        .eq("client_request_id", args.client_request_id)
+        .maybeSingle();
+      if (existing) {
+        const ex = existing as {
+          id: string;
+          status: string;
+          expires_at: string;
+          executed_at: string | null;
+          result_status_code: number | null;
+          result_body: string | null;
+          action_summary: string;
+          dollar_amount_cents: number | null;
+        };
+        const baseUrl =
+          process.env.NEXT_PUBLIC_SITE_URL ?? "https://sherpakeys.com";
+        const approvalUrl = `${baseUrl.replace(/\/+$/, "")}/approve/${ex.id}`;
+        const ctx = await fetchProjectContext(supabase, session.projectId);
+        const idemResponse = {
+          idempotency_hit: true,
+          approval_id: ex.id,
+          status: ex.status,
+          action_summary: ex.action_summary,
+          expires_at: ex.expires_at,
+          executed_at: ex.executed_at,
+          result_status_code: ex.result_status_code,
+          result_body: ex.result_body,
+          approval_url: approvalUrl,
+          message:
+            ex.status === "pending"
+              ? `This request was previously queued and is still awaiting user approval. Approval URL: ${approvalUrl}. Poll sherpa_get_approval_result with approval_id="${ex.id}" instead of resending the call.`
+              : `This request was previously queued and resolved with status="${ex.status}". Re-fetching the existing result instead of re-queuing.`,
+        };
+        return success(req.id, {
+          content: [
+            {
+              type: "text",
+              text:
+                `# Project: ${ctx.project_name} (id: ${ctx.project_id})\n\n` +
+                JSON.stringify(idemResponse, null, 2),
+            },
+          ],
+          structuredContent: { project: ctx, ...idemResponse },
+        });
+      }
+    }
+
     // Default TTL: 1 hour from now.
     const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
 
@@ -916,6 +983,7 @@ async function tool_callApi(
         dollar_amount_cents: dollarCents,
         agent_prompt: null, // future MCP arg; left null for now
         expires_at: expiresAt.toISOString(),
+        client_request_id: args.client_request_id ?? null,
       } as never)
       .select("id")
       .single();
