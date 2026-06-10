@@ -81,14 +81,19 @@ export default async function AgentsSettingsPage({
         credentials to make API calls — without ever seeing the keys themselves.
       </p>
 
-      <Callout tone="info" title="Coming online: the MCP server endpoint">
-        Tokens you generate here are real and stored hashed in your database
-        right now. The MCP server endpoint they connect to{" "}
+      <Callout tone="info" title="The MCP server endpoint is live">
+        Point your AI agent at{" "}
         <code className="rounded bg-white px-1 py-0.5 font-mono text-xs">
           {mcpEndpoint}
         </code>{" "}
-        is the next thing on the build list (SHRP-030 → 032). Once it&apos;s live,
-        the tokens you create here will work immediately — no need to regenerate.
+        with one of the tokens below as a Bearer authorization header. The
+        server speaks JSON-RPC 2.0 over HTTP and exposes the standard MCP
+        tools (<code className="font-mono text-xs">sherpa_list_services</code>,{" "}
+        <code className="font-mono text-xs">sherpa_call_api</code>,{" "}
+        <code className="font-mono text-xs">sherpa_rotate</code>,{" "}
+        <code className="font-mono text-xs">sherpa_get_approval_result</code>).
+        Tokens are scoped to this single project — generate a separate token
+        per project so agents can never cross client workspaces.
       </Callout>
 
       <div className="mt-6 space-y-6">
