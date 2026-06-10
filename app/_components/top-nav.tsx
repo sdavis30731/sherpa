@@ -13,7 +13,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { KeyRound, Menu, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
 
 const NAV_LINKS: ReadonlyArray<{ href: string; label: string }> = [
   { href: "/agencies", label: "For agencies" },
@@ -38,14 +38,31 @@ export function TopNav() {
 
   return (
     <nav className="relative flex items-center justify-between py-4 sm:py-5">
-      {/* Wordmark — gradient key icon + bigger text */}
+      {/* Wordmark — Peak Keyhole logo mark + wordmark.
+          The mark is a sharp sherpa peak (mountain) with a keyhole carved
+          out of the center, riffing on the "sherpa for credentials"
+          metaphor. Uses fill=currentColor so it inherits the white from
+          the parent's text-white class inside the gradient pill. Same
+          mark also appears bare (no pill) in the /agencies sub-nav at
+          h-6/w-6, so the visual identity is consistent across surfaces. */}
       <Link
         href="/"
         className="group flex items-center gap-2.5 transition hover:opacity-90"
         onClick={() => setOpen(false)}
       >
         <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-sherpa-500 to-sherpa-600 text-white shadow-md shadow-sherpa-500/30 ring-1 ring-sherpa-700/10 sm:h-10 sm:w-10">
-          <KeyRound className="h-5 w-5" />
+          <svg
+            viewBox="0 0 24 24"
+            className="h-5 w-5"
+            fill="currentColor"
+            aria-hidden="true"
+          >
+            <path
+              fillRule="evenodd"
+              clipRule="evenodd"
+              d="M12 2.4 L22.6 20.8 H1.4 Z M12 8.4 a2.6 2.6 0 0 1 1.2 4.9 L14.4 17.8 H9.6 L10.8 13.3 A2.6 2.6 0 0 1 12 8.4 Z"
+            />
+          </svg>
         </span>
         <span className="text-2xl font-bold tracking-tight sm:text-3xl">
           <span className="text-slate-900">Sherpa</span>
