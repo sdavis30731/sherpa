@@ -1,0 +1,1579 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Go-Live Credential Custody Record — Brushfire Coffee DTC Launch</title>
+<style>
+  :root {
+    --ink: #0f172a;
+    --body: #334155;
+    --muted: #64748b;
+    --light: #94a3b8;
+    --hairline: #e2e8f0;
+    --tint: #f8fafc;
+    --tint-2: #f1f5f9;
+    --blue: #1f6feb;
+    --blue-dark: #1346a3;
+    --blue-tint: #eef4ff;
+    --green: #047857;
+    --green-tint: #d1fae5;
+    --amber: #b45309;
+    --amber-tint: #fef3c7;
+    --red: #b91c1c;
+    --red-tint: #fee2e2;
+  }
+
+  @page {
+    size: Letter;
+    margin: 0.85in 0.7in 0.85in 0.7in;
+
+    @bottom-left {
+      content: "Brushfire Coffee — DTC Launch · Go-Live Credential Custody Record";
+      font-family: "Inter", "Helvetica Neue", Arial, sans-serif;
+      font-size: 7.5pt;
+      color: var(--light);
+      padding-bottom: 0.2in;
+    }
+    @bottom-right {
+      content: "Page " counter(page) " of " counter(pages);
+      font-family: "Inter", "Helvetica Neue", Arial, sans-serif;
+      font-size: 7.5pt;
+      color: var(--light);
+      padding-bottom: 0.2in;
+    }
+  }
+  @page :first {
+    margin: 0;
+    @bottom-left { content: none; }
+    @bottom-right { content: none; }
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    font-family: "Inter", "Helvetica Neue", Arial, sans-serif;
+    color: var(--body);
+    font-size: 10pt;
+    line-height: 1.5;
+    margin: 0;
+    padding: 0;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1, h2, h3, h4 {
+    color: var(--ink);
+    font-weight: 700;
+    margin: 0;
+    line-height: 1.15;
+  }
+
+  .mono {
+    font-family: "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace;
+    font-size: 8.5pt;
+  }
+
+  .eyebrow {
+    font-size: 8pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--blue);
+  }
+  .eyebrow.muted { color: var(--muted); }
+  .small-caps {
+    font-size: 8pt;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--muted);
+  }
+
+  /* ============================================================
+     COVER PAGE
+     ============================================================ */
+  .cover {
+    page: cover;
+    height: 10.4in;
+    width: 8.5in;
+    color: #fff;
+    background:
+      linear-gradient(135deg, #0c2a63 0%, #1346a3 38%, #1f6feb 100%);
+    padding: 0.7in 0.65in 0.6in 0.65in;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    page-break-after: always;
+    overflow: hidden;
+  }
+  .cover::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image:
+      radial-gradient(circle at 88% 18%, rgba(255,255,255,0.10) 0, transparent 35%),
+      radial-gradient(circle at 8% 92%, rgba(255,255,255,0.06) 0, transparent 40%);
+    pointer-events: none;
+  }
+  .cover > * { position: relative; z-index: 1; }
+
+  .cover-brandbar {
+    display: flex;
+    align-items: center;
+    gap: 12pt;
+    font-size: 11pt;
+    font-weight: 600;
+    color: rgba(255,255,255,0.92);
+  }
+  .cover-logo-mark {
+    width: 32pt; height: 32pt;
+    border-radius: 8pt;
+    background: rgba(255,255,255,0.18);
+    border: 1pt solid rgba(255,255,255,0.32);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 11pt;
+    letter-spacing: 0.05em;
+  }
+  .cover-chip {
+    display: inline-block;
+    background: rgba(255,255,255,0.14);
+    border: 1pt solid rgba(255,255,255,0.30);
+    border-radius: 999pt;
+    padding: 4pt 11pt;
+    font-size: 7.5pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: rgba(255,255,255,0.95);
+    margin-top: 22pt;
+  }
+  .cover-title {
+    margin-top: 10pt;
+    font-size: 30pt;
+    font-weight: 800;
+    line-height: 1.05;
+    color: #fff;
+    letter-spacing: -0.02em;
+  }
+  .cover-subtitle {
+    margin-top: 10pt;
+    font-size: 11pt;
+    color: rgba(255,255,255,0.88);
+    font-weight: 500;
+    line-height: 1.4;
+    max-width: 92%;
+  }
+
+  .cover-meta {
+    margin-top: 22pt;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    column-gap: 18pt;
+    row-gap: 10pt;
+    border-top: 1pt solid rgba(255,255,255,0.18);
+    padding-top: 14pt;
+  }
+  .cover-meta div .lbl {
+    font-size: 6.5pt;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: rgba(255,255,255,0.62);
+  }
+  .cover-meta div .val {
+    margin-top: 2pt;
+    color: #fff;
+    font-weight: 600;
+    font-size: 9.5pt;
+  }
+
+  .cover-score-card {
+    margin-top: auto;
+    background: #fff;
+    color: var(--ink);
+    border-radius: 12pt;
+    padding: 16pt 20pt;
+    box-shadow: 0 10pt 30pt rgba(7, 18, 50, 0.30);
+  }
+  .cover-score-card .row {
+    display: flex;
+    align-items: center;
+    gap: 20pt;
+  }
+  .cover-score-num {
+    font-size: 50pt;
+    font-weight: 800;
+    color: var(--ink);
+    letter-spacing: -0.04em;
+    line-height: 1;
+  }
+  .cover-score-num .denom {
+    font-size: 18pt;
+    font-weight: 600;
+    color: var(--light);
+  }
+  .cover-score-band {
+    font-size: 11pt;
+    font-weight: 800;
+    color: var(--green);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .cover-score-verdict {
+    margin-top: 3pt;
+    font-size: 10pt;
+    color: var(--body);
+    max-width: 4.2in;
+    line-height: 1.4;
+  }
+  .cover-score-stripe {
+    margin-top: 10pt;
+    display: flex;
+    border-radius: 5pt;
+    overflow: hidden;
+    height: 6pt;
+    background: var(--tint);
+  }
+  .cover-score-stripe span { display: block; height: 100%; }
+
+  .cover-footer {
+    margin-top: 12pt;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: rgba(255,255,255,0.72);
+    font-size: 7.5pt;
+  }
+  .cover-footer .sherpa {
+    font-weight: 700;
+  }
+  .cover-footer .sherpa .keys { color: rgba(255,255,255,0.92); }
+
+  /* ============================================================
+     INTERIOR PAGE FRAMEWORK
+     ============================================================ */
+  .page-section {
+    page-break-before: always;
+    padding-top: 0;
+  }
+  .page-section:first-of-type { page-break-before: auto; }
+
+  .section-header {
+    border-bottom: 1pt solid var(--hairline);
+    padding-bottom: 14pt;
+    margin-bottom: 22pt;
+  }
+  .section-header .eyebrow { margin-bottom: 4pt; display: block; }
+  .section-header h2 {
+    font-size: 22pt;
+    color: var(--ink);
+    font-weight: 800;
+    letter-spacing: -0.01em;
+  }
+  .section-header .sub {
+    margin-top: 6pt;
+    color: var(--muted);
+    font-size: 10pt;
+    max-width: 5.5in;
+  }
+
+  /* ============================================================
+     EXECUTIVE SUMMARY
+     ============================================================ */
+  .exec-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    column-gap: 10pt;
+    margin-bottom: 24pt;
+  }
+  .exec-card {
+    background: var(--tint);
+    border: 1pt solid var(--hairline);
+    border-radius: 8pt;
+    padding: 12pt 13pt;
+  }
+  .exec-card .num {
+    color: var(--blue);
+    font-size: 22pt;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -0.02em;
+  }
+  .exec-card .lbl {
+    margin-top: 7pt;
+    font-size: 8pt;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    font-weight: 700;
+  }
+  .exec-card .body {
+    margin-top: 4pt;
+    font-size: 9pt;
+    color: var(--body);
+    line-height: 1.4;
+  }
+
+  .twocol {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 22pt;
+    margin-top: 6pt;
+  }
+
+  .col-h {
+    font-size: 9pt;
+    font-weight: 700;
+    color: var(--ink);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin-bottom: 8pt;
+  }
+  .pill-list { margin: 0; padding: 0; list-style: none; }
+  .pill-list li {
+    padding: 6pt 0;
+    border-bottom: 1pt solid var(--hairline);
+    font-size: 9.5pt;
+    color: var(--body);
+  }
+  .pill-list li:last-child { border-bottom: 0; }
+  .pill-list li strong { color: var(--ink); }
+
+  .callout {
+    background: var(--amber-tint);
+    border: 1pt solid #f6d36a;
+    border-left: 3pt solid var(--amber);
+    border-radius: 6pt;
+    padding: 12pt 14pt;
+    margin-top: 16pt;
+    color: var(--amber);
+  }
+  .callout .lbl {
+    font-size: 8pt;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--amber);
+  }
+  .callout .body {
+    margin-top: 4pt;
+    font-size: 9.5pt;
+    color: #5b370c;
+    line-height: 1.45;
+  }
+  .callout.info {
+    background: var(--blue-tint);
+    border-color: #b9d3fa;
+    border-left-color: var(--blue);
+    color: var(--blue-dark);
+  }
+  .callout.info .lbl, .callout.info { color: var(--blue-dark); }
+  .callout.info .body { color: #1d335f; }
+
+  /* ============================================================
+     PER-SERVICE PAGE
+     ============================================================ */
+  .svc-banner {
+    display: flex;
+    align-items: center;
+    gap: 14pt;
+    padding-bottom: 14pt;
+    margin-bottom: 18pt;
+    border-bottom: 1pt solid var(--hairline);
+  }
+  .svc-logo {
+    width: 40pt; height: 40pt;
+    border-radius: 8pt;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 11pt;
+    color: #fff;
+    letter-spacing: 0.04em;
+  }
+  .svc-logo.stripe   { background: #635bff; }
+  .svc-logo.supabase { background: #0d8a52; }
+  .svc-logo.github   { background: #181717; }
+  .svc-logo.vercel   { background: #0a0a0a; }
+  .svc-logo.openai   { background: #10a37f; }
+  .svc-logo.resend   { background: #000000; }
+  .svc-logo.cloudflare { background: #f6821f; }
+
+  .svc-name {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+  .svc-name h3 {
+    font-size: 17pt;
+    color: var(--ink);
+    font-weight: 800;
+  }
+  .svc-name .role {
+    margin-top: 2pt;
+    font-size: 9pt;
+    color: var(--muted);
+  }
+  .svc-status {
+    border-radius: 999pt;
+    padding: 5pt 13pt;
+    font-size: 8.5pt;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    border: 1pt solid;
+  }
+  .svc-status.green {
+    background: var(--green-tint);
+    border-color: #6ee7b7;
+    color: var(--green);
+  }
+  .svc-status.amber {
+    background: var(--amber-tint);
+    border-color: #fcd34d;
+    color: var(--amber);
+  }
+  .svc-status.red {
+    background: var(--red-tint);
+    border-color: #fca5a5;
+    color: var(--red);
+  }
+
+  .kv-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 22pt;
+    row-gap: 12pt;
+  }
+  .kv {
+    display: flex;
+    flex-direction: column;
+  }
+  .kv .k {
+    font-size: 7.5pt;
+    font-weight: 800;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+  }
+  .kv .v {
+    margin-top: 3pt;
+    color: var(--ink);
+    font-size: 10pt;
+    font-weight: 600;
+  }
+  .kv .v .tag {
+    margin-left: 5pt;
+    display: inline-block;
+    padding: 1pt 6pt;
+    font-size: 7pt;
+    font-weight: 800;
+    border-radius: 4pt;
+    letter-spacing: 0.06em;
+  }
+  .kv .v .tag.client {
+    background: var(--green-tint);
+    color: var(--green);
+  }
+  .kv .v .tag.agency {
+    background: var(--blue-tint);
+    color: var(--blue-dark);
+  }
+  .kv .v .tag.contractor {
+    background: var(--amber-tint);
+    color: var(--amber);
+  }
+  .kv .v.mono { font-family: "JetBrains Mono", "SF Mono", Menlo, monospace; font-size: 9pt; }
+
+  .admin-list {
+    margin-top: 4pt;
+    padding: 0;
+    list-style: none;
+    font-size: 9pt;
+  }
+  .admin-list li {
+    padding: 4pt 0;
+    color: var(--ink);
+    font-weight: 500;
+    display: flex;
+    justify-content: space-between;
+  }
+  .admin-list .who { font-family: "JetBrains Mono", "SF Mono", Menlo, monospace; font-size: 8.5pt; }
+  .admin-list .tag {
+    font-size: 7pt;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    padding: 1pt 6pt;
+    border-radius: 4pt;
+  }
+  .admin-list .tag.client {
+    background: var(--green-tint);
+    color: var(--green);
+  }
+  .admin-list .tag.agency {
+    background: var(--blue-tint);
+    color: var(--blue-dark);
+  }
+
+  .block-title {
+    margin-top: 18pt;
+    margin-bottom: 8pt;
+    font-size: 9pt;
+    font-weight: 800;
+    color: var(--ink);
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+  }
+
+  table.data {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 9pt;
+  }
+  table.data thead th {
+    text-align: left;
+    font-size: 7.5pt;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+    font-weight: 700;
+    padding: 6pt 8pt;
+    border-bottom: 1pt solid var(--hairline);
+    background: var(--tint-2);
+  }
+  table.data tbody td {
+    padding: 7pt 8pt;
+    border-bottom: 1pt solid var(--hairline);
+    color: var(--body);
+    vertical-align: top;
+  }
+  table.data tbody tr:last-child td { border-bottom: 0; }
+  table.data td.who, table.data td.when {
+    font-family: "JetBrains Mono", "SF Mono", Menlo, monospace;
+    font-size: 8.5pt;
+    color: var(--ink);
+  }
+
+  .svc-exception {
+    background: var(--blue-tint);
+    border: 1pt solid #b9d3fa;
+    border-left: 3pt solid var(--blue);
+    border-radius: 6pt;
+    padding: 11pt 13pt;
+    margin-top: 14pt;
+  }
+  .svc-exception .lbl {
+    font-size: 7.5pt;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--blue-dark);
+  }
+  .svc-exception .body {
+    margin-top: 4pt;
+    font-size: 9.5pt;
+    color: #1d335f;
+    line-height: 1.45;
+  }
+  .svc-exception.green {
+    background: var(--green-tint);
+    border-color: #6ee7b7;
+    border-left-color: var(--green);
+  }
+  .svc-exception.green .lbl, .svc-exception.green .body { color: var(--green); }
+
+  /* ============================================================
+     SIGNATURE PAGE
+     ============================================================ */
+  .sig-block {
+    margin-top: 36pt;
+    border-top: 1pt solid var(--hairline);
+    padding-top: 22pt;
+  }
+  .sig-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 28pt;
+  }
+  .sig-pad {
+    border: 1pt solid var(--hairline);
+    border-radius: 6pt;
+    padding: 14pt 16pt 16pt 16pt;
+    background: var(--tint);
+  }
+  .sig-pad .sig-line {
+    margin-top: 18pt;
+    border-bottom: 1.4pt solid var(--ink);
+    height: 30pt;
+    display: flex;
+    align-items: flex-end;
+    padding-bottom: 4pt;
+    font-family: "Snell Roundhand", "Brush Script MT", cursive;
+    font-style: italic;
+    font-size: 17pt;
+    color: var(--ink);
+  }
+  .sig-pad .sig-label {
+    margin-top: 8pt;
+    font-size: 8pt;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    font-weight: 700;
+  }
+  .sig-pad .sig-name {
+    margin-top: 2pt;
+    color: var(--ink);
+    font-weight: 700;
+    font-size: 10pt;
+  }
+  .sig-pad .sig-role {
+    margin-top: 1pt;
+    color: var(--muted);
+    font-size: 9pt;
+  }
+
+  .meth-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 22pt;
+  }
+  .meth-card {
+    background: var(--tint);
+    border: 1pt solid var(--hairline);
+    border-radius: 8pt;
+    padding: 14pt 14pt;
+  }
+  .meth-card h4 {
+    font-size: 10pt;
+    color: var(--ink);
+    margin-bottom: 8pt;
+  }
+  .meth-card ul {
+    margin: 0; padding-left: 14pt;
+    font-size: 9pt;
+    color: var(--body);
+  }
+  .meth-card ul li { margin-bottom: 4pt; }
+  .meth-card.checked h4 { color: var(--green); }
+  .meth-card.unchecked h4 { color: var(--amber); }
+
+  .footer-watermark {
+    margin-top: 36pt;
+    padding-top: 14pt;
+    border-top: 1pt solid var(--hairline);
+    text-align: center;
+    color: var(--light);
+    font-size: 8pt;
+  }
+  .footer-watermark .sk {
+    font-weight: 700;
+    color: var(--muted);
+  }
+  .footer-watermark .sk .keys { color: var(--blue); }
+
+  /* ============================================================
+     SCORE STRIPE COLORS
+     ============================================================ */
+  .stripe-green { background: var(--green); }
+  .stripe-amber { background: var(--amber); }
+  .stripe-red { background: var(--red); }
+
+  /* Status dots — replace emoji for print/PDF font robustness */
+  .svc-status::before,
+  .cover-score-band::before {
+    content: "";
+    display: inline-block;
+    width: 7pt;
+    height: 7pt;
+    border-radius: 50%;
+    background: currentColor;
+    margin-right: 6pt;
+    vertical-align: 0.25pt;
+  }
+  .meth-card h4::before {
+    content: "";
+    display: inline-block;
+    width: 7pt;
+    height: 7pt;
+    border-radius: 50%;
+    margin-right: 6pt;
+    vertical-align: 0.25pt;
+  }
+  .meth-card.checked h4::before { background: var(--green); }
+  .meth-card.unchecked h4::before { background: var(--amber); }
+
+  .cover-score-how {
+    margin-top: 9pt;
+    padding-top: 7pt;
+    border-top: 1pt solid var(--hairline);
+    font-size: 7.5pt;
+    line-height: 1.45;
+    color: var(--muted);
+  }
+
+  /* Print hardening */
+  @media print {
+    html, body {
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    .kv-grid, .exec-card, .meth-card, .svc-exception, .svc-banner, .sig-block {
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+    tr { break-inside: avoid; page-break-inside: avoid; }
+    thead { display: table-header-group; }
+    a { color: inherit; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     COVER
+     ============================================================ -->
+<section class="cover">
+  <div class="cover-brandbar">
+    <span class="cover-logo-mark">NS</span>
+    <span>Northshore Studio</span>
+  </div>
+
+  <span class="cover-chip">Go-Live Credential Custody Record</span>
+
+  <h1 class="cover-title">
+    Brushfire Coffee<br>
+    DTC Launch
+  </h1>
+
+  <p class="cover-subtitle">
+    A signed, dated, client-facing record of who owns each production account,
+    who had access during the project, what was revoked at handoff, and what
+    exceptions remain — prepared for Brushfire Coffee Roasters by Northshore
+    Studio.
+  </p>
+
+  <div class="cover-meta">
+    <div>
+      <div class="lbl">Client</div>
+      <div class="val">Brushfire Coffee Roasters</div>
+    </div>
+    <div>
+      <div class="lbl">Agency</div>
+      <div class="val">Northshore Studio</div>
+    </div>
+    <div>
+      <div class="lbl">Project</div>
+      <div class="val">DTC e-commerce launch</div>
+    </div>
+    <div>
+      <div class="lbl">Launch date</div>
+      <div class="val">May 22, 2026</div>
+    </div>
+    <div>
+      <div class="lbl">Signed by</div>
+      <div class="val">Mara Lindberg, Project Lead</div>
+    </div>
+    <div>
+      <div class="lbl">Issued</div>
+      <div class="val">May 24, 2026</div>
+    </div>
+  </div>
+
+  <div class="cover-score-card">
+    <div class="row">
+      <div class="cover-score-num">89<span class="denom">/100</span></div>
+      <div>
+        <div class="cover-score-band">Green — Launch-ready</div>
+        <div class="cover-score-verdict">
+          Custody clean across all seven production services. Two exceptions
+          documented below, both time-bound and revocable by the client at any
+          time. Audit log attached.
+        </div>
+      </div>
+    </div>
+    <div class="cover-score-stripe">
+      <span class="stripe-green" style="width: 89%;"></span>
+      <span style="width: 11%; background: var(--hairline);"></span>
+    </div>
+  <div class="cover-score-how">
+      <strong>How this was scored:</strong> 100 base · −8 retained admin access under a
+      documented warranty exception (GitHub) · −3 ownership transfer scheduled, not
+      complete, at issue date. Read-only, auto-expiring exceptions (Stripe events key)
+      carry no deduction under v1 methodology — full rubric on page 11.
+    </div>
+    </div>
+
+  <div class="cover-footer">
+    <div>Engagement ID · NS-2026-BCR-001 · v1 · Confidential to Brushfire Coffee Roasters</div>
+    <div class="cover-footer-brand">
+      <span class="sherpa">Generated with Sherpa<span class="keys" style="color:#9bd0ff">Keys</span></span>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     EXECUTIVE SUMMARY
+     ============================================================ -->
+<section class="page-section">
+  <div class="section-header">
+    <span class="eyebrow">Executive summary</span>
+    <h2>What your client should know.</h2>
+    <p class="sub">
+      A non-technical summary of credential custody as of launch. Detailed
+      per-service assertions follow on pages 3–9. Audit log on page 10.
+      Methodology on page 11.
+    </p>
+  </div>
+
+  <div class="exec-grid">
+    <div class="exec-card">
+      <div class="num">7 / 7</div>
+      <div class="lbl">Production accounts</div>
+      <div class="body">Account ownership transferred to Brushfire Coffee Roasters before launch. All seven critical services accounted for.</div>
+    </div>
+    <div class="exec-card">
+      <div class="num">3</div>
+      <div class="lbl">Personnel revocations</div>
+      <div class="body">Three former project members removed from production systems during the engagement, all logged with timestamps.</div>
+    </div>
+    <div class="exec-card">
+      <div class="num">2</div>
+      <div class="lbl">Documented exceptions</div>
+      <div class="body">Two time-bound exceptions in place for go-live and warranty support. Both client-revocable at any time.</div>
+    </div>
+  </div>
+
+  <div class="twocol">
+    <div>
+      <div class="col-h">What's locked in at launch</div>
+      <ul class="pill-list">
+        <li><strong>Account ownership:</strong> Brushfire owns the Stripe account, Supabase project, Vercel team, Cloudflare zone, GitHub org, OpenAI account, and Resend workspace as of May 22.</li>
+        <li><strong>Billing:</strong> All seven services bill to a Brushfire card. No agency or personal cards remain in production.</li>
+        <li><strong>Recovery contact:</strong> ops@brushfirecoffee.com across every service, with julia@brushfirecoffee.com as backup where supported.</li>
+        <li><strong>Production secrets rotated</strong> on May 20 across all seven services — full evidence on pages 3–9.</li>
+      </ul>
+    </div>
+    <div>
+      <div class="col-h">Documented exceptions</div>
+      <ul class="pill-list">
+        <li>
+          <strong>Stripe events feed (read-only)</strong> — Northshore retains a
+          restricted Stripe key until <strong>August 8, 2026</strong> for
+          post-launch incident triage. Revocable by client at any time.
+        </li>
+        <li>
+          <strong>GitHub org admin (warranty)</strong> — Northshore retains one
+          org-admin seat until <strong>September 30, 2026</strong> for warranty
+          support. Removable by client immediately.
+        </li>
+        <li>
+          <strong>Suggested next review:</strong> August 8, 2026, when the
+          Stripe exception auto-expires.
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout info">
+    <div class="lbl">For the busy reader</div>
+    <div class="body">
+      Six services Green; GitHub Yellow only because of the documented warranty exception. No red-flag items, no undocumented agency access. Both exceptions are client-revocable today.
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     STRIPE
+     ============================================================ -->
+<section class="page-section">
+  <div class="svc-banner">
+    <span class="svc-logo stripe">S</span>
+    <div class="svc-name">
+      <h3>Stripe — payments &amp; billing</h3>
+      <span class="role">Production live mode · custody assertion</span>
+    </div>
+    <span class="svc-status green">Green</span>
+  </div>
+
+  <div class="kv-grid">
+    <div class="kv">
+      <span class="k">Account owner</span>
+      <span class="v">ops@brushfirecoffee.com <span class="tag client">Client</span></span>
+    </div>
+    <div class="kv">
+      <span class="k">Billing card holder</span>
+      <span class="v">Brushfire Coffee Roasters · Visa •••• 4242</span>
+    </div>
+    <div class="kv">
+      <span class="k">Recovery contact</span>
+      <span class="v">ops@brushfirecoffee.com</span>
+    </div>
+    <div class="kv">
+      <span class="k">Transfer status</span>
+      <span class="v" style="color: var(--green); font-weight: 800;">✓ Complete</span>
+    </div>
+  </div>
+
+  <div class="block-title">Current admin access</div>
+  <ul class="admin-list">
+    <li><span class="who">ops@brushfirecoffee.com</span> <span class="tag client">Client</span></li>
+    <li><span class="who">julia@brushfirecoffee.com</span> <span class="tag client">Client</span></li>
+  </ul>
+
+  <div class="block-title">Personnel revoked during project</div>
+  <table class="data">
+    <thead>
+      <tr>
+        <th>Person</th>
+        <th>Role</th>
+        <th>Removed</th>
+        <th>Reason</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="who">maria.olson@northshorestudio.com</td>
+        <td>Engineer (Northshore)</td>
+        <td class="when">2026-05-15</td>
+        <td>Engagement offboarding — production access no longer required.</td>
+      </tr>
+      <tr>
+        <td class="who">ben.cho@freelancer.io</td>
+        <td>Contractor (DTC build)</td>
+        <td class="when">2026-05-08</td>
+        <td>Contract complete — access removed at project conclusion.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="block-title">Rotation evidence</div>
+  <table class="data">
+    <thead>
+      <tr>
+        <th>Secret</th>
+        <th>Last rotated</th>
+        <th>Rotated by</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="mono">STRIPE_SECRET_KEY</td>
+        <td class="when">2026-05-20</td>
+        <td class="who">mara.lindberg@northshorestudio.com</td>
+      </tr>
+      <tr>
+        <td class="mono">STRIPE_WEBHOOK_SECRET</td>
+        <td class="when">2026-05-20</td>
+        <td class="who">mara.lindberg@northshorestudio.com</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="svc-exception">
+    <div class="lbl">Exception — documented &amp; time-bound</div>
+    <div class="body">
+      Northshore Studio retains a Stripe <strong>restricted API key</strong>
+      (events feed read-only, no write access) on a key named
+      <span class="mono">rk_live_NS_events_only</span>, scoped to read events
+      and balance only. Purpose: post-launch incident triage and refund
+      assistance during the 90-day support window. <strong>Auto-expires
+      August 8, 2026.</strong> The client may revoke this key at any time
+      via Stripe Dashboard → Developers → API keys.
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     SUPABASE
+     ============================================================ -->
+<section class="page-section">
+  <div class="svc-banner">
+    <span class="svc-logo supabase">SB</span>
+    <div class="svc-name">
+      <h3>Supabase — database &amp; auth</h3>
+      <span class="role">Production project · custody assertion</span>
+    </div>
+    <span class="svc-status green">Green</span>
+  </div>
+
+  <div class="kv-grid">
+    <div class="kv">
+      <span class="k">Account owner</span>
+      <span class="v">ops@brushfirecoffee.com <span class="tag client">Client</span></span>
+    </div>
+    <div class="kv">
+      <span class="k">Billing</span>
+      <span class="v">Brushfire Coffee Roasters · Pro plan</span>
+    </div>
+    <div class="kv">
+      <span class="k">Recovery contact</span>
+      <span class="v">ops@brushfirecoffee.com</span>
+    </div>
+    <div class="kv">
+      <span class="k">Transfer status</span>
+      <span class="v" style="color: var(--green); font-weight: 800;">✓ Complete</span>
+    </div>
+  </div>
+
+  <div class="block-title">Current admin access</div>
+  <ul class="admin-list">
+    <li><span class="who">ops@brushfirecoffee.com</span> <span class="tag client">Client (Owner)</span></li>
+    <li><span class="who">ana.kim@brushfirecoffee.com</span> <span class="tag client">Client (Developer)</span></li>
+  </ul>
+
+  <div class="block-title">Personnel revoked during project</div>
+  <table class="data">
+    <thead>
+      <tr><th>Person</th><th>Role</th><th>Removed</th><th>Reason</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="who">maria.olson@northshorestudio.com</td>
+        <td>Engineer (Northshore)</td>
+        <td class="when">2026-05-15</td>
+        <td>Engagement offboarding.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="block-title">Rotation evidence</div>
+  <table class="data">
+    <thead>
+      <tr><th>Secret</th><th>Last rotated</th><th>Rotated by</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="mono">SUPABASE_SERVICE_ROLE_KEY</td>
+        <td class="when">2026-05-20</td>
+        <td class="who">mara.lindberg@northshorestudio.com</td>
+      </tr>
+      <tr>
+        <td class="mono">SUPABASE_DB_URL (db password)</td>
+        <td class="when">2026-05-20</td>
+        <td class="who">ana.kim@brushfirecoffee.com</td>
+      </tr>
+      <tr>
+        <td class="mono">SUPABASE_ANON_KEY</td>
+        <td class="when">stable</td>
+        <td class="who">— (anon key is public-by-design; no rotation)</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="svc-exception green">
+    <div class="lbl">Clean — no exceptions</div>
+    <div class="body">
+      No agency or contractor retains any access to the Supabase project.
+      Row-Level Security policies on every user-facing table validated by
+      Northshore Studio engineer on 2026-05-19. Test report attached as
+      Appendix B (Brushfire Coffee internal copy).
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     GITHUB
+     ============================================================ -->
+<section class="page-section">
+  <div class="svc-banner">
+    <span class="svc-logo github">GH</span>
+    <div class="svc-name">
+      <h3>GitHub — source code</h3>
+      <span class="role">brushfirecoffee organization · custody assertion</span>
+    </div>
+    <span class="svc-status amber">Yellow</span>
+  </div>
+
+  <div class="kv-grid">
+    <div class="kv">
+      <span class="k">Org owner</span>
+      <span class="v">brushfirecoffee org <span class="tag client">Client</span></span>
+    </div>
+    <div class="kv">
+      <span class="k">Billing</span>
+      <span class="v">Brushfire Coffee Roasters · Team plan</span>
+    </div>
+    <div class="kv">
+      <span class="k">Recovery contact</span>
+      <span class="v">ops@brushfirecoffee.com</span>
+    </div>
+    <div class="kv">
+      <span class="k">Transfer status</span>
+      <span class="v" style="color: var(--amber); font-weight: 800;">Scheduled — see exception</span>
+    </div>
+  </div>
+
+  <div class="block-title">Current admin access</div>
+  <ul class="admin-list">
+    <li><span class="who">ops@brushfirecoffee.com</span> <span class="tag client">Client (Owner)</span></li>
+    <li><span class="who">julia@brushfirecoffee.com</span> <span class="tag client">Client (Admin)</span></li>
+    <li><span class="who">mara.lindberg@northshorestudio.com</span> <span class="tag agency">Agency (Warranty exception)</span></li>
+  </ul>
+
+  <div class="block-title">Personnel revoked during project</div>
+  <table class="data">
+    <thead>
+      <tr><th>Person</th><th>Role</th><th>Removed</th><th>Reason</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="who">ben.cho@freelancer.io</td>
+        <td>Contractor</td>
+        <td class="when">2026-05-08</td>
+        <td>Contract complete — write access removed.</td>
+      </tr>
+      <tr>
+        <td class="who">kareem.shah@freelancer.io</td>
+        <td>Contractor (design build)</td>
+        <td class="when">2026-04-30</td>
+        <td>Project phase complete — repo access removed.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="block-title">Rotation evidence</div>
+  <table class="data">
+    <thead>
+      <tr><th>Secret</th><th>Last rotated</th><th>Rotated by</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="mono">GITHUB_DEPLOY_KEY (production)</td>
+        <td class="when">2026-05-19</td>
+        <td class="who">mara.lindberg@northshorestudio.com</td>
+      </tr>
+      <tr>
+        <td class="mono">GITHUB_ACTIONS_PAT</td>
+        <td class="when">2026-05-19</td>
+        <td class="who">mara.lindberg@northshorestudio.com</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="svc-exception">
+    <div class="lbl">Exception — documented &amp; time-bound</div>
+    <div class="body">
+      Northshore Studio retains <strong>one org-admin seat</strong>
+      (mara.lindberg@northshorestudio.com) on the brushfirecoffee GitHub
+      org for the duration of the <strong>warranty support window through
+      September 30, 2026</strong>. Purpose: ship hotfixes, address security
+      patches, and respond to GitHub-side incidents during the warranty
+      period. The client retains the right to remove this seat at any time;
+      doing so does not affect the warranty. After September 30, 2026 the
+      seat is automatically scheduled for removal.
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     VERCEL
+     ============================================================ -->
+<section class="page-section">
+  <div class="svc-banner">
+    <span class="svc-logo vercel">V</span>
+    <div class="svc-name">
+      <h3>Vercel — production hosting</h3>
+      <span class="role">brushfirecoffee team · custody assertion</span>
+    </div>
+    <span class="svc-status green">Green</span>
+  </div>
+
+  <div class="kv-grid">
+    <div class="kv">
+      <span class="k">Team owner</span>
+      <span class="v">ops@brushfirecoffee.com <span class="tag client">Client</span></span>
+    </div>
+    <div class="kv">
+      <span class="k">Billing</span>
+      <span class="v">Brushfire Coffee Roasters · Pro plan</span>
+    </div>
+    <div class="kv">
+      <span class="k">Recovery contact</span>
+      <span class="v">ops@brushfirecoffee.com</span>
+    </div>
+    <div class="kv">
+      <span class="k">Transfer status</span>
+      <span class="v" style="color: var(--green); font-weight: 800;">✓ Complete</span>
+    </div>
+  </div>
+
+  <div class="block-title">Current admin access</div>
+  <ul class="admin-list">
+    <li><span class="who">ops@brushfirecoffee.com</span> <span class="tag client">Client (Owner)</span></li>
+    <li><span class="who">julia@brushfirecoffee.com</span> <span class="tag client">Client (Member)</span></li>
+  </ul>
+
+  <div class="block-title">Personnel revoked during project</div>
+  <table class="data">
+    <thead>
+      <tr><th>Person</th><th>Role</th><th>Removed</th><th>Reason</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="who">maria.olson@northshorestudio.com</td>
+        <td>Engineer (Northshore)</td>
+        <td class="when">2026-05-15</td>
+        <td>Engagement offboarding.</td>
+      </tr>
+      <tr>
+        <td class="who">ben.cho@freelancer.io</td>
+        <td>Contractor</td>
+        <td class="when">2026-05-08</td>
+        <td>Contract complete — preview deploy access removed.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="block-title">Rotation evidence</div>
+  <table class="data">
+    <thead>
+      <tr><th>Secret</th><th>Last rotated</th><th>Rotated by</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="mono">VERCEL_DEPLOY_HOOK_PROD</td>
+        <td class="when">2026-05-20</td>
+        <td class="who">mara.lindberg@northshorestudio.com</td>
+      </tr>
+      <tr>
+        <td class="mono">VERCEL_TOKEN (CLI)</td>
+        <td class="when">2026-05-20</td>
+        <td class="who">mara.lindberg@northshorestudio.com</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="svc-exception green">
+    <div class="lbl">Clean — no exceptions</div>
+    <div class="body">
+      Northshore Studio retains no Vercel access. Production environment
+      variables verified against deployment config on 2026-05-21. Preview
+      deploy URLs disabled for non-team members.
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     OPENAI
+     ============================================================ -->
+<section class="page-section">
+  <div class="svc-banner">
+    <span class="svc-logo openai">AI</span>
+    <div class="svc-name">
+      <h3>OpenAI — product description AI</h3>
+      <span class="role">Brushfire account · custody assertion</span>
+    </div>
+    <span class="svc-status green">Green</span>
+  </div>
+
+  <div class="kv-grid">
+    <div class="kv">
+      <span class="k">Account owner</span>
+      <span class="v">ops@brushfirecoffee.com <span class="tag client">Client</span></span>
+    </div>
+    <div class="kv">
+      <span class="k">Billing</span>
+      <span class="v">Brushfire Coffee Roasters · Pay-as-you-go</span>
+    </div>
+    <div class="kv">
+      <span class="k">Recovery contact</span>
+      <span class="v">ops@brushfirecoffee.com</span>
+    </div>
+    <div class="kv">
+      <span class="k">Spend cap</span>
+      <span class="v" style="color: var(--green); font-weight: 800;">$200 / month (set 2026-05-20)</span>
+    </div>
+  </div>
+
+  <div class="block-title">Current admin access</div>
+  <ul class="admin-list">
+    <li><span class="who">ops@brushfirecoffee.com</span> <span class="tag client">Client (Owner)</span></li>
+  </ul>
+
+  <div class="block-title">Personnel revoked during project</div>
+  <p style="font-size:9pt; color: var(--muted); margin-top: 4pt;">
+    None. The OpenAI account was created under the client's email on the
+    first day of the engagement. Northshore Studio never held administrative
+    access; all API usage during build was through scoped API keys, all of
+    which were rotated to client-generated keys before launch.
+  </p>
+
+  <div class="block-title">Rotation evidence</div>
+  <table class="data">
+    <thead><tr><th>Secret</th><th>Last rotated</th><th>Rotated by</th></tr></thead>
+    <tbody>
+      <tr>
+        <td class="mono">OPENAI_API_KEY (production)</td>
+        <td class="when">2026-05-20</td>
+        <td class="who">ops@brushfirecoffee.com</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="svc-exception green">
+    <div class="lbl">Recommendation — monitoring</div>
+    <div class="body">
+      Recommended that Brushfire add a monthly spend alert at 80% of cap
+      ($160) and configure billing email notifications. Documented in
+      handoff playbook section 4.3.
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     RESEND
+     ============================================================ -->
+<section class="page-section">
+  <div class="svc-banner">
+    <span class="svc-logo resend">R</span>
+    <div class="svc-name">
+      <h3>Resend — transactional email</h3>
+      <span class="role">brushfirecoffee.com sending domain · custody assertion</span>
+    </div>
+    <span class="svc-status green">Green</span>
+  </div>
+
+  <div class="kv-grid">
+    <div class="kv">
+      <span class="k">Account owner</span>
+      <span class="v">ops@brushfirecoffee.com <span class="tag client">Client</span></span>
+    </div>
+    <div class="kv">
+      <span class="k">Billing</span>
+      <span class="v">Brushfire Coffee Roasters · Pro plan</span>
+    </div>
+    <div class="kv">
+      <span class="k">Recovery contact</span>
+      <span class="v">ops@brushfirecoffee.com</span>
+    </div>
+    <div class="kv">
+      <span class="k">Transfer status</span>
+      <span class="v" style="color: var(--green); font-weight: 800;">✓ Complete</span>
+    </div>
+  </div>
+
+  <div class="block-title">Current admin access</div>
+  <ul class="admin-list">
+    <li><span class="who">ops@brushfirecoffee.com</span> <span class="tag client">Client (Owner)</span></li>
+  </ul>
+
+  <div class="block-title">Personnel revoked during project</div>
+  <table class="data">
+    <thead><tr><th>Person</th><th>Role</th><th>Removed</th><th>Reason</th></tr></thead>
+    <tbody>
+      <tr>
+        <td class="who">maria.olson@northshorestudio.com</td>
+        <td>Engineer (Northshore)</td>
+        <td class="when">2026-05-15</td>
+        <td>Engagement offboarding.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="block-title">Rotation evidence</div>
+  <table class="data">
+    <thead><tr><th>Secret</th><th>Last rotated</th><th>Rotated by</th></tr></thead>
+    <tbody>
+      <tr>
+        <td class="mono">RESEND_API_KEY</td>
+        <td class="when">2026-05-20</td>
+        <td class="who">mara.lindberg@northshorestudio.com</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="svc-exception green">
+    <div class="lbl">Email deliverability — verified</div>
+    <div class="body">
+      SPF, DKIM, and DMARC records validated for brushfirecoffee.com on
+      2026-05-18. DMARC policy: <span class="mono">p=quarantine</span> with
+      <span class="mono">rua=mailto:dmarc@brushfirecoffee.com</span>. DNS
+      records snapshot attached as Appendix C.
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     CLOUDFLARE
+     ============================================================ -->
+<section class="page-section">
+  <div class="svc-banner">
+    <span class="svc-logo cloudflare">CF</span>
+    <div class="svc-name">
+      <h3>Cloudflare — DNS &amp; CDN</h3>
+      <span class="role">brushfirecoffee.com zone · custody assertion</span>
+    </div>
+    <span class="svc-status green">Green</span>
+  </div>
+
+  <div class="kv-grid">
+    <div class="kv">
+      <span class="k">Zone owner</span>
+      <span class="v">ops@brushfirecoffee.com <span class="tag client">Client</span></span>
+    </div>
+    <div class="kv">
+      <span class="k">Billing</span>
+      <span class="v">Brushfire Coffee Roasters · Free plan (CDN)</span>
+    </div>
+    <div class="kv">
+      <span class="k">Recovery contact</span>
+      <span class="v">ops@brushfirecoffee.com</span>
+    </div>
+    <div class="kv">
+      <span class="k">Transfer status</span>
+      <span class="v" style="color: var(--green); font-weight: 800;">✓ Complete</span>
+    </div>
+  </div>
+
+  <div class="block-title">Current admin access</div>
+  <ul class="admin-list">
+    <li><span class="who">ops@brushfirecoffee.com</span> <span class="tag client">Client (Super Administrator)</span></li>
+    <li><span class="who">julia@brushfirecoffee.com</span> <span class="tag client">Client (Administrator)</span></li>
+  </ul>
+
+  <div class="block-title">Personnel revoked during project</div>
+  <table class="data">
+    <thead><tr><th>Person</th><th>Role</th><th>Removed</th><th>Reason</th></tr></thead>
+    <tbody>
+      <tr>
+        <td class="who">maria.olson@northshorestudio.com</td>
+        <td>Engineer (Northshore)</td>
+        <td class="when">2026-05-15</td>
+        <td>Engagement offboarding — DNS access removed.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="block-title">Rotation evidence</div>
+  <table class="data">
+    <thead><tr><th>Secret</th><th>Last rotated</th><th>Rotated by</th></tr></thead>
+    <tbody>
+      <tr>
+        <td class="mono">CLOUDFLARE_API_TOKEN</td>
+        <td class="when">2026-05-20</td>
+        <td class="who">mara.lindberg@northshorestudio.com</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="svc-exception green">
+    <div class="lbl">Domain registrar — separate from Cloudflare</div>
+    <div class="body">
+      Domain <span class="mono">brushfirecoffee.com</span> is registered with
+      Hover under ops@brushfirecoffee.com (Brushfire Coffee Roasters). Auto-renew
+      enabled. Northshore Studio holds no registrar access.
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     AUDIT LOG APPENDIX
+     ============================================================ -->
+<section class="page-section">
+  <div class="section-header">
+    <span class="eyebrow">Appendix A</span>
+    <h2>Audit log of the engagement.</h2>
+    <p class="sub">
+      Significant events between project kickoff (March 4, 2026) and report
+      issue date (May 24, 2026). One row per material custody event. Reads
+      and routine deployments are summarized rather than enumerated; full
+      detail available on request.
+    </p>
+  </div>
+
+  <table class="data">
+    <thead>
+      <tr>
+        <th>When</th>
+        <th>Actor</th>
+        <th>Service</th>
+        <th>Event</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td class="when">2026-03-04</td><td class="who">mara.lindberg@northshorestudio.com</td><td>—</td><td>Engagement created · NS-2026-BCR-001 · kickoff.</td></tr>
+      <tr><td class="when">2026-03-04</td><td class="who">ops@brushfirecoffee.com</td><td>Stripe</td><td>Account created under client email; agency invited as restricted-key holder only.</td></tr>
+      <tr><td class="when">2026-03-04</td><td class="who">ops@brushfirecoffee.com</td><td>Supabase</td><td>Project created under client email; agency invited as developer.</td></tr>
+      <tr><td class="when">2026-03-05</td><td class="who">ops@brushfirecoffee.com</td><td>Vercel</td><td>Team created; brushfirecoffee.com domain attached.</td></tr>
+      <tr><td class="when">2026-03-05</td><td class="who">ops@brushfirecoffee.com</td><td>Cloudflare</td><td>Zone created; DNS migrated from previous host.</td></tr>
+      <tr><td class="when">2026-03-12</td><td class="who">kareem.shah@freelancer.io</td><td>GitHub</td><td>Granted write access to brushfirecoffee/dtc-storefront for design build.</td></tr>
+      <tr><td class="when">2026-04-02</td><td class="who">ben.cho@freelancer.io</td><td>GitHub, Vercel, Stripe</td><td>Granted scoped access for DTC integration work.</td></tr>
+      <tr><td class="when">2026-04-30</td><td class="who">mara.lindberg@northshorestudio.com</td><td>GitHub</td><td>kareem.shah@freelancer.io access removed — phase complete.</td></tr>
+      <tr><td class="when">2026-05-08</td><td class="who">mara.lindberg@northshorestudio.com</td><td>GitHub, Vercel, Stripe</td><td>ben.cho@freelancer.io access removed — contract complete.</td></tr>
+      <tr><td class="when">2026-05-15</td><td class="who">mara.lindberg@northshorestudio.com</td><td>Stripe, Supabase, Vercel, Resend, Cloudflare</td><td>maria.olson@northshorestudio.com offboarded across all services.</td></tr>
+      <tr><td class="when">2026-05-18</td><td class="who">mara.lindberg@northshorestudio.com</td><td>Resend, Cloudflare</td><td>SPF, DKIM, DMARC validated for brushfirecoffee.com.</td></tr>
+      <tr><td class="when">2026-05-19</td><td class="who">mara.lindberg@northshorestudio.com</td><td>Supabase</td><td>RLS policy audit across user-facing tables — clean.</td></tr>
+      <tr><td class="when">2026-05-19</td><td class="who">mara.lindberg@northshorestudio.com</td><td>GitHub</td><td>Deploy key and Actions PAT rotated for production.</td></tr>
+      <tr><td class="when">2026-05-20</td><td class="who">mara.lindberg@northshorestudio.com</td><td>Stripe</td><td>STRIPE_SECRET_KEY and STRIPE_WEBHOOK_SECRET rotated. Restricted key issued for events feed.</td></tr>
+      <tr><td class="when">2026-05-20</td><td class="who">ana.kim@brushfirecoffee.com</td><td>Supabase</td><td>SUPABASE_SERVICE_ROLE_KEY and DB password rotated.</td></tr>
+      <tr><td class="when">2026-05-20</td><td class="who">mara.lindberg@northshorestudio.com</td><td>Vercel, Resend, Cloudflare</td><td>Production secrets rotated across hosting, email, and DNS.</td></tr>
+      <tr><td class="when">2026-05-20</td><td class="who">ops@brushfirecoffee.com</td><td>OpenAI</td><td>OPENAI_API_KEY generated by client; agency keys revoked. Spend cap set $200/mo.</td></tr>
+      <tr><td class="when">2026-05-22</td><td class="who">mara.lindberg@northshorestudio.com</td><td>—</td><td><strong>Launch ✓ — DTC storefront live at brushfirecoffee.com.</strong></td></tr>
+      <tr><td class="when">2026-05-24</td><td class="who">mara.lindberg@northshorestudio.com</td><td>—</td><td>This custody record issued to client; engagement marked LAUNCHED.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ============================================================
+     METHODOLOGY + SIGNATURE
+     ============================================================ -->
+<section class="page-section">
+  <div class="section-header">
+    <span class="eyebrow">Appendix B</span>
+    <h2>Methodology &amp; signature.</h2>
+    <p class="sub">
+      What this custody record asserts, what it doesn't, and the agency
+      principal's signed attestation as of the issue date.
+    </p>
+  </div>
+
+  <div class="meth-grid">
+    <div class="meth-card checked">
+      <h4>What we asserted</h4>
+      <ul>
+        <li>Account ownership: whose email, whose billing card, whose recovery contact across seven production services.</li>
+        <li>Current admin access: every active human and machine principal with admin or write capability.</li>
+        <li>Personnel revocations: every project member who held production access during the engagement and was removed, with timestamps.</li>
+        <li>Rotation evidence: production secrets rotated within 30 days of launch, with rotator identified.</li>
+        <li>Transfer status: explicit YES/SCHEDULED/EXCEPTION per service.</li>
+        <li>Exceptions: time-bound, client-revocable, documented.</li>
+      </ul>
+    </div>
+    <div class="meth-card unchecked">
+      <h4>What we did NOT assert</h4>
+      <ul>
+        <li>Live state at the provider: the assertion is based on agency records and rotation evidence as of 2026-05-24, not a real-time API check at each provider.</li>
+        <li>Long tail: services outside the seven listed (analytics, error tracking, CI dashboards) are out of scope for this engagement's report.</li>
+        <li>Application-level access control: in-app user roles, RLS policies, and similar are validated separately (see Appendix B in Brushfire's internal copy).</li>
+        <li>Client-side operational practices: how Brushfire maintains custody after launch is the client's responsibility; this report is a snapshot at handoff.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="sig-block">
+    <div class="sig-row">
+      <div class="sig-pad">
+        <div class="sig-line">Mara Lindberg</div>
+        <div class="sig-label">Signed by Agency Principal</div>
+        <div class="sig-name">Mara Lindberg</div>
+        <div class="sig-role">Project Lead · Northshore Studio · May 24, 2026</div>
+      </div>
+      <div class="sig-pad">
+        <div class="sig-line" style="font-family: inherit; font-style: normal; font-size: 9pt; color: var(--muted); font-weight: 500; padding-bottom: 8pt;">— pending client signature —</div>
+        <div class="sig-label">Acknowledged by Client</div>
+        <div class="sig-name">Olivia Pham</div>
+        <div class="sig-role">Director of Operations · Brushfire Coffee Roasters</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer-watermark">
+    <div class="sk">Sherpa<span class="keys">Keys</span> · Go-Live Credential Custody Record · v1 methodology · sherpakeys.com</div>
+    <div style="margin-top: 4pt;">This document is confidential to Brushfire Coffee Roasters and Northshore Studio. Engagement ID: NS-2026-BCR-001.</div>
+  </div>
+</section>
+
+</body>
+</html>
