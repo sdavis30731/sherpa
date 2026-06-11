@@ -103,7 +103,12 @@ export function CustodyEditForm({
         seeded_at: initial.seeded_at,
 
         issued_by: { name: issuedByName.trim(), role: issuedByRole.trim() },
-        issued_at: new Date().toISOString(),
+        // SHRP-098 — form save stamps saved_at. issued_at only flips
+        // when the agency explicitly clicks Issue on the view page.
+        // If a previous Issue stamped it, preserve that — edits don't
+        // un-issue.
+        saved_at: new Date().toISOString(),
+        issued_at: initial.issued_at,
         domain: {
           primary_domain: domain.primary_domain.trim(),
           registrar: domain.registrar.trim(),

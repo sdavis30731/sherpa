@@ -1,13 +1,14 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { ChevronLeft, Pencil } from "lucide-react";
+import { ChevronLeft, Pencil, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { PrintButton } from "./_components/print-button";
+import { IssueButton } from "./_components/issue-button";
 import {
   normalizeCustody,
   parseAdminList,
   transferStatusLabel,
-  isComplete,
+  isIssued,
   type CustodyAssertions,
 } from "@/lib/custody";
 import { getService } from "@/lib/services";
@@ -82,11 +83,10 @@ export default async function CustodyViewPage({
     };
 
   const custody: CustodyAssertions = normalizeCustody(project.custody_assertions);
-  const complete = isComplete(custody);
+  const issued = isIssued(custody);
 
-  const issuedAt = custody.issued_at
-    ? new Date(custody.issued_at)
-    : null;
+  const issuedAt = custody.issued_at ? new Date(custody.issued_at) : null;
+  const savedAt = custody.saved_at ? new Date(custody.saved_at) : null;
   const launchDate = project.launch_date
     ? new Date(`${project.launch_date}T00:00`)
     : null;
@@ -106,16 +106,58 @@ export default async function CustodyViewPage({
 
   return (
     <>
+      {/* ──────────── Draft CTA banner (screen only) ──────────── */}
+      {!issued && (
+        <div className="custody-draft-banner bg-amber-50 border-b border-amber-200 px-6 py-3 print:hidden">
+          <div className="mx-auto flex max-w-4xl flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2 text-sm text-amber-900">
+              <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600" />
+              <span>
+                <strong>Draft.</strong> Issue the record to remove the
+                watermark and stamp the official date.
+              </span>
+            </div>
+            <IssueButton
+              projectId={projectId}
+              clientName={project.client_name ?? ""}
+            />
+          </div>
+        </div>
+      )}
+
       {/* ──────────── Toolbar (screen only) ──────────── */}
       <div className="custody-toolbar bg-slate-100 px-6 py-3 print:hidden">
-        <div className="mx-auto flex max-w-4xl items-center justify-between">
+        <div className="mx-auto flex max-w-4xl items-center justify-between gap-3">
           <Link
             href={`/vault/${projectId}`}
             className="inline-flex items-center gap-1 text-sm text-slate-600 hover:text-slate-900"
           >
             <ChevronLeft className="h-4 w-4" /> Back to engagement
           </Link>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
+            {issued ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-200">
+                <CheckCircle2 className="h-3 w-3" />
+                Issued{" "}
+                {issuedAt
+                  ? issuedAt.toLocaleDateString(undefined, {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    })
+                  : ""}
+              </span>
+            ) : savedAt ? (
+              <span className="text-xs text-slate-500">
+                Last saved{" "}
+                {savedAt.toLocaleString(undefined, {
+                  month: "short",
+                  day: "numeric",
+                  hour: "numeric",
+                  minute: "2-digit",
+                })}
+              </span>
+            ) : null}
             <Link
               href={`/vault/${projectId}/custody/edit`}
               className="inline-flex items-center gap-2 rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50"
@@ -139,7 +181,7 @@ export default async function CustodyViewPage({
         }}
       />
 
-      <article className="custody-record">
+      <article className={"custody-record " + (issued ? "is-issued" : "is-draft")}>
         {/* ──────────── Cover ──────────── */}
         <section className="cr-cover">
           <div className="cr-cover-brandbar">
@@ -230,10 +272,10 @@ export default async function CustodyViewPage({
             </div>
           </div>
 
-          {!complete && (
+          {!issued && (
             <div className="cr-cover-draft">
-              Draft — fill in all required fields and re-save to issue a final
-              record.
+              Draft — not yet issued. Issue the record to remove the
+              watermark and stamp the official date.
             </div>
           )}
         </section>
@@ -504,6 +546,37 @@ function buildCss({
   max-width: 8.5in;
   margin: 0 auto;
   padding: 24px 0 60px;
+}
+
+/* SHRP-098 — DRAFT watermark for un-issued records. Overlaid on each
+   page via ::after pseudo-element. Visible on screen and in print.
+   The .is-draft class is set on the .custody-record root from the
+   server (issued_at not set on custody_assertions). */
+.custody-record.is-draft .cr-cover,
+.custody-record.is-draft .cr-page {
+  position: relative;
+}
+.custody-record.is-draft .cr-cover::after,
+.custody-record.is-draft .cr-page::after {
+  content: "DRAFT";
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 110pt;
+  font-weight: 900;
+  letter-spacing: 0.18em;
+  color: rgba(220, 38, 38, 0.10);
+  transform: rotate(-22deg);
+  pointer-events: none;
+  z-index: 50;
+  user-select: none;
+}
+.custody-record.is-draft .cr-cover::after {
+  /* Brighter watermark on the dark cover so it reads through the
+     gradient instead of disappearing into it. */
+  color: rgba(255, 255, 255, 0.18);
 }
 
 .custody-record h1,
@@ -955,7 +1028,7 @@ function buildCss({
     margin: 0.65in 0.6in;
   }
   body { background: #fff !important; }
-  .custody-toolbar { display: none !important; }
+  .custody-toolbar, .custody-draft-banner { display: none !important; }
   .custody-record {
     max-width: none;
     padding: 0;
@@ -966,6 +1039,12 @@ function buildCss({
   .cr-kv-grid, .cr-exec-card, .cr-svc-banner, .cr-sig-row, .cr-svc-exception {
     break-inside: avoid;
     page-break-inside: avoid;
+  }
+  /* Boost watermark contrast for print — the screen version is
+     intentionally subtle but printed pages need it more visible to
+     survive a hand-off as an "obviously DRAFT" document. */
+  .custody-record.is-draft .cr-page::after {
+    color: rgba(220, 38, 38, 0.18);
   }
   html, body {
     -webkit-print-color-adjust: exact;

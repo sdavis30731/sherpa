@@ -173,6 +173,14 @@ const REGISTRY: Record<string, AuditActionMeta> = {
     severity: "success",
     category: "project",
   },
+  custody_record_issued: {
+    label: "Custody Record issued",
+    description:
+      "Custody Record stamped as the official, dated handoff document.",
+    icon: FileText,
+    severity: "notable",
+    category: "project",
+  },
 
   // ----- Agent (MCP) -----
   mcp_token_created: {

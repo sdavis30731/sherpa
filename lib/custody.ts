@@ -63,7 +63,24 @@ export type CustodyAssertions = {
   seeded_at?: string;
 
   issued_by?: CustodyIssuer;
-  /** ISO timestamp set when the agency saves the form. */
+
+  /**
+   * SHRP-098 — semantic split.
+   *   - saved_at: stamped every time the agency saves the edit form.
+   *     A Custody Record with saved_at but no issued_at is a DRAFT.
+   *   - issued_at: stamped only when the agency clicks "Issue Custody
+   *     Record" and confirms the (free-during-founding-cohort) charge.
+   *     Once set, the document is the official one — view renders
+   *     clean, no watermark. Edits after issuing are allowed but the
+   *     issued_at stays put (re-issues would belong to a new revision
+   *     model we don't have yet).
+   *
+   * Before SHRP-098, issued_at was being used for both senses. Rows
+   * created prior to this change will have issued_at populated by the
+   * form save; we treat those rows as Draft (Issue still required to
+   * make them official). The normalizer migrates that data on read.
+   */
+  saved_at?: string;
   issued_at?: string;
 
   domain?: CustodyDomain;
@@ -75,6 +92,8 @@ export type CustodyAssertions = {
 /** Fresh shell for a brand-new Custody Record (no prior data). */
 export const EMPTY_CUSTODY: CustodyAssertions = {
   issued_by: { name: "", role: "" },
+  saved_at: undefined,
+  issued_at: undefined,
   domain: { primary_domain: "", registrar: "", owner_email: "", notes: "" },
   hosting: { platform: "", billing_owner_email: "", notes: "" },
   services: [],
@@ -94,16 +113,43 @@ export function normalizeCustody(
     is_sample?: boolean;
     seeded_at?: string;
   };
+
+  // SHRP-098 backward-compat migration on read:
+  // Before SHRP-098, the form save stamped `issued_at` directly. After
+  // SHRP-098 we split it: `saved_at` for form save, `issued_at` only
+  // for the explicit Issue action. A row from the old world that has
+  // issued_at populated is actually a draft (the agency never went
+  // through the new Issue flow), so we slide that timestamp into
+  // saved_at and clear issued_at unless an explicit `issued` flag is
+  // present in the blob.
+  let savedAt = safe.saved_at;
+  let issuedAt = safe.issued_at;
+  if (issuedAt && !savedAt && (safe as { issued?: boolean }).issued !== true) {
+    savedAt = issuedAt;
+    issuedAt = undefined;
+  }
+
   return {
     is_sample: safe.is_sample ?? false,
     seeded_at: safe.seeded_at,
     issued_by: { ...EMPTY_CUSTODY.issued_by!, ...(safe.issued_by ?? {}) },
-    issued_at: safe.issued_at,
+    saved_at: savedAt,
+    issued_at: issuedAt,
     domain: { ...EMPTY_CUSTODY.domain!, ...(safe.domain ?? {}) },
     hosting: { ...EMPTY_CUSTODY.hosting!, ...(safe.hosting ?? {}) },
     services: Array.isArray(safe.services) ? safe.services : [],
     handoff_notes: safe.handoff_notes ?? "",
   };
+}
+
+/** A Custody Record has been officially issued if issued_at is set. */
+export function isIssued(c: CustodyAssertions): boolean {
+  return Boolean(c.issued_at);
+}
+
+/** A Custody Record has been saved as a draft at least once. */
+export function isDrafted(c: CustodyAssertions): boolean {
+  return Boolean(c.saved_at);
 }
 
 /**

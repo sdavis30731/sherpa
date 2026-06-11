@@ -114,17 +114,36 @@ export default async function ProjectPage({
       typeof project.custody_assertions === "object" &&
       (project.custody_assertions as { is_sample?: unknown }).is_sample === true,
   );
-  // "Custody Record issued" = the form has been saved at least once and
-  // stamped an issued_at. We don't use isComplete() here because partial
-  // saves still produce a viewable record (rendered as Draft).
-  const custodyIssuedAt =
+  // SHRP-098 — three states for the Custody Record card:
+  //   - issued: agency clicked Issue Custody Record (issued_at stamped)
+  //   - drafted: form has been saved at least once (saved_at stamped)
+  //              but never issued — show "Drafted, Issue when ready"
+  //   - none: never opened the form — show "Start"
+  // Backward-compat: rows from before SHRP-098 carry an issued_at
+  // from the form save. normalizeCustody migrates that to saved_at on
+  // read, but here we only have the raw blob. We approximate by
+  // treating any issued_at as a drafted state — the agency will see
+  // their existing record as drafted and can explicitly Issue when
+  // they're ready.
+  const custodyBlob =
     project.custody_assertions &&
     typeof project.custody_assertions === "object"
-      ? ((project.custody_assertions as { issued_at?: unknown }).issued_at as
-          | string
-          | undefined)
-      : undefined;
-  const hasCustody = Boolean(custodyIssuedAt);
+      ? (project.custody_assertions as Record<string, unknown>)
+      : null;
+  const custodySavedAt =
+    (custodyBlob?.saved_at as string | undefined) ??
+    (custodyBlob?.issued_at as string | undefined);
+  const custodyIssuedAt = custodyBlob
+    ? // Only treat as issued if EITHER saved_at is also present (which
+      // means the row went through the SHRP-098-aware save flow), OR
+      // an explicit `issued: true` flag is set. Otherwise the
+      // issued_at we see is a legacy form-save timestamp and the
+      // record is actually a draft.
+      (custodyBlob.saved_at || custodyBlob.issued === true) &&
+      (custodyBlob.issued_at as string | undefined)
+    : undefined;
+  const hasIssued = Boolean(custodyIssuedAt);
+  const hasDraft = Boolean(custodySavedAt) && !hasIssued;
   const isLaunched = project.status === "launched";
 
   return (
@@ -200,14 +219,21 @@ export default async function ProjectPage({
           </div>
         )}
 
-        {/* Custody Record entry. Three states:
-              - Has issued: View + Edit.
-              - Launched but no record yet: prominent "Generate now" nudge.
-              - Otherwise: subtle "Start Custody Record" CTA. */}
+        {/* Custody Record entry. Four states:
+              - hasIssued: View + Edit, with "Issued [date]" indicator.
+              - hasDraft: prominent "Issue Custody Record" CTA with
+                "Saved [date]" subtext and View/Edit secondary actions.
+              - launched, no record: prominent "Start Custody Record"
+                emerald nudge — the deliverable.
+              - default: subtle "Start" CTA. */}
         <CustodyCard
           projectId={project.id}
-          hasCustody={hasCustody}
-          custodyIssuedAt={custodyIssuedAt}
+          hasIssued={hasIssued}
+          hasDraft={hasDraft}
+          custodyIssuedAt={
+            typeof custodyIssuedAt === "string" ? custodyIssuedAt : undefined
+          }
+          custodySavedAt={custodySavedAt}
           isLaunched={isLaunched}
         />
 
@@ -331,20 +357,24 @@ function StatusPill({ status }: { status: EngagementRow["status"] }) {
  */
 function CustodyCard({
   projectId,
-  hasCustody,
+  hasIssued,
+  hasDraft,
   custodyIssuedAt,
+  custodySavedAt,
   isLaunched,
 }: {
   projectId: string;
-  hasCustody: boolean;
+  hasIssued: boolean;
+  hasDraft: boolean;
   custodyIssuedAt: string | undefined;
+  custodySavedAt: string | undefined;
   isLaunched: boolean;
 }) {
-  if (hasCustody) {
+  if (hasIssued) {
     return (
-      <div className="mb-6 flex items-center justify-between gap-3 rounded-2xl border border-sherpa-200 bg-sherpa-50/60 p-4">
+      <div className="mb-6 flex items-center justify-between gap-3 rounded-2xl border border-emerald-200 bg-emerald-50/60 p-4">
         <div className="flex items-center gap-3 min-w-0">
-          <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-sherpa-500 text-white">
+          <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-emerald-500 text-white">
             <FileText className="h-4 w-4" />
           </span>
           <div className="min-w-0">
@@ -353,14 +383,12 @@ function CustodyCard({
             </div>
             <div className="truncate text-xs text-slate-600">
               {custodyIssuedAt
-                ? `Last saved ${new Date(custodyIssuedAt).toLocaleString(undefined, {
+                ? `Issued ${new Date(custodyIssuedAt).toLocaleString(undefined, {
                     month: "short",
                     day: "numeric",
                     year: "numeric",
-                    hour: "numeric",
-                    minute: "2-digit",
                   })}`
-                : "Saved"}
+                : "Issued"}
             </div>
           </div>
         </div>
@@ -376,6 +404,49 @@ function CustodyCard({
             className="inline-flex items-center gap-1.5 rounded-md bg-sherpa-500 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-sherpa-600"
           >
             View
+            <ArrowRight className="h-3 w-3" />
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (hasDraft) {
+    return (
+      <div className="mb-6 flex items-center justify-between gap-3 rounded-2xl border border-amber-200 bg-amber-50/70 p-4">
+        <div className="flex items-center gap-3 min-w-0">
+          <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-amber-500 text-white">
+            <FileText className="h-4 w-4" />
+          </span>
+          <div className="min-w-0">
+            <div className="text-sm font-semibold text-slate-900">
+              Custody Record drafted — issue it when ready.
+            </div>
+            <div className="truncate text-xs text-slate-700">
+              {custodySavedAt
+                ? `Last saved ${new Date(custodySavedAt).toLocaleString(undefined, {
+                    month: "short",
+                    day: "numeric",
+                    hour: "numeric",
+                    minute: "2-digit",
+                  })}`
+                : "Draft saved"}
+              {" · Issuing stamps the official date and removes the watermark."}
+            </div>
+          </div>
+        </div>
+        <div className="flex shrink-0 items-center gap-2">
+          <Link
+            href={`/vault/${projectId}/custody/edit`}
+            className="inline-flex items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm hover:bg-slate-50"
+          >
+            Edit
+          </Link>
+          <Link
+            href={`/vault/${projectId}/custody/view`}
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-amber-500 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-amber-600"
+          >
+            Review &amp; Issue
             <ArrowRight className="h-3 w-3" />
           </Link>
         </div>
