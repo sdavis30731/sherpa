@@ -219,12 +219,161 @@ const SUPABASE: StackGuide = {
   ],
 };
 
+const RESEND: StackGuide = {
+  service_id: "resend",
+  display_name: "Resend",
+  what_we_need:
+    "A Resend API key so we can send transactional email from your domain (order confirmations, password resets, receipts).",
+  key_type_default: "api_key",
+  paste_label: "Paste the API key",
+  paste_placeholder: "re_…",
+  validate_pattern: /^re_/,
+  beginner: [
+    {
+      title: "Sign in to Resend",
+      body: "Open resend.com in a new tab and sign in with the email Resend is registered to.",
+      url: "https://resend.com/login",
+    },
+    {
+      title: "Open API Keys",
+      body: "In the left sidebar, click 'API Keys'. You'll see a list of any keys you've already created.",
+      url: "https://resend.com/api-keys",
+    },
+    {
+      title: "Create a new API Key",
+      body: "Click 'Create API Key' in the top-right. Name: 'SherpaKeys – [your agency]'. Permission: 'Sending access' (not 'Full access') unless your agency tells you otherwise. Domain: 'All domains' is fine for v1; you can scope later.",
+    },
+    {
+      title: "Click Add",
+      body: "Resend shows the API key starting with 're_…' on a one-time-only screen. Copy the entire string. ⚠️ You can only see this key once — if you close the dialog, you'll need to make a new one.",
+    },
+    {
+      title: "Paste it into the box below",
+      body: "Paste the key. We encrypt it in your browser before it leaves your machine — your agency can read it; we can't.",
+    },
+  ],
+};
+
+const OPENAI: StackGuide = {
+  service_id: "openai",
+  display_name: "OpenAI",
+  what_we_need:
+    "An OpenAI API key so we can use AI features in your app (product descriptions, search, recommendations).",
+  key_type_default: "api_key",
+  paste_label: "Paste the API key",
+  paste_placeholder: "sk-…",
+  validate_pattern: /^sk-/,
+  beginner: [
+    {
+      title: "Sign in to OpenAI",
+      body: "Open platform.openai.com in a new tab and sign in. Important: this is the developer platform, not chat.openai.com.",
+      url: "https://platform.openai.com/login",
+    },
+    {
+      title: "Open API keys",
+      body: "Click your profile icon in the top-right, then 'View API keys'. Or open the dashboard directly — see the link below.",
+      url: "https://platform.openai.com/api-keys",
+    },
+    {
+      title: "Create a new secret key",
+      body: "Click 'Create new secret key' in the top-right. Name: 'SherpaKeys – [your agency]'. Project: pick the specific project your agency is working on (not 'Default project'). Permissions: 'Restricted' is safer than 'All' — ask your agency which scopes; usually Model capabilities → Read + Write is enough.",
+    },
+    {
+      title: "Click Create secret key",
+      body: "OpenAI shows the key starting with 'sk-…' on a one-time-only screen. Copy the entire string. ⚠️ You can only see this once — closing the modal means starting over.",
+    },
+    {
+      title: "Set a usage limit (recommended)",
+      body: "Before you close the page, go to Settings → Billing → Usage limits in the left sidebar. Set a monthly hard limit (e.g. $100) so a runaway script can't drain your account. Your agency will tell you the right ceiling.",
+      url: "https://platform.openai.com/account/billing/limits",
+    },
+    {
+      title: "Paste the key into the box below",
+      body: "Paste the secret key. We encrypt it in your browser before it leaves your machine — your agency can read it; we can't.",
+    },
+  ],
+};
+
+const TWILIO: StackGuide = {
+  service_id: "twilio",
+  display_name: "Twilio",
+  what_we_need:
+    "A Twilio API key so we can send SMS messages from your account (order updates, two-factor codes, alerts).",
+  key_type_default: "api_key",
+  paste_label: "Paste the API Key SID + Secret pair",
+  paste_placeholder: "SKxxxxxxxx:xxxxxxxxxxxx (SID, colon, Secret)",
+  validate_pattern: /^SK[a-f0-9]{32}:.{16,}/i,
+  beginner: [
+    {
+      title: "Sign in to Twilio",
+      body: "Open console.twilio.com in a new tab and sign in.",
+      url: "https://console.twilio.com/login",
+    },
+    {
+      title: "Open API keys & tokens",
+      body: "In the left sidebar, expand 'Account' (your profile icon at the bottom) and click 'API keys & tokens'.",
+      url: "https://console.twilio.com/us1/account/keys-credentials/api-keys",
+    },
+    {
+      title: "Create a new API Key",
+      body: "Click 'Create API Key' at the top. Friendly name: 'SherpaKeys – [your agency]'. Key type: 'Standard' (not 'Main'). Click 'Create API Key'.",
+    },
+    {
+      title: "Copy BOTH the SID and the Secret",
+      body: "Twilio shows you two values on a one-time-only screen: an 'SID' starting with 'SK…' and a 'Secret'. ⚠️ Copy BOTH. The Secret is gone after you click away. Paste them as one string into the box below, separated by a colon — like 'SK123…:abc456…'.",
+    },
+    {
+      title: "Paste it into the box below",
+      body: "Paste 'SID:Secret'. We encrypt it in your browser before it leaves your machine — your agency can read it; we can't.",
+    },
+  ],
+};
+
+const SENDGRID: StackGuide = {
+  service_id: "sendgrid",
+  display_name: "SendGrid",
+  what_we_need:
+    "A SendGrid API key so we can send email from your domain (marketing campaigns, transactional email).",
+  key_type_default: "api_key",
+  paste_label: "Paste the API key",
+  paste_placeholder: "SG.…",
+  validate_pattern: /^SG\./,
+  beginner: [
+    {
+      title: "Sign in to SendGrid",
+      body: "Open app.sendgrid.com in a new tab and sign in. (SendGrid is owned by Twilio now — same login if you have a Twilio account.)",
+      url: "https://app.sendgrid.com/login",
+    },
+    {
+      title: "Open Settings → API Keys",
+      body: "In the bottom-left sidebar, click 'Settings', then click 'API Keys' from the submenu.",
+      url: "https://app.sendgrid.com/settings/api_keys",
+    },
+    {
+      title: "Create a new API Key",
+      body: "Click 'Create API Key' in the top-right. Name: 'SherpaKeys – [your agency]'. Permissions: 'Restricted Access' is safest. Your agency will tell you which scopes — usually Mail Send (full access) + Marketing (read only) is enough for transactional.",
+    },
+    {
+      title: "Click Create & View",
+      body: "SendGrid shows the API key starting with 'SG.…' on a one-time-only screen. Copy the entire string. ⚠️ This is the only time you'll see it — clicking 'Done' hides it forever.",
+    },
+    {
+      title: "Paste it into the box below",
+      body: "Paste the key. We encrypt it in your browser before it leaves your machine — your agency can read it; we can't.",
+    },
+  ],
+};
+
 const GUIDES: Record<string, StackGuide> = {
   stripe: STRIPE,
   github: GITHUB,
   vercel: VERCEL,
   cloudflare: CLOUDFLARE,
   supabase: SUPABASE,
+  resend: RESEND,
+  openai: OPENAI,
+  twilio: TWILIO,
+  sendgrid: SENDGRID,
 };
 
 /**

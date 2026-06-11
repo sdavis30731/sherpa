@@ -232,18 +232,16 @@ export function ClientOnboardBoard({
               <LevelChoice
                 level="intermediate"
                 title="I've done it once or twice"
-                body="A short paragraph + the URL. You'll figure it out from there. (Coming soon — for now, same as Beginner.)"
+                body="A short paragraph + the URL. For now we still show you the step-by-step — pick this so you skip ahead when you can."
                 onPick={setLevel}
                 color={agencyPrimaryColor}
-                disabled
               />
               <LevelChoice
                 level="expert"
                 title="I do this all the time"
-                body="Just give me the URL. (Coming soon — for now, same as Beginner.)"
+                body="Just give me the URL. For now we still show you the step-by-step — pick this and skim past."
                 onPick={setLevel}
                 color={agencyPrimaryColor}
-                disabled
               />
             </div>
           </div>
