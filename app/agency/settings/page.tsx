@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { AgencyProfileForm } from "../_components/agency-profile-form";
@@ -7,7 +6,7 @@ import {
   DEFAULT_ACCENT_COLOR,
   DEFAULT_PRIMARY_COLOR,
 } from "@/lib/agency";
-import { ChevronLeft } from "lucide-react";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
 
 /**
  * SHRP-096 Day 4-5 — Edit-mode counterpart to /agency/setup.
@@ -38,17 +37,17 @@ export default async function AgencySettingsPage() {
     redirect("/agency/setup");
   }
 
+  const agencyName = profile.name?.trim() || "Your agency";
+
   return (
     <main className="mx-auto max-w-2xl px-6 py-12">
-      <div className="mb-2">
-        <Link
-          href="/vault"
-          className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-800"
-        >
-          <ChevronLeft className="h-4 w-4" />
-          Back to dashboard
-        </Link>
-      </div>
+      <Breadcrumb
+        className="mb-3"
+        segments={[
+          { label: agencyName, href: "/vault" },
+          { label: "Settings" },
+        ]}
+      />
       <div className="mb-8">
         <h1 className="text-3xl font-bold tracking-tight text-slate-900">
           Agency settings

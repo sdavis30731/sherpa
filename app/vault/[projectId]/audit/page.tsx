@@ -8,8 +8,9 @@ import {
   SEVERITY_STYLES,
   type AuditCategory,
 } from "@/lib/audit-actions";
-import { ChevronLeft, Activity } from "lucide-react";
+import { Activity } from "lucide-react";
 import { AuditFilters } from "./_components/audit-filters";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
 
 const PAGE_SIZE = 200;
 
@@ -78,10 +79,19 @@ export default async function AuditPage({
 
   const { data: project } = await supabase
     .from("projects")
-    .select("id, name")
+    .select("id, name, client_name")
     .eq("id", projectId)
     .maybeSingle();
   if (!project) notFound();
+
+  const { data: agencyRow } = await supabase
+    .from("agency_profiles")
+    .select("name")
+    .eq("user_id", user.id)
+    .maybeSingle();
+  const agencyName =
+    (agencyRow as { name?: string | null } | null)?.name?.trim() ||
+    "Your agency";
 
   // Build the query
   let query = supabase
@@ -159,12 +169,20 @@ export default async function AuditPage({
 
   return (
     <main className="mx-auto max-w-4xl px-6 py-10">
-      <Link
-        href={`/vault/${projectId}`}
-        className="mb-3 inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-800"
-      >
-        <ChevronLeft className="h-4 w-4" /> Back to {project.name}
-      </Link>
+      <Breadcrumb
+        className="mb-3"
+        segments={[
+          { label: agencyName, href: "/vault" },
+          { label: "Engagements", href: "/vault" },
+          {
+            label:
+              (project as { client_name?: string | null }).client_name?.trim() ||
+              "—",
+          },
+          { label: project.name, href: `/vault/${projectId}` },
+          { label: "Activity" },
+        ]}
+      />
 
       <div className="mb-2 flex items-center gap-2">
         <Activity className="h-5 w-5 text-sherpa-500" />

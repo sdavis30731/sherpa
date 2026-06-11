@@ -1,0 +1,8 @@
+node_modules/
+dist/
+*.log
+.DS_Store
+
+# Local vault file (in case someone runs `init` from inside the repo)
+.sherpakeys/
+vault.json.enc

@@ -1,0 +1,50 @@
+{
+  "name": "@sherpakeys/mcp-firewall",
+  "version": "0.1.0",
+  "description": "Local AI firewall — your Claude/Cursor/Cowork uses your API keys without ever seeing them. No SaaS, no signup, encrypted local vault.",
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/cli.js",
+  "bin": {
+    "sherpakeys-mcp-firewall": "dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "init": "node dist/cli.js init",
+    "serve": "node dist/cli.js serve"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.6.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "ai",
+    "security",
+    "credentials",
+    "vault",
+    "firewall",
+    "claude",
+    "cursor",
+    "anthropic"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sdavis30731/sherpa.git",
+    "directory": "mcp-firewall"
+  },
+  "homepage": "https://sherpakeys.com"
+}

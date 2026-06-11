@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Settings } from "lucide-react";
 import { ApprovalsChip } from "./_components/approvals-chip";
+import { IdentityRibbon } from "./_components/identity-ribbon";
 
 /**
  * Vault layout — gates every /vault/* route.
@@ -99,6 +100,10 @@ export default async function VaultLayout({ children }: { children: React.ReactN
           </div>
         </div>
       </header>
+      <IdentityRibbon
+        agencyName={agencyName}
+        userEmail={user.email ?? "you"}
+      />
       <div data-has-passphrase={hasPassphrase} className="bg-slate-50 min-h-full">
         {children}
       </div>

@@ -3,7 +3,18 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/card";
 import { Callout } from "@/components/ui/callout";
-import { Plus, Briefcase, CalendarDays, CircleDot, CheckCircle2, Archive } from "lucide-react";
+import {
+  Plus,
+  Briefcase,
+  CalendarDays,
+  CircleDot,
+  CheckCircle2,
+  Archive,
+  Users,
+  AlertTriangle,
+  Bell,
+  ArrowRight,
+} from "lucide-react";
 import { VaultHomeActions } from "./_components/vault-home-actions";
 import {
   NeedsAttentionCard,
@@ -121,22 +132,121 @@ export default async function VaultHome() {
   const active = projects.filter((p) => p.status !== "launched");
   const launched = projects.filter((p) => p.status === "launched");
 
+  // SHRP-102c — control-center stats. Distinct clients across all
+  // non-archived engagements; attention count (overdue + drafts); and
+  // pending approvals so the dashboard hero can show "what's waiting
+  // on you" at a glance.
+  const distinctClients = new Set(
+    projects
+      .map((p) => p.client_name?.trim())
+      .filter((n): n is string => !!n && n.length > 0),
+  ).size;
+
+  // Drafts that exist but haven't been issued yet — sweeping the
+  // custody_assertions jsonb across this user's projects. Cheap because
+  // we have the rows in hand already.
+  const { data: assertionRows } = await supabase
+    .from("projects")
+    .select("id, custody_assertions")
+    .is("archived_at", null);
+  const draftCustodyCount = (assertionRows ?? []).filter((r) => {
+    const c = (r as { custody_assertions?: Record<string, unknown> | null })
+      .custody_assertions;
+    if (!c || typeof c !== "object") return false;
+    const saved =
+      (c as { saved_at?: unknown }).saved_at ??
+      (c as { issued_at?: unknown }).issued_at; // legacy
+    const issuedFlag =
+      (c as { issued?: unknown }).issued === true ||
+      (Boolean((c as { saved_at?: unknown }).saved_at) &&
+        Boolean((c as { issued_at?: unknown }).issued_at));
+    return Boolean(saved) && !issuedFlag;
+  }).length;
+
+  const attentionTotal = attentionItems.length + draftCustodyCount;
+
+  const nowIso = new Date().toISOString();
+  const { count: pendingApprovalsCount } = await supabase
+    .from("pending_approvals")
+    .select("id", { count: "exact", head: true })
+    .eq("status", "pending")
+    .gt("expires_at", nowIso);
+
+  // Agency name for the hero greeting. RLS-scoped; one row per user.
+  const { data: agencyRow } = await supabase
+    .from("agency_profiles")
+    .select("name")
+    .eq("user_id", user.id)
+    .maybeSingle();
+  const agencyName =
+    (agencyRow as { name?: string | null } | null)?.name?.trim() ||
+    "Your agency";
+
   return (
     <main className="mx-auto max-w-4xl px-6 py-10">
       <PendingImportBanner />
-      <NeedsAttentionCard items={attentionItems} />
 
-      <div className="mb-6 flex items-end justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Your engagements</h1>
-          <p className="mt-1 text-sm text-slate-600">
-            {plan === "free"
-              ? "Free: 2 engagements included. $19/month per additional engagement."
-              : "Unlimited engagements."}
-          </p>
+      {/* SHRP-102c — Control-center hero. Replaces the bare "Your
+          engagements" title. Identity is set by the IdentityRibbon in
+          the vault layout; this hero answers "what's the state of my
+          agency right now?" at a glance. */}
+      <section className="mb-8">
+        <div className="mb-2 flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wider text-sherpa-600">
+              Agency control center
+            </p>
+            <h1 className="mt-1 text-2xl font-bold text-slate-900 sm:text-3xl">
+              Welcome back to {agencyName}.
+            </h1>
+            <p className="mt-1 text-sm text-slate-600">
+              {plan === "free"
+                ? "Free: 2 engagements included. $19/month per additional engagement."
+                : "Unlimited engagements."}
+            </p>
+          </div>
+          {projects.length > 0 && <VaultHomeActions />}
         </div>
-        {projects.length > 0 && <VaultHomeActions />}
-      </div>
+
+        <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <StatCard
+            icon={<Briefcase className="h-4 w-4" />}
+            label="Engagements"
+            value={active.length}
+            sub={
+              distinctClients > 0
+                ? `for ${distinctClients} client${distinctClients === 1 ? "" : "s"}`
+                : "no clients named yet"
+            }
+            tone="info"
+          />
+          <StatCard
+            icon={<AlertTriangle className="h-4 w-4" />}
+            label="Need your attention"
+            value={attentionTotal}
+            sub={
+              attentionTotal === 0
+                ? "all clear"
+                : `${attentionItems.length} rotation${attentionItems.length === 1 ? "" : "s"} · ${draftCustodyCount} draft${draftCustodyCount === 1 ? "" : "s"}`
+            }
+            tone={attentionTotal > 0 ? "warning" : "muted"}
+          />
+          <StatCard
+            icon={<Bell className="h-4 w-4" />}
+            label="Approvals pending"
+            value={pendingApprovalsCount ?? 0}
+            sub={
+              (pendingApprovalsCount ?? 0) > 0
+                ? "agent actions waiting on you"
+                : "nothing waiting"
+            }
+            tone={(pendingApprovalsCount ?? 0) > 0 ? "amber" : "muted"}
+            href="/vault/approvals"
+          />
+        </div>
+      </section>
+
+      <NeedsAttentionCard items={attentionItems} />
 
       {projects.length === 0 ? (
         <Card>
@@ -191,6 +301,80 @@ export default async function VaultHome() {
       )}
     </main>
   );
+}
+
+function StatCard({
+  icon,
+  label,
+  value,
+  sub,
+  tone,
+  href,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: number;
+  sub: string;
+  tone: "info" | "warning" | "amber" | "muted";
+  href?: string;
+}) {
+  const palette = {
+    info: {
+      border: "border-sherpa-200",
+      bg: "bg-sherpa-50/60",
+      icon: "text-sherpa-600",
+      value: "text-sherpa-900",
+    },
+    warning: {
+      border: "border-amber-200",
+      bg: "bg-amber-50/70",
+      icon: "text-amber-600",
+      value: "text-amber-900",
+    },
+    amber: {
+      border: "border-amber-300",
+      bg: "bg-amber-50",
+      icon: "text-amber-700",
+      value: "text-amber-900",
+    },
+    muted: {
+      border: "border-slate-200",
+      bg: "bg-white",
+      icon: "text-slate-400",
+      value: "text-slate-900",
+    },
+  }[tone];
+
+  const inner = (
+    <div
+      className={`flex h-full items-start justify-between gap-3 rounded-2xl border p-4 ${palette.border} ${palette.bg}`}
+    >
+      <div className="min-w-0">
+        <div className={`flex items-center gap-1.5 ${palette.icon}`}>
+          {icon}
+          <span className="text-xs font-semibold uppercase tracking-wider">
+            {label}
+          </span>
+        </div>
+        <div className={`mt-1 text-3xl font-bold tracking-tight ${palette.value}`}>
+          {value}
+        </div>
+        <div className="mt-0.5 truncate text-xs text-slate-600">{sub}</div>
+      </div>
+      {href && (
+        <ArrowRight className="mt-1 h-4 w-4 shrink-0 text-slate-400" />
+      )}
+    </div>
+  );
+
+  if (href) {
+    return (
+      <Link href={href} className="block transition hover:opacity-90">
+        {inner}
+      </Link>
+    );
+  }
+  return inner;
 }
 
 function EngagementGrid({

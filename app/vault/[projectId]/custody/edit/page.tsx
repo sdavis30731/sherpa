@@ -1,8 +1,7 @@
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { ChevronLeft } from "lucide-react";
 import { CustodyEditForm } from "./_components/custody-edit-form";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
 import {
   normalizeCustody,
   reconcileServices,
@@ -51,6 +50,7 @@ export default async function CustodyEditPage({
     .eq("user_id", user.id)
     .maybeSingle();
   const agencyName = (agencyRaw as { name?: string | null } | null)?.name ?? "";
+  const agencyCrumbLabel = agencyName.trim() || "Your agency";
 
   const { data: creds } = await supabase
     .from("credentials")
@@ -70,12 +70,17 @@ export default async function CustodyEditPage({
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-10">
-      <Link
-        href={`/vault/${projectId}`}
-        className="mb-3 inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-800"
-      >
-        <ChevronLeft className="h-4 w-4" /> Back to engagement
-      </Link>
+      <Breadcrumb
+        className="mb-3"
+        segments={[
+          { label: agencyCrumbLabel, href: "/vault" },
+          { label: "Engagements", href: "/vault" },
+          { label: project.client_name?.trim() || "—" },
+          { label: project.name, href: `/vault/${projectId}` },
+          { label: "Custody Record" },
+          { label: "Edit" },
+        ]}
+      />
 
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-slate-900">Custody Record</h1>

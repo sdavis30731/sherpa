@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { ApprovalsBoard } from "./_components/approvals-board";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
 
 /**
  * SHRP-097 — Approvals dashboard.
@@ -64,13 +65,32 @@ export default async function ApprovalsDashboardPage() {
     .order("created_at", { ascending: false })
     .limit(RECENT_LIMIT);
 
+  const { data: agencyRow } = await supabase
+    .from("agency_profiles")
+    .select("name")
+    .eq("user_id", user.id)
+    .maybeSingle();
+  const agencyName =
+    (agencyRow as { name?: string | null } | null)?.name?.trim() ||
+    "Your agency";
+
   return (
     <main className="mx-auto max-w-6xl px-6 py-10">
+      <Breadcrumb
+        className="mb-3"
+        segments={[
+          { label: agencyName, href: "/vault" },
+          { label: "Approvals" },
+        ]}
+      />
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-slate-900">Approvals</h1>
+        <h1 className="text-2xl font-bold text-slate-900">
+          Agent actions you need to approve
+        </h1>
         <p className="mt-1 text-sm text-slate-600">
-          Agent actions waiting on you. New requests appear here instantly —
-          email is the away-from-desk fallback.
+          When an AI agent tries to write through SherpaKeys, the request
+          lands here. New requests appear instantly while you&apos;re on this
+          page — email is the away-from-desk fallback.
         </p>
       </div>
       <ApprovalsBoard

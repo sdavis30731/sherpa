@@ -2,7 +2,8 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChevronLeft, Bot, ArrowRight } from "lucide-react";
+import { Bot, ArrowRight } from "lucide-react";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { RenameProjectForm } from "./_components/rename-form";
 import { ArchiveProjectSection } from "./_components/archive-section";
 import { DeleteProjectSection } from "./_components/delete-section";
@@ -40,6 +41,15 @@ export default async function ProjectSettingsPage({
   if (!projectRaw) notFound();
   const project = projectRaw as EngagementRow;
 
+  const { data: agencyRow } = await supabase
+    .from("agency_profiles")
+    .select("name")
+    .eq("user_id", user.id)
+    .maybeSingle();
+  const agencyName =
+    (agencyRow as { name?: string | null } | null)?.name?.trim() ||
+    "Your agency";
+
   const [{ count: credentialCount }, { count: tokenCount }] = await Promise.all([
     supabase
       .from("credentials")
@@ -53,16 +63,18 @@ export default async function ProjectSettingsPage({
       .is("revoked_at", null),
   ]);
 
-  const displayName = project.client_name?.trim() || project.name;
-
   return (
     <main className="mx-auto max-w-2xl px-6 py-10">
-      <Link
-        href={`/vault/${projectId}`}
-        className="mb-3 inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-800"
-      >
-        <ChevronLeft className="h-4 w-4" /> Back to {displayName}
-      </Link>
+      <Breadcrumb
+        className="mb-3"
+        segments={[
+          { label: agencyName, href: "/vault" },
+          { label: "Engagements", href: "/vault" },
+          { label: project.client_name?.trim() || "—" },
+          { label: project.name, href: `/vault/${projectId}` },
+          { label: "Settings" },
+        ]}
+      />
 
       <h1 className="mb-1 text-2xl font-bold text-slate-900">Engagement settings</h1>
       <p className="mb-8 text-sm text-slate-600">
