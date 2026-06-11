@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { ChevronLeft, Pencil, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { Pencil, AlertTriangle, CheckCircle2, ArrowRight } from "lucide-react";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { PrintButton } from "./_components/print-button";
 import { IssueButton } from "./_components/issue-button";
 import {
@@ -12,6 +13,12 @@ import {
   type CustodyAssertions,
 } from "@/lib/custody";
 import { getService } from "@/lib/services";
+import {
+  plainOpener,
+  plainServiceDescription,
+  plainOwnershipCaption,
+  watchForItems,
+} from "@/lib/custody-plain-language";
 
 /**
  * SHRP-096 Day 10-11 — Rendered Custody Record.
@@ -104,8 +111,69 @@ export default async function CustodyViewPage({
     agency.footer_text?.trim() ||
     `Prepared by ${agency.name || "Your agency"} using SherpaKeys`;
 
+  const agencyDisplayName = agency.name?.trim() || "Your agency";
+  const clientDisplayName = project.client_name?.trim() || "—";
+
   return (
     <>
+      {/* ──────────── Breadcrumb + From→To header (screen only) ──────────── */}
+      <div className="custody-context bg-white border-b border-slate-200 px-6 py-3 print:hidden">
+        <div className="mx-auto max-w-4xl">
+          <Breadcrumb
+            className="mb-2"
+            segments={[
+              { label: agencyDisplayName, href: "/vault" },
+              { label: "Engagements", href: "/vault" },
+              { label: clientDisplayName },
+              { label: project.name, href: `/vault/${projectId}` },
+              { label: "Custody Record" },
+              { label: "View" },
+            ]}
+          />
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+            <span className="inline-flex items-center gap-1 rounded-md bg-sherpa-50 px-2 py-1 text-xs font-semibold text-sherpa-700 ring-1 ring-sherpa-200">
+              From
+              <span className="font-bold text-sherpa-900">
+                {agencyDisplayName}
+              </span>
+            </span>
+            <ArrowRight className="h-4 w-4 text-slate-400" aria-hidden="true" />
+            <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-200">
+              To
+              <span className="font-bold text-emerald-900">
+                {clientDisplayName}
+              </span>
+            </span>
+            <span className="text-xs text-slate-400">·</span>
+            <span className="text-xs text-slate-500">
+              Prepared with{" "}
+              <span className="font-semibold text-slate-700">
+                Sherpa<span className="text-sherpa-500">Keys</span>
+              </span>
+            </span>
+            <span className="text-xs text-slate-400">·</span>
+            {issued ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-200">
+                <CheckCircle2 className="h-3 w-3" />
+                Issued
+                {issuedAt
+                  ? ` · ${issuedAt.toLocaleDateString(undefined, {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    })}`
+                  : ""}
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-700 ring-1 ring-amber-200">
+                <AlertTriangle className="h-3 w-3" />
+                Draft
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+
       {/* ──────────── Draft CTA banner (screen only) ──────────── */}
       {!issued && (
         <div className="custody-draft-banner bg-amber-50 border-b border-amber-200 px-6 py-3 print:hidden">
@@ -132,7 +200,7 @@ export default async function CustodyViewPage({
             href={`/vault/${projectId}`}
             className="inline-flex items-center gap-1 text-sm text-slate-600 hover:text-slate-900"
           >
-            <ChevronLeft className="h-4 w-4" /> Back to engagement
+            ← Back to engagement
           </Link>
           <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
             {issued ? (
@@ -283,12 +351,30 @@ export default async function CustodyViewPage({
         {/* ──────────── Executive summary ──────────── */}
         <section className="cr-page">
           <div className="cr-section-header">
-            <span className="cr-eyebrow">Executive summary</span>
-            <h2>What your client should know.</h2>
-            <p className="cr-sub">
-              A non-technical summary of credential custody as of the issue
-              date.
-            </p>
+            <span className="cr-eyebrow">For the reader</span>
+            {(() => {
+              const opener = plainOpener({
+                custody,
+                agencyName: agencyDisplayName,
+                clientName: project.client_name ?? "",
+                engagementName: project.name,
+              });
+              return (
+                <>
+                  <h2>{opener.headline}</h2>
+                  {opener.paragraphs.map((p, i) => (
+                    <p
+                      key={i}
+                      className={
+                        "cr-plain-opener" + (i === 0 ? " is-first" : "")
+                      }
+                    >
+                      {p}
+                    </p>
+                  ))}
+                </>
+              );
+            })()}
           </div>
 
           <div className="cr-exec-grid">
@@ -381,6 +467,11 @@ export default async function CustodyViewPage({
             svc.service_name || def?.name || svc.service_id;
           const admins = parseAdminList(svc.admins_raw);
           const statusLabel = transferStatusLabel(svc.transfer_status);
+          const plainDescription = plainServiceDescription(
+            svc.service_id,
+            displayName,
+          );
+          const plainCaption = plainOwnershipCaption(svc, agencyDisplayName);
           return (
             <section key={svc.service_id} className="cr-page">
               <div className="cr-svc-banner">
@@ -408,6 +499,14 @@ export default async function CustodyViewPage({
                 >
                   {statusLabel}
                 </span>
+              </div>
+
+              {/* SHRP-104c — Plain-English caption above the technical
+                  detail. Reads from the client's perspective: what this
+                  service does, and what their ownership situation is. */}
+              <div className="cr-plain-caption">
+                <p className="what-it-does">{plainDescription}</p>
+                <p className="who-owns-it">{plainCaption}</p>
               </div>
 
               <div className="cr-kv-grid">
@@ -452,6 +551,68 @@ export default async function CustodyViewPage({
             </section>
           );
         })}
+
+        {/* ──────────── What to watch for (SHRP-104d) ──────────── */}
+        {(() => {
+          const items = watchForItems(custody, (id) => {
+            const def = getService(id);
+            const matchingService = services.find((s) => s.service_id === id);
+            return (
+              matchingService?.service_name || def?.name || id
+            );
+          });
+          if (items.length === 0) return null;
+          return (
+            <section className="cr-page">
+              <div className="cr-section-header">
+                <span className="cr-eyebrow">For the reader</span>
+                <h2>What to watch for.</h2>
+                <p className="cr-sub">
+                  Items the agency flagged that have a deadline or that
+                  you can act on. Time-bound exceptions are revocable by
+                  you at any time.
+                </p>
+              </div>
+              <ul className="cr-watch-list">
+                {items.map((item) => (
+                  <li key={item.service_id} className="cr-watch-item">
+                    <div className="cr-watch-row-top">
+                      <span
+                        className={
+                          "cr-watch-pill " +
+                          (item.status === "exception"
+                            ? "amber"
+                            : item.status === "scheduled"
+                              ? "amber"
+                              : "green")
+                        }
+                      >
+                        {item.status === "exception"
+                          ? "Exception"
+                          : item.status === "scheduled"
+                            ? "Scheduled"
+                            : "Note"}
+                      </span>
+                      <span className="cr-watch-service">
+                        {item.service_label}
+                      </span>
+                    </div>
+                    <p className="cr-watch-frame">
+                      {item.status === "exception"
+                        ? "Time-bound exception in place. You can revoke at any time."
+                        : item.status === "scheduled"
+                          ? "Transfer scheduled — see the timeline below."
+                          : "No exceptions for this account."}
+                    </p>
+                    {item.note && (
+                      <p className="cr-watch-note">{item.note}</p>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          );
+        })()}
 
         {/* ──────────── Signature ──────────── */}
         <section className="cr-page">
@@ -728,6 +889,107 @@ function buildCss({
   color: var(--cr-muted);
   font-size: 10pt;
   max-width: 5.5in;
+}
+
+/* SHRP-104b — "What this means for you" opener paragraphs that sit
+   directly under the section H2 in the executive summary. Larger,
+   warmer leading than ordinary body text so the human voice reads
+   first. */
+.cr-plain-opener {
+  margin-top: 10pt;
+  font-size: 11pt;
+  line-height: 1.55;
+  color: var(--cr-body);
+  max-width: 6.2in;
+}
+.cr-plain-opener.is-first {
+  margin-top: 14pt;
+  color: var(--cr-ink);
+  font-weight: 500;
+}
+
+/* SHRP-104c — Per-service plain-English caption that sits between the
+   service banner and the technical key/value grid. Two short lines:
+   what the service does, and what the client's ownership situation is. */
+.cr-plain-caption {
+  margin-bottom: 16pt;
+  padding: 11pt 13pt;
+  background: var(--cr-tint);
+  border: 1pt solid var(--cr-hairline);
+  border-radius: 6pt;
+}
+.cr-plain-caption .what-it-does {
+  margin: 0;
+  font-size: 10.5pt;
+  color: var(--cr-ink);
+  font-weight: 600;
+  line-height: 1.4;
+}
+.cr-plain-caption .who-owns-it {
+  margin: 4pt 0 0 0;
+  font-size: 9.5pt;
+  color: var(--cr-body);
+  line-height: 1.45;
+}
+
+/* SHRP-104d — "What to watch for" client-facing action items. */
+.cr-watch-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.cr-watch-item {
+  margin-bottom: 14pt;
+  padding: 14pt 16pt;
+  background: #fff;
+  border: 1pt solid var(--cr-hairline);
+  border-radius: 8pt;
+}
+.cr-watch-item:last-child { margin-bottom: 0; }
+.cr-watch-row-top {
+  display: flex;
+  align-items: center;
+  gap: 10pt;
+  margin-bottom: 6pt;
+}
+.cr-watch-pill {
+  display: inline-block;
+  padding: 2pt 9pt;
+  border-radius: 999pt;
+  font-size: 7.5pt;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  border: 1pt solid;
+}
+.cr-watch-pill.amber {
+  background: var(--cr-amber-tint);
+  border-color: #fcd34d;
+  color: var(--cr-amber);
+}
+.cr-watch-pill.green {
+  background: var(--cr-green-tint);
+  border-color: #6ee7b7;
+  color: var(--cr-green);
+}
+.cr-watch-service {
+  font-size: 10pt;
+  font-weight: 700;
+  color: var(--cr-ink);
+}
+.cr-watch-frame {
+  margin: 0;
+  font-size: 10pt;
+  color: var(--cr-ink);
+  line-height: 1.5;
+}
+.cr-watch-note {
+  margin: 6pt 0 0 0;
+  padding-top: 6pt;
+  border-top: 1pt solid var(--cr-hairline);
+  font-size: 9.5pt;
+  color: var(--cr-body);
+  line-height: 1.5;
 }
 .cr-eyebrow {
   display: block;
@@ -1028,7 +1290,7 @@ function buildCss({
     margin: 0.65in 0.6in;
   }
   body { background: #fff !important; }
-  .custody-toolbar, .custody-draft-banner { display: none !important; }
+  .custody-toolbar, .custody-draft-banner, .custody-context { display: none !important; }
   .custody-record {
     max-width: none;
     padding: 0;
