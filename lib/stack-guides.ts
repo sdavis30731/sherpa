@@ -364,6 +364,197 @@ const SENDGRID: StackGuide = {
   ],
 };
 
+const ANTHROPIC: StackGuide = {
+  service_id: "anthropic",
+  display_name: "Anthropic",
+  what_we_need:
+    "An Anthropic API key so we can use Claude in your app (for AI features like content generation, search, customer support).",
+  key_type_default: "api_key",
+  paste_label: "Paste the API key",
+  paste_placeholder: "sk-ant-…",
+  validate_pattern: /^sk-ant-/,
+  beginner: [
+    {
+      title: "Sign in to the Anthropic Console",
+      body: "Open console.anthropic.com in a new tab and sign in. Important: this is the developer console, not claude.ai.",
+      url: "https://console.anthropic.com/login",
+    },
+    {
+      title: "Open API Keys",
+      body: "In the left sidebar, click 'API Keys' near the bottom.",
+      url: "https://console.anthropic.com/settings/keys",
+    },
+    {
+      title: "Create a new key",
+      body: "Click 'Create Key' in the top-right. Name: 'SherpaKeys – [your agency]'. Workspace: pick the specific workspace your agency is working on (or 'Default Workspace' if you only have one). Click 'Create Key'.",
+    },
+    {
+      title: "Copy the key",
+      body: "Anthropic shows the key starting with 'sk-ant-…' on a one-time-only screen. Copy the entire string. ⚠️ This is the only time you'll see it — once you close the modal it's gone.",
+    },
+    {
+      title: "Set a usage limit (recommended)",
+      body: "Before you close the page, go to Settings → Billing → Usage limits. Set a monthly spend cap (e.g. $100) so a runaway script can't drain your balance. Your agency will tell you the right ceiling.",
+      url: "https://console.anthropic.com/settings/limits",
+    },
+    {
+      title: "Paste the key into the box below",
+      body: "Paste the key. We encrypt it in your browser before it leaves your machine — your agency can read it; we can't.",
+    },
+  ],
+};
+
+const AWS: StackGuide = {
+  service_id: "aws",
+  display_name: "AWS",
+  what_we_need:
+    "An AWS access key pair so we can manage your cloud resources — storage buckets, image uploads, file delivery.",
+  key_type_default: "access_key_pair",
+  paste_label: "Paste the Access Key ID and Secret Access Key, separated by a colon",
+  paste_placeholder: "AKIAxxxxxxxxxxxxxxxx:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+  validate_pattern: /^(AKIA|ASIA)[A-Z0-9]{16,}:.{20,}/,
+  beginner: [
+    {
+      title: "Sign in to AWS",
+      body: "Open console.aws.amazon.com in a new tab and sign in as the root user (or an IAM user with permission to create keys). If your agency told you which AWS region they're using, switch to it now from the dropdown in the top-right.",
+      url: "https://console.aws.amazon.com/",
+    },
+    {
+      title: "Open the IAM service",
+      body: "In the top search bar, type 'IAM' and click the result. IAM is where you manage users and access keys.",
+      url: "https://console.aws.amazon.com/iam/home",
+    },
+    {
+      title: "Create a new IAM user",
+      body: "In the left sidebar click 'Users', then 'Create user' in the top-right. User name: 'sherpakeys-[your agency]'. Check 'Provide user access to the AWS Management Console' OFF — we only need programmatic access. Click 'Next'.",
+    },
+    {
+      title: "Attach the permissions your agency told you to",
+      body: "On the permissions screen, pick 'Attach policies directly'. Your agency will tell you which policies — usually 'AmazonS3FullAccess' for storage-only work. If you don't know, pick that one and your agency can scope it down later. Click 'Next', then 'Create user'.",
+    },
+    {
+      title: "Create an access key for the user",
+      body: "Click the user you just created. Open the 'Security credentials' tab. Scroll down to 'Access keys' and click 'Create access key'. Choose 'Application running outside AWS', click 'Next', then 'Create access key'.",
+    },
+    {
+      title: "Copy BOTH the Access Key ID and the Secret Access Key",
+      body: "AWS shows both values on a one-time-only screen. ⚠️ The Secret is gone once you click 'Done' — there is no way to see it again. Copy both. Paste them as one string into the box below, separated by a colon — like 'AKIA…:xyz…'.",
+    },
+    {
+      title: "Paste it into the box below",
+      body: "Paste 'AccessKeyID:SecretAccessKey'. We encrypt it in your browser before it leaves your machine — your agency can read it; we can't.",
+    },
+  ],
+};
+
+const GODADDY: StackGuide = {
+  service_id: "godaddy",
+  display_name: "GoDaddy",
+  what_we_need:
+    "A GoDaddy API key so we can manage your domain settings (DNS records, renewals, transfer locks).",
+  key_type_default: "api_key_pair",
+  paste_label: "Paste the API Key and Secret, separated by a colon",
+  paste_placeholder: "key:secret",
+  beginner: [
+    {
+      title: "Sign in to GoDaddy",
+      body: "Open godaddy.com in a new tab and sign in to the account that owns the domain your agency is working on.",
+      url: "https://sso.godaddy.com/",
+    },
+    {
+      title: "Open the API key page",
+      body: "Go to developer.godaddy.com/keys (this is the developer portal, not the main GoDaddy site). You may need to sign in again.",
+      url: "https://developer.godaddy.com/keys",
+    },
+    {
+      title: "Create a production API Key",
+      body: "Click 'Create New API Key' at the top. Name: 'SherpaKeys – [your agency]'. Environment: 'Production' (not 'OTE' — that's a test environment that doesn't touch your real domain). Click 'Next'.",
+    },
+    {
+      title: "Copy BOTH the Key and the Secret",
+      body: "GoDaddy shows both values on a one-time-only screen. ⚠️ The Secret is gone once you click away — there's no way to retrieve it later. Copy both. Paste them as one string into the box below, separated by a colon — like 'key:secret'.",
+    },
+    {
+      title: "Paste it into the box below",
+      body: "Paste 'Key:Secret'. We encrypt it in your browser before it leaves your machine — your agency can read it; we can't.",
+    },
+  ],
+};
+
+const LOOM: StackGuide = {
+  service_id: "loom",
+  display_name: "Loom",
+  what_we_need:
+    "A Loom API token so we can embed your video walkthroughs and recordings into the experience your agency is building.",
+  key_type_default: "api_token",
+  paste_label: "Paste the API token",
+  paste_placeholder: "Long random string",
+  beginner: [
+    {
+      title: "Sign in to Loom",
+      body: "Open loom.com in a new tab and sign in. You need to be on a Business plan or higher to create API tokens — your agency will let you know if that's a blocker.",
+      url: "https://www.loom.com/login",
+    },
+    {
+      title: "Open your Workspace Settings",
+      body: "Click your profile photo in the top-right corner, then 'Settings'. In the left sidebar, click 'Developers'.",
+      url: "https://www.loom.com/settings/developers",
+    },
+    {
+      title: "Generate a new API token",
+      body: "Click 'Generate new token'. Name: 'SherpaKeys – [your agency]'. Expiration: 90 days (you can rotate later). Click 'Generate'.",
+    },
+    {
+      title: "Copy the token",
+      body: "Loom shows the token on a one-time-only screen. Copy the entire string. ⚠️ This is the only time you'll see it — clicking 'Done' hides it.",
+    },
+    {
+      title: "Paste it into the box below",
+      body: "Paste the token. We encrypt it in your browser before it leaves your machine — your agency can read it; we can't.",
+    },
+  ],
+};
+
+const REPLICATE: StackGuide = {
+  service_id: "replicate",
+  display_name: "Replicate",
+  what_we_need:
+    "A Replicate API token so we can run AI models in your app (image generation, transcription, custom ML models).",
+  key_type_default: "api_token",
+  paste_label: "Paste the API token",
+  paste_placeholder: "r8_…",
+  validate_pattern: /^r8_/,
+  beginner: [
+    {
+      title: "Sign in to Replicate",
+      body: "Open replicate.com in a new tab and sign in.",
+      url: "https://replicate.com/signin",
+    },
+    {
+      title: "Open API tokens",
+      body: "Click your profile photo in the top-right, then 'Account'. In the left sidebar, click 'API tokens'.",
+      url: "https://replicate.com/account/api-tokens",
+    },
+    {
+      title: "Create a new token",
+      body: "Click 'Create token' in the top-right. Name: 'SherpaKeys – [your agency]'. Click 'Create token'.",
+    },
+    {
+      title: "Copy the token",
+      body: "Replicate shows the token starting with 'r8_…' on a one-time-only screen. Copy the entire string. ⚠️ This is the only time you'll see it — once you close the modal it's gone.",
+    },
+    {
+      title: "Set a spend limit (recommended)",
+      body: "Before you close the page, go to Account → Billing in the left sidebar. Set a monthly spend cap so a runaway script can't drain your balance. Image and video models can get expensive fast — your agency will tell you the right ceiling.",
+      url: "https://replicate.com/account/billing",
+    },
+    {
+      title: "Paste the token into the box below",
+      body: "Paste the token. We encrypt it in your browser before it leaves your machine — your agency can read it; we can't.",
+    },
+  ],
+};
+
 const GUIDES: Record<string, StackGuide> = {
   stripe: STRIPE,
   github: GITHUB,
@@ -374,6 +565,11 @@ const GUIDES: Record<string, StackGuide> = {
   openai: OPENAI,
   twilio: TWILIO,
   sendgrid: SENDGRID,
+  anthropic: ANTHROPIC,
+  aws: AWS,
+  godaddy: GODADDY,
+  loom: LOOM,
+  replicate: REPLICATE,
 };
 
 /**
