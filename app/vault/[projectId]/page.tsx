@@ -9,6 +9,7 @@ import { ProjectActions } from "./_components/project-actions";
 import { CredentialRow, type CredentialView } from "./_components/credential-row";
 import { ScrollToCredential } from "./_components/scroll-to-credential";
 import { PlaybookProvider } from "@/components/playbook-context";
+import { ReceivedFromClient } from "./_components/received-from-client";
 import {
   KeyRound,
   CalendarDays,
@@ -82,6 +83,27 @@ export default async function ProjectPage({
   const agencyName =
     (agencyRow as { name?: string | null } | null)?.name?.trim() ||
     "Your agency";
+
+  // SHRP-107h — count pending credential submissions from the client
+  // for this engagement. The banner is hidden when zero.
+  const { data: pendingRequestRows } = await supabase
+    .from("credential_requests")
+    .select("id")
+    .eq("project_id", projectId)
+    .eq("user_id", user.id);
+  const requestIds = (pendingRequestRows ?? []).map(
+    (r) => (r as { id: string }).id,
+  );
+  let pendingSubmissionsCount = 0;
+  if (requestIds.length > 0) {
+    const { count } = await supabase
+      .from("credential_submissions")
+      .select("id", { count: "exact", head: true })
+      .in("request_id", requestIds)
+      .is("accepted_at", null)
+      .is("declined_at", null);
+    pendingSubmissionsCount = count ?? 0;
+  }
 
   const { data: credentials } = await supabase
     .from("credentials")
@@ -235,6 +257,14 @@ export default async function ProjectPage({
             </Callout>
           </div>
         )}
+
+        {/* SHRP-107h — Received-from-client banner appears above the
+            Custody Record card so the agency sees inbound credentials
+            first thing. */}
+        <ReceivedFromClient
+          projectId={project.id}
+          initialPendingCount={pendingSubmissionsCount}
+        />
 
         {/* Custody Record entry. Four states:
               - hasIssued: View + Edit, with "Issued [date]" indicator.
