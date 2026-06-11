@@ -11,6 +11,7 @@ import {
   toBase64,
   ARGON_PARAMS_PRODUCTION,
 } from "@/lib/crypto";
+import { generateAgencyKeypair } from "@/lib/keypair";
 import { generateRecoveryCode, recoveryWords } from "@/lib/recovery";
 import { estimatePassphrase } from "@/lib/passphrase";
 import { Button } from "@/components/ui/button";
@@ -74,6 +75,13 @@ export default function SetupPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not signed in");
 
+      // SHRP-107c — generate the agency's long-lived X25519 keypair at
+      // vault setup. The private half is wrapped with the vault key
+      // (vaultKey) before it's stored, so the server can never read
+      // it. The public half is stored plaintext so the client-onboarding
+      // page can fetch it later to encrypt incoming credentials.
+      const keypair = await generateAgencyKeypair(vaultKey);
+
       // Upsert in case the public.users row wasn't auto-created by the
       // handle_new_user trigger (e.g., user signed up before migration 0001
       // had created the trigger). RLS allows insert + update where id = auth.uid().
@@ -88,6 +96,9 @@ export default function SetupPage() {
             recovery_wrapped_passphrase: wrappedPassphrase,
             recovery_salt: toBase64(recoverySalt),
             recovery_params: ARGON_PARAMS_PRODUCTION,
+            public_key: keypair.publicKey,
+            wrapped_private_key: keypair.wrappedPrivateKey,
+            keypair_algo: keypair.algo,
           },
           { onConflict: "id" },
         );

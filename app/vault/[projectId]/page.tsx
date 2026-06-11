@@ -10,7 +10,6 @@ import { CredentialRow, type CredentialView } from "./_components/credential-row
 import { ScrollToCredential } from "./_components/scroll-to-credential";
 import { PlaybookProvider } from "@/components/playbook-context";
 import {
-  ChevronLeft,
   KeyRound,
   CalendarDays,
   CircleDot,
@@ -20,8 +19,10 @@ import {
   Eye,
   FileText,
   ArrowRight,
+  Mail,
 } from "lucide-react";
 import { Suspense } from "react";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
 
 /**
  * SHRP-096 Day 6-8 — Engagement detail page.
@@ -71,6 +72,16 @@ export default async function ProjectPage({
     .maybeSingle();
   if (!projectRaw) notFound();
   const project = projectRaw as EngagementRow;
+
+  // SHRP-102d — breadcrumb root: the agency. RLS-scoped; one row per user.
+  const { data: agencyRow } = await supabase
+    .from("agency_profiles")
+    .select("name")
+    .eq("user_id", user.id)
+    .maybeSingle();
+  const agencyName =
+    (agencyRow as { name?: string | null } | null)?.name?.trim() ||
+    "Your agency";
 
   const { data: credentials } = await supabase
     .from("credentials")
@@ -152,12 +163,15 @@ export default async function ProjectPage({
         <Suspense fallback={null}>
           <ScrollToCredential credentialServiceMap={credentialServiceMap} />
         </Suspense>
-        <Link
-          href="/vault"
-          className="mb-3 inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-800"
-        >
-          <ChevronLeft className="h-4 w-4" /> All engagements
-        </Link>
+        <Breadcrumb
+          className="mb-3"
+          segments={[
+            { label: agencyName, href: "/vault" },
+            { label: "Engagements", href: "/vault" },
+            { label: project.client_name?.trim() || "—" },
+            { label: project.name },
+          ]}
+        />
 
         <div className="mb-6 flex items-start justify-between gap-4">
           <div className="min-w-0">
@@ -184,7 +198,10 @@ export default async function ProjectPage({
               <p className="mt-2 text-sm text-slate-600">{project.description}</p>
             )}
           </div>
-          <ProjectActions projectId={project.id} />
+          <ProjectActions
+            projectId={project.id}
+            clientName={project.client_name ?? undefined}
+          />
         </div>
 
         {isSample && (
@@ -240,20 +257,42 @@ export default async function ProjectPage({
         {grouped.length === 0 ? (
           <Card>
             <CardHeader>
-              <CardTitle>This engagement is empty.</CardTitle>
+              <CardTitle>
+                No credentials yet
+                {project.client_name?.trim()
+                  ? ` for ${project.client_name.trim()}.`
+                  : "."}
+              </CardTitle>
             </CardHeader>
             <CardBody className="space-y-4">
               <Callout tone="info">
-                Add the API keys, webhook secrets, and DNS records you&apos;re
-                taking on for this client. Everything is encrypted in your
-                browser before it leaves.
+                Add the API keys, webhook secrets, and DNS records
+                you&apos;re managing
+                {project.client_name?.trim()
+                  ? ` for ${project.client_name.trim()}`
+                  : " for this client"}
+                . Everything is encrypted in your browser before it leaves.
               </Callout>
-              <button
-                data-action="open-add-credential"
-                className="inline-flex items-center gap-2 rounded-md bg-sherpa-500 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-sherpa-600"
-              >
-                <KeyRound className="h-4 w-4" /> Add the first credential
-              </button>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  data-action="open-request-credentials"
+                  className="inline-flex items-center gap-2 rounded-md bg-sherpa-500 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-sherpa-600"
+                >
+                  <Mail className="h-4 w-4" /> Request from client
+                </button>
+                <span className="text-xs text-slate-400">or</span>
+                <button
+                  data-action="open-add-credential"
+                  className="inline-flex items-center gap-2 rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50"
+                >
+                  <KeyRound className="h-4 w-4" /> Add credentials yourself
+                </button>
+              </div>
+              <p className="text-xs text-slate-500">
+                Request from client is usually faster — they paste their keys
+                into a guided page, everything is encrypted in their browser
+                before it reaches us.
+              </p>
             </CardBody>
           </Card>
         ) : (

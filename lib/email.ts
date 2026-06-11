@@ -205,6 +205,181 @@ If you didn't request this, you can safely ignore this email — the action will
   });
 }
 
+/**
+ * SHRP-107e — Credential request invite email.
+ *
+ * Sent to a client when the agency hits "Request from client" on an
+ * engagement. The email looks like it's from the agency partner
+ * (display-name pattern: "Mara Lindberg (via SherpaKeys)") with the
+ * agency's reply-to so client replies route back to the partner. Body
+ * is branded with the agency logo and primary color.
+ *
+ * Same graceful-degrade contract: if RESEND_API_KEY is missing we
+ * return { sent: false } and the share URL still works (the agency can
+ * copy it out of the dialog and send manually).
+ */
+export async function sendCredentialRequestEmail(args: {
+  to: string;
+  shareUrl: string;
+  agencyName: string;
+  agencyLogoUrl: string | null;
+  agencyPrimaryColor: string;
+  agencyPartnerName: string;
+  agencyPartnerEmail: string;
+  clientName: string | null;
+  engagementName: string;
+  personalMessage: string | null;
+  requestedServiceNames: string[];
+  expiresAt: Date;
+}): Promise<SendResult> {
+  const apiKey = process.env.RESEND_API_KEY;
+  const fromAddress =
+    process.env.EMAIL_FROM_ADDRESS ?? "notifications@sherpakeys.com";
+
+  if (!apiKey) {
+    console.warn(
+      "[email] RESEND_API_KEY not set — skipping credential-request email. Share URL still works.",
+    );
+    return { sent: false, reason: "no_api_key" };
+  }
+
+  // Display-name pattern: client sees "Mara Lindberg (via SherpaKeys)"
+  // in their inbox. Reply-To routes back to the agency partner directly.
+  const fromDisplay = args.agencyPartnerName
+    ? `${args.agencyPartnerName} (via SherpaKeys)`
+    : `${args.agencyName} (via SherpaKeys)`;
+  const from = `${fromDisplay} <${fromAddress}>`;
+  const replyTo = args.agencyPartnerEmail;
+
+  const greeting = args.clientName?.trim()
+    ? `Hi ${escapeHtml(args.clientName.trim().split(/\s+/)[0] ?? args.clientName.trim())},`
+    : "Hi,";
+
+  const personalNoteBlock = args.personalMessage?.trim()
+    ? `<tr><td style="padding: 8px 32px 0;">
+        <blockquote style="margin: 0; padding: 12px 14px; background: #f8fafc; border-left: 3px solid ${escapeHtml(args.agencyPrimaryColor)}; border-radius: 6px; color: #0f172a; font-size: 14px; line-height: 1.55; white-space: pre-wrap;">${escapeHtml(args.personalMessage.trim())}</blockquote>
+      </td></tr>`
+    : "";
+
+  const serviceList =
+    args.requestedServiceNames.length === 0
+      ? ""
+      : `<tr><td style="padding: 12px 32px 0;">
+          <p style="margin: 0 0 6px; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #64748b;">Accounts we'll need access to</p>
+          <ul style="margin: 0; padding-left: 18px; color: #0f172a; font-size: 14px; line-height: 1.65;">
+            ${args.requestedServiceNames
+              .map((n) => `<li>${escapeHtml(n)}</li>`)
+              .join("")}
+          </ul>
+        </td></tr>`;
+
+  const logoBlock = args.agencyLogoUrl
+    ? `<img src="${escapeHtml(args.agencyLogoUrl)}" alt="${escapeHtml(args.agencyName)} logo" style="width: 44px; height: 44px; border-radius: 8px; object-fit: contain; background: #fff; border: 1px solid #e2e8f0;">`
+    : `<div style="width: 44px; height: 44px; border-radius: 8px; background: ${escapeHtml(args.agencyPrimaryColor)}; color: white; display: inline-block; line-height: 44px; text-align: center; font-weight: 800; font-size: 18px;">${escapeHtml((args.agencyName.charAt(0) || "A").toUpperCase())}</div>`;
+
+  const daysLeft = Math.max(
+    1,
+    Math.round(
+      (args.expiresAt.getTime() - Date.now()) / (24 * 60 * 60 * 1000),
+    ),
+  );
+
+  const html = `<!DOCTYPE html>
+<html>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f1f5f9; padding: 32px 16px; margin: 0;">
+  <table cellpadding="0" cellspacing="0" border="0" style="max-width: 560px; margin: 0 auto; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(15, 23, 42, 0.08);">
+    <tr><td style="padding: 28px 32px 16px;">
+      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 18px;">
+        ${logoBlock}
+        <div>
+          <p style="margin: 0; font-size: 12px; font-weight: 700; color: #64748b; letter-spacing: 0.05em; text-transform: uppercase;">${escapeHtml(args.agencyName)}</p>
+          <p style="margin: 2px 0 0; font-size: 13px; color: #0f172a;">Engagement: ${escapeHtml(args.engagementName)}</p>
+        </div>
+      </div>
+      <h1 style="margin: 8px 0 0; font-size: 22px; color: #0f172a; font-weight: 700; line-height: 1.3;">${greeting}</h1>
+      <p style="margin: 10px 0 0; font-size: 15px; color: #334155; line-height: 1.6;">
+        ${escapeHtml(args.agencyPartnerName || args.agencyName)} is getting set up to work on ${escapeHtml(args.engagementName)} and needs access to a few of your accounts. You can grant access through a secure SherpaKeys page — each step has a plain-English guide.
+      </p>
+    </td></tr>
+    ${personalNoteBlock}
+    ${serviceList}
+    <tr><td style="padding: 24px 32px 0;">
+      <a href="${escapeHtml(args.shareUrl)}" style="display: inline-block; background: ${escapeHtml(args.agencyPrimaryColor)}; color: white; padding: 14px 26px; border-radius: 10px; text-decoration: none; font-weight: 700; font-size: 15px; box-shadow: 0 2px 8px rgba(15, 23, 42, 0.12);">Open the secure page →</a>
+      <p style="margin: 12px 0 0; font-size: 12px; color: #64748b;">Link expires in ${daysLeft} day${daysLeft === 1 ? "" : "s"}.</p>
+    </td></tr>
+    <tr><td style="padding: 22px 32px 0;">
+      <div style="border-top: 1px solid #e2e8f0; padding-top: 16px;">
+        <p style="margin: 0; font-size: 12px; font-weight: 700; color: #047857; letter-spacing: 0.05em; text-transform: uppercase;">🔒 How this is kept private</p>
+        <p style="margin: 6px 0 0; font-size: 13px; color: #334155; line-height: 1.55;">
+          Your credentials are encrypted in <strong>your browser</strong> before they leave your machine. Only ${escapeHtml(args.agencyName)} can read them. Even SherpaKeys (the tool) can&apos;t see them.
+        </p>
+      </div>
+    </td></tr>
+    <tr><td style="padding: 22px 32px 28px;">
+      <p style="margin: 0; font-size: 12px; color: #64748b; line-height: 1.55;">
+        Questions? Reply to this email — it goes straight to ${escapeHtml(args.agencyPartnerName || args.agencyName)}.
+      </p>
+    </td></tr>
+  </table>
+  <p style="text-align: center; color: #94a3b8; font-size: 11px; margin: 16px auto 0; max-width: 560px;">
+    Sent by ${escapeHtml(args.agencyName)} using SherpaKeys · the credential keychain for AI-built apps
+  </p>
+</body>
+</html>`;
+
+  const text = `${greeting}
+
+${args.agencyPartnerName || args.agencyName} is getting set up to work on ${args.engagementName} and needs access to a few of your accounts.
+
+${args.personalMessage?.trim() ? `${args.personalMessage.trim()}\n\n` : ""}Accounts we'll need access to:
+${args.requestedServiceNames.map((n) => `  - ${n}`).join("\n")}
+
+Open the secure page (link expires in ${daysLeft} day${daysLeft === 1 ? "" : "s"}):
+${args.shareUrl}
+
+How this is kept private: your credentials are encrypted in your browser before they leave your machine. Only ${args.agencyName} can read them. SherpaKeys (the tool) cannot.
+
+Questions? Reply to this email — it goes to ${args.agencyPartnerName || args.agencyName}.
+
+— Sent by ${args.agencyName} using SherpaKeys`;
+
+  const subject = args.clientName?.trim()
+    ? `${args.agencyPartnerName || args.agencyName} needs access for ${args.engagementName}`
+    : `Access request from ${args.agencyPartnerName || args.agencyName}`;
+
+  try {
+    const response = await fetch(RESEND_API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        from,
+        to: [args.to],
+        reply_to: replyTo,
+        subject,
+        html,
+        text,
+      }),
+    });
+    if (!response.ok) {
+      const errBody = (await response
+        .json()
+        .catch(() => ({}))) as ResendErrorBody;
+      const reason = errBody.message ?? `http_${response.status}`;
+      console.warn("[email] credential-request send failed:", reason);
+      return { sent: false, reason };
+    }
+    const body = (await response.json().catch(() => ({}))) as ResendSuccessBody;
+    return { sent: true, messageId: body.id };
+  } catch (err) {
+    const reason = err instanceof Error ? err.message : "unknown";
+    console.warn("[email] network error sending credential request:", reason);
+    return { sent: false, reason };
+  }
+}
+
 function escapeHtml(str: string): string {
   return str
     .replace(/&/g, "&amp;")

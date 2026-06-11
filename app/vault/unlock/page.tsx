@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useVaultKey } from "@/lib/vault-context";
 import { deriveKey, decrypt, fromBase64, type ArgonParams } from "@/lib/crypto";
+import { generateAgencyKeypair } from "@/lib/keypair";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -55,7 +56,9 @@ export default function UnlockPage() {
 
       const { data: profile, error: pErr } = await supabase
         .from("users")
-        .select("argon_salt, argon_params, sentinel_ciphertext")
+        .select(
+          "argon_salt, argon_params, sentinel_ciphertext, public_key, wrapped_private_key",
+        )
         .eq("id", user.id)
         .single();
       if (pErr) throw pErr;
@@ -84,6 +87,30 @@ export default function UnlockPage() {
         }
         setPassphrase("");
         return;
+      }
+
+      // SHRP-107c — lazy-migrate users from before the asymmetric
+      // keypair existed. Now that we have the vault key in hand, we
+      // can wrap a fresh X25519 private key with it and save the
+      // public + wrapped private side-by-side. ~200ms one-time cost
+      // the first time an existing user unlocks after this ships.
+      // Subsequent unlocks skip this entirely.
+      if (!profile.public_key || !profile.wrapped_private_key) {
+        try {
+          const kp = await generateAgencyKeypair(key);
+          await supabase
+            .from("users")
+            .update({
+              public_key: kp.publicKey,
+              wrapped_private_key: kp.wrappedPrivateKey,
+              keypair_algo: kp.algo,
+            } as never)
+            .eq("id", user.id);
+        } catch (kpErr) {
+          // Don't block unlock on keypair generation — log and move
+          // on. Worst case we retry next unlock.
+          console.error("SHRP-107 keypair lazy-migration failed:", kpErr);
+        }
       }
 
       vault.unlock(key);

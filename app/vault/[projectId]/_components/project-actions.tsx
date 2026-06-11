@@ -4,23 +4,41 @@ import * as React from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useVaultKey } from "@/lib/vault-context";
-import { KeyRound, Lock, Unlock, Settings, Upload, Activity } from "lucide-react";
+import {
+  KeyRound,
+  Lock,
+  Unlock,
+  Settings,
+  Upload,
+  Activity,
+  Mail,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AddCredentialDialog } from "@/components/add-credential-dialog";
 import { ImportEnvDialog } from "@/components/import-env-dialog";
+import { RequestCredentialsDialog } from "@/components/request-credentials-dialog";
 import { loadPendingImport } from "@/lib/pending-import";
 
 /**
- * Project-page top-right actions: Add credential, and the unlock status
- * indicator. Both buttons are clickable via the [data-action="open-add-credential"]
- * attribute on the empty state card so the same handler powers both entry points.
+ * Project-page top-right actions: Add credential, Request from client,
+ * Import .env, Activity link, Settings link, and the unlock status
+ * indicator. Several entry points are clickable via data-action
+ * attributes on the empty-state card so the same handlers power both
+ * pathways.
  */
-export function ProjectActions({ projectId }: { projectId: string }) {
+export function ProjectActions({
+  projectId,
+  clientName,
+}: {
+  projectId: string;
+  clientName?: string;
+}) {
   const router = useRouter();
   const vault = useVaultKey();
   const searchParams = useSearchParams();
   const [open, setOpen] = React.useState(false);
   const [importOpen, setImportOpen] = React.useState(false);
+  const [requestOpen, setRequestOpen] = React.useState(false);
   const [pendingText, setPendingText] = React.useState<string | undefined>(undefined);
 
   // If we arrived from the landing-page handoff (?continue_import=1) and
@@ -52,6 +70,9 @@ export function ProjectActions({ projectId }: { projectId: string }) {
       } else if (target?.closest('[data-action="open-import-env"]')) {
         e.preventDefault();
         openImport();
+      } else if (target?.closest('[data-action="open-request-credentials"]')) {
+        e.preventDefault();
+        setRequestOpen(true);
       }
     }
     document.addEventListener("click", onClick);
@@ -94,6 +115,9 @@ export function ProjectActions({ projectId }: { projectId: string }) {
       >
         <Settings className="h-4 w-4" />
       </Link>
+      <Button variant="secondary" onClick={() => setRequestOpen(true)}>
+        <Mail className="h-4 w-4" /> Request from client
+      </Button>
       <Button variant="secondary" onClick={openImport}>
         <Upload className="h-4 w-4" /> Import .env
       </Button>
@@ -115,6 +139,12 @@ export function ProjectActions({ projectId }: { projectId: string }) {
         }}
         onImported={() => router.refresh()}
         initialText={pendingText}
+      />
+      <RequestCredentialsDialog
+        projectId={projectId}
+        defaultClientName={clientName ?? ""}
+        open={requestOpen}
+        onOpenChange={setRequestOpen}
       />
     </div>
   );

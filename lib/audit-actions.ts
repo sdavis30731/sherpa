@@ -181,6 +181,22 @@ const REGISTRY: Record<string, AuditActionMeta> = {
     severity: "notable",
     category: "project",
   },
+  credential_request_created: {
+    label: "Credential request sent",
+    description:
+      "Agency invited the client to deposit credentials via the SherpaKeys onboarding link.",
+    icon: Upload,
+    severity: "info",
+    category: "project",
+  },
+  credential_request_submitted: {
+    label: "Client submitted credentials",
+    description:
+      "Client encrypted credentials with the agency public key and submitted them.",
+    icon: ShieldCheck,
+    severity: "success",
+    category: "credential",
+  },
 
   // ----- Agent (MCP) -----
   mcp_token_created: {
