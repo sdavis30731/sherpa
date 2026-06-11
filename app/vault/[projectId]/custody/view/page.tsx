@@ -673,6 +673,14 @@ export default async function CustodyViewPage({
  * Build the page CSS with the agency's brand color baked in. Kept in JS
  * rather than as a static stylesheet because the cover gradient and
  * accent text need to be themed per-agency.
+ *
+ * SHRP-099 — cover ink is computed from the maximum relative luminance
+ * of the gradient stops (sRGB linear, the accessibility formula). If
+ * the brightest stop is light enough that white text would fail
+ * contrast, we flip the entire cover palette to dark-on-light. The
+ * gradient also darkens toward the right edge instead of lightening,
+ * which eliminates the "white text disappears in the faded area"
+ * failure mode Steve flagged for dark-green primaries.
  */
 function buildCss({
   primary,
@@ -681,6 +689,30 @@ function buildCss({
   primary: string;
   accent: string;
 }): string {
+  // SHRP-099 — luminance-aware ink for the cover. We darken the gradient
+  // endpoint (was lighten before), so the BRIGHTEST point on the cover
+  // is whichever of primary/accent is lighter. Pick ink to contrast
+  // against that brightest point.
+  const coverEnd = darken(primary, 0.12);
+  const maxLum = Math.max(
+    relativeLuminance(primary),
+    relativeLuminance(accent),
+    relativeLuminance(coverEnd),
+  );
+  // Threshold biased toward keeping the historical white-on-dark
+  // palette (the common case) unless the agency picked something
+  // clearly light. 0.55 lands light yellows and pastels in
+  // dark-on-light, leaves dark greens and navys in white-on-dark.
+  const inkMode: "light" | "dark" = maxLum > 0.55 ? "dark" : "light";
+  const inkSolid = inkMode === "dark" ? "#0f172a" : "#ffffff";
+  const inkBase = inkMode === "dark" ? "15, 23, 42" : "255, 255, 255";
+  // The draft callout sits ON the cover and needs to read against it.
+  // Light cover → dark callout box with light text. Dark cover → light
+  // callout box with dark text (the original).
+  const draftBg =
+    inkMode === "dark" ? "rgba(15, 23, 42, 0.92)" : "rgba(255, 255, 255, 0.92)";
+  const draftText =
+    inkMode === "dark" ? "#ffffff" : darken(primary, 0.3);
   return `
 :root {
   --cr-ink: #0f172a;
@@ -735,9 +767,11 @@ function buildCss({
   user-select: none;
 }
 .custody-record.is-draft .cr-cover::after {
-  /* Brighter watermark on the dark cover so it reads through the
-     gradient instead of disappearing into it. */
-  color: rgba(255, 255, 255, 0.18);
+  /* SHRP-099 — ink-aware watermark. On dark covers (light ink), this
+     renders as semi-transparent white; on light covers (dark ink),
+     semi-transparent dark. Either way, the watermark reads through
+     the gradient instead of disappearing into it. */
+  color: rgba(${inkBase}, 0.18);
 }
 
 .custody-record h1,
@@ -751,9 +785,9 @@ function buildCss({
 }
 
 .cr-cover {
-  color: #fff;
+  color: ${inkSolid};
   background:
-    linear-gradient(135deg, ${accent} 0%, ${primary} 60%, ${lighten(primary, 0.15)} 100%);
+    linear-gradient(135deg, ${accent} 0%, ${primary} 60%, ${coverEnd} 100%);
   padding: 0.7in 0.65in 0.6in 0.65in;
   border-radius: 6px;
   margin-bottom: 20px;
@@ -765,8 +799,8 @@ function buildCss({
   position: absolute;
   inset: 0;
   background-image:
-    radial-gradient(circle at 88% 18%, rgba(255,255,255,0.10) 0, transparent 35%),
-    radial-gradient(circle at 8% 92%, rgba(255,255,255,0.06) 0, transparent 40%);
+    radial-gradient(circle at 88% 18%, rgba(${inkBase},0.10) 0, transparent 35%),
+    radial-gradient(circle at 8% 92%, rgba(${inkBase},0.06) 0, transparent 40%);
   pointer-events: none;
 }
 .cr-cover > * { position: relative; z-index: 1; }
@@ -777,21 +811,21 @@ function buildCss({
   gap: 12pt;
   font-size: 11pt;
   font-weight: 600;
-  color: rgba(255,255,255,0.92);
+  color: rgba(${inkBase},0.92);
 }
 .cr-cover-logo {
   width: 36pt;
   height: 36pt;
   border-radius: 8pt;
-  background: rgba(255,255,255,0.95);
+  background: rgba(${inkBase},0.95);
   object-fit: contain;
   padding: 4pt;
 }
 .cr-cover-logo-mark {
   width: 32pt; height: 32pt;
   border-radius: 8pt;
-  background: rgba(255,255,255,0.18);
-  border: 1pt solid rgba(255,255,255,0.32);
+  background: rgba(${inkBase},0.18);
+  border: 1pt solid rgba(${inkBase},0.32);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -799,18 +833,18 @@ function buildCss({
   font-size: 12pt;
   letter-spacing: 0.05em;
 }
-.cr-cover-brand-name { color: #fff; }
+.cr-cover-brand-name { color: ${inkSolid}; }
 .cr-cover-chip {
   display: inline-block;
-  background: rgba(255,255,255,0.14);
-  border: 1pt solid rgba(255,255,255,0.30);
+  background: rgba(${inkBase},0.14);
+  border: 1pt solid rgba(${inkBase},0.30);
   border-radius: 999pt;
   padding: 4pt 11pt;
   font-size: 8pt;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.18em;
-  color: rgba(255,255,255,0.95);
+  color: rgba(${inkBase},0.95);
   margin-top: 22pt;
 }
 .cr-cover-title {
@@ -818,18 +852,18 @@ function buildCss({
   font-size: 28pt;
   font-weight: 800;
   line-height: 1.08;
-  color: #fff;
+  color: ${inkSolid};
   letter-spacing: -0.02em;
 }
 .cr-cover-title-sub {
   font-weight: 500;
   font-size: 16pt;
-  color: rgba(255,255,255,0.88);
+  color: rgba(${inkBase},0.88);
 }
 .cr-cover-subtitle {
   margin-top: 12pt;
   font-size: 11pt;
-  color: rgba(255,255,255,0.88);
+  color: rgba(${inkBase},0.88);
   font-weight: 500;
   line-height: 1.4;
   max-width: 5in;
@@ -840,25 +874,25 @@ function buildCss({
   grid-template-columns: 1fr 1fr 1fr;
   column-gap: 18pt;
   row-gap: 10pt;
-  border-top: 1pt solid rgba(255,255,255,0.18);
+  border-top: 1pt solid rgba(${inkBase},0.18);
   padding-top: 14pt;
 }
 .cr-cover-meta div .lbl {
   font-size: 7pt;
   text-transform: uppercase;
   letter-spacing: 0.16em;
-  color: rgba(255,255,255,0.62);
+  color: rgba(${inkBase},0.62);
 }
 .cr-cover-meta div .val {
   margin-top: 2pt;
-  color: #fff;
+  color: ${inkSolid};
   font-weight: 600;
   font-size: 9.5pt;
 }
 .cr-cover-draft {
   margin-top: 22pt;
-  background: rgba(255,255,255,0.92);
-  color: ${darken(primary, 0.3)};
+  background: ${draftBg};
+  color: ${draftText};
   border-radius: 6pt;
   padding: 10pt 14pt;
   font-size: 9pt;
@@ -1317,6 +1351,20 @@ function buildCss({
 }
 
 /* ──────────── Tiny color utils ──────────── */
+
+/**
+ * SHRP-099 — sRGB relative luminance. Returns a value in [0, 1] using
+ * the WCAG / sRGB gamma-correction formula. Used to pick contrasting
+ * ink for the agency's cover gradient.
+ */
+function relativeLuminance(hex: string): number {
+  const { r, g, b } = parseHex(hex);
+  const toLin = (c: number): number => {
+    const cs = c / 255;
+    return cs <= 0.03928 ? cs / 12.92 : Math.pow((cs + 0.055) / 1.055, 2.4);
+  };
+  return 0.2126 * toLin(r) + 0.7152 * toLin(g) + 0.0722 * toLin(b);
+}
 
 function hexWithAlpha(hex: string, alpha: number): string {
   const { r, g, b } = parseHex(hex);
