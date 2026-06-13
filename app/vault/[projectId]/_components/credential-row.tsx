@@ -29,6 +29,8 @@ import { Callout } from "@/components/ui/callout";
 import { EditCredentialDialog } from "@/components/edit-credential-dialog";
 import { DeleteCredentialDialog } from "@/components/delete-credential-dialog";
 import { MarkRotatedDialog } from "@/components/mark-rotated-dialog";
+import { RotateNowDialog } from "@/components/rotate-now-dialog";
+import { EnableRotationDialog } from "@/components/enable-rotation-dialog";
 import { useOpenPlaybook } from "@/components/playbook-context";
 import { getPlaybook } from "@/lib/playbooks";
 import { RiskBadge } from "@/components/risk-badge";
@@ -44,7 +46,9 @@ import {
   CheckCircle2,
   Lock,
   RotateCw,
+  Zap,
   BookOpen,
+  Hourglass,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -57,6 +61,10 @@ export interface CredentialView {
   ciphertext: string;
   last_rotated_at: string | null;
   created_at: string;
+  /** SHRP-051 — vault_key (default) or agency_sealed_box (post-rotation, awaiting re-wrap). */
+  ciphertext_format?: "vault_key" | "agency_sealed_box";
+  /** SHRP-051 — true if a rotation_policy exists for this credential. */
+  auto_rotates?: boolean;
 }
 
 const REVEAL_SECONDS = 10;
@@ -82,6 +90,12 @@ export function CredentialRow({
   const [editing, setEditing] = React.useState(false);
   const [deleting, setDeleting] = React.useState(false);
   const [rotating, setRotating] = React.useState(false);
+  // SHRP-051 — manual auto-rotation trigger dialog (different from
+  // mark-as-rotated, which is just a timestamp update).
+  const [rotateNow, setRotateNow] = React.useState(false);
+  const [enableRotation, setEnableRotation] = React.useState(false);
+
+  const rewrapPending = cred.ciphertext_format === "agency_sealed_box";
 
   const service = getService(cred.service);
   const rotationDays = service?.rotationDays ?? 180;
@@ -184,6 +198,24 @@ export function CredentialRow({
               >
                 {cred.env}
               </span>
+              {rewrapPending && (
+                <span
+                  title="This credential was rotated and is awaiting re-wrap. Unlock your vault on this device to complete it."
+                  className="inline-flex shrink-0 items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700 ring-1 ring-amber-200"
+                >
+                  <Hourglass className="h-3 w-3" />
+                  Re-wrap pending
+                </span>
+              )}
+              {cred.auto_rotates && !rewrapPending && (
+                <span
+                  title="Auto-rotation is enabled for this credential."
+                  className="inline-flex shrink-0 items-center gap-1 rounded-full bg-sherpa-50 px-2 py-0.5 text-[10px] font-semibold text-sherpa-700 ring-1 ring-sherpa-200"
+                >
+                  <Zap className="h-3 w-3" />
+                  Auto-rotates
+                </span>
+              )}
             </div>
             <div className="mt-0.5 text-xs text-slate-500">
               <Clock className="-mt-0.5 mr-1 inline h-3 w-3" />
@@ -239,6 +271,23 @@ export function CredentialRow({
             >
               <BookOpen className="h-4 w-4" />
             </IconButton>
+            {cred.auto_rotates ? (
+              <IconButton
+                title="Rotate now (auto-rotation enabled)"
+                onClick={() => setRotateNow(true)}
+                className="text-sherpa-600 hover:text-sherpa-700"
+              >
+                <Zap className="h-4 w-4" />
+              </IconButton>
+            ) : (
+              <IconButton
+                title="Enable auto-rotation"
+                onClick={() => setEnableRotation(true)}
+                className="text-slate-400 hover:text-sherpa-600"
+              >
+                <Zap className="h-4 w-4" />
+              </IconButton>
+            )}
             <IconButton
               title="Mark as rotated"
               onClick={() => setRotating(true)}
@@ -304,6 +353,22 @@ export function CredentialRow({
         onOpenChange={setRotating}
         onDone={() => router.refresh()}
         onOpenEdit={() => setEditing(true)}
+      />
+      <RotateNowDialog
+        credentialId={cred.id}
+        credentialLabel={cred.label}
+        serviceName={service?.name ?? cred.service}
+        open={rotateNow}
+        onOpenChange={setRotateNow}
+      />
+      <EnableRotationDialog
+        credentialId={cred.id}
+        credentialLabel={cred.label}
+        credentialService={cred.service}
+        credentialCiphertext={cred.ciphertext}
+        open={enableRotation}
+        onOpenChange={setEnableRotation}
+        onSaved={() => router.refresh()}
       />
     </>
   );

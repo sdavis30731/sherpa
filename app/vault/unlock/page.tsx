@@ -4,8 +4,12 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useVaultKey } from "@/lib/vault-context";
-import { deriveKey, decrypt, fromBase64, type ArgonParams } from "@/lib/crypto";
-import { generateAgencyKeypair } from "@/lib/keypair";
+import { deriveKey, decrypt, encrypt, fromBase64, type ArgonParams } from "@/lib/crypto";
+import {
+  generateAgencyKeypair,
+  unwrapAgencyPrivateKey,
+  openFromAgency,
+} from "@/lib/keypair";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -95,7 +99,8 @@ export default function UnlockPage() {
       // public + wrapped private side-by-side. ~200ms one-time cost
       // the first time an existing user unlocks after this ships.
       // Subsequent unlocks skip this entirely.
-      if (!profile.public_key || !profile.wrapped_private_key) {
+      let wrappedPrivateKey = profile.wrapped_private_key as string | null;
+      if (!profile.public_key || !wrappedPrivateKey) {
         try {
           const kp = await generateAgencyKeypair(key);
           await supabase
@@ -106,10 +111,58 @@ export default function UnlockPage() {
               keypair_algo: kp.algo,
             } as never)
             .eq("id", user.id);
+          wrappedPrivateKey = kp.wrappedPrivateKey;
         } catch (kpErr) {
           // Don't block unlock on keypair generation — log and move
           // on. Worst case we retry next unlock.
           console.error("SHRP-107 keypair lazy-migration failed:", kpErr);
+        }
+      }
+
+      // SHRP-051g — re-wrap any credentials that were left in
+      // agency_sealed_box format by the rotation orchestrator. The
+      // orchestrator writes the new ciphertext as a sealed-box because
+      // it can't reach the vault key; we close that loop here by
+      // decrypting with the private key, re-encrypting with the vault
+      // key, and flipping the format back to 'vault_key'. Silent —
+      // user sees no UI for this, just a clean vault on landing.
+      if (wrappedPrivateKey) {
+        try {
+          const { data: pending } = await supabase
+            .from("credentials")
+            .select("id, ciphertext")
+            .eq("ciphertext_format", "agency_sealed_box")
+            .is("deleted_at", null);
+          const pendingList = (pending ?? []) as Array<{
+            id: string;
+            ciphertext: string;
+          }>;
+          if (pendingList.length > 0) {
+            const priv = await unwrapAgencyPrivateKey(wrappedPrivateKey, key);
+            for (const row of pendingList) {
+              try {
+                const plaintext = await openFromAgency(row.ciphertext, priv);
+                const newCt = await encrypt(plaintext, key);
+                await supabase
+                  .from("credentials")
+                  .update({
+                    ciphertext: newCt,
+                    ciphertext_format: "vault_key",
+                  } as never)
+                  .eq("id", row.id);
+              } catch (perRowErr) {
+                console.error(
+                  `SHRP-051 re-wrap failed for credential ${row.id}:`,
+                  perRowErr,
+                );
+                // Continue with the next row. Failed ones stay in
+                // sealed-box format and will retry next unlock.
+              }
+            }
+          }
+        } catch (rewrapErr) {
+          // Same as the keypair lazy-migrate: don't block unlock.
+          console.error("SHRP-051 re-wrap sweep failed:", rewrapErr);
         }
       }
 

@@ -197,6 +197,20 @@ const REGISTRY: Record<string, AuditActionMeta> = {
     severity: "success",
     category: "credential",
   },
+  rotation_policy_set: {
+    label: "Auto-rotation enabled",
+    description: "Created or updated the rotation policy for a credential.",
+    icon: RotateCw,
+    severity: "success",
+    category: "credential",
+  },
+  rotation_policy_removed: {
+    label: "Auto-rotation disabled",
+    description: "Removed the rotation policy for a credential.",
+    icon: RotateCw,
+    severity: "info",
+    category: "credential",
+  },
 
   // ----- Agent (MCP) -----
   mcp_token_created: {

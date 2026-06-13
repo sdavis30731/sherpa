@@ -8,6 +8,7 @@ import { RenameProjectForm } from "./_components/rename-form";
 import { ArchiveProjectSection } from "./_components/archive-section";
 import { DeleteProjectSection } from "./_components/delete-section";
 import { EngagementStatusSection } from "./_components/status-section";
+import { HandoffSection } from "./_components/handoff-section";
 
 type EngagementRow = {
   id: string;
@@ -18,6 +19,8 @@ type EngagementRow = {
   status: "active" | "launched" | "archived";
   archived_at: string | null;
   created_at: string;
+  custody_assertions: Record<string, unknown> | null;
+  transferred_at: string | null;
 };
 
 export default async function ProjectSettingsPage({
@@ -34,7 +37,7 @@ export default async function ProjectSettingsPage({
   const { data: projectRaw } = await supabase
     .from("projects")
     .select(
-      "id, name, description, client_name, launch_date, status, archived_at, created_at",
+      "id, name, description, client_name, launch_date, status, archived_at, created_at, custody_assertions, transferred_at",
     )
     .eq("id", projectId)
     .maybeSingle();
@@ -49,6 +52,24 @@ export default async function ProjectSettingsPage({
   const agencyName =
     (agencyRow as { name?: string | null } | null)?.name?.trim() ||
     "Your agency";
+
+  // SHRP-100 — is this engagement ready to hand off?
+  const custodyIssuedAt =
+    project.custody_assertions && typeof project.custody_assertions === "object"
+      ? ((project.custody_assertions as { issued_at?: unknown }).issued_at as
+          | string
+          | undefined)
+      : undefined;
+  const handoffReady =
+    project.status === "launched" &&
+    Boolean(custodyIssuedAt) &&
+    !project.transferred_at;
+  const { data: inFlightHandoff } = await supabase
+    .from("engagement_handoffs")
+    .select("id, status, client_email, started_at, accepted_at")
+    .eq("project_id", projectId)
+    .in("status", ["pending_acceptance", "pending_rekey"])
+    .maybeSingle();
 
   const [{ count: credentialCount }, { count: tokenCount }] = await Promise.all([
     supabase
@@ -129,6 +150,25 @@ export default async function ProjectSettingsPage({
             />
           </CardBody>
         </Card>
+
+        <HandoffSection
+          projectId={project.id}
+          engagementName={project.name}
+          clientName={project.client_name ?? ""}
+          isReady={handoffReady}
+          alreadyTransferred={Boolean(project.transferred_at)}
+          inFlight={
+            inFlightHandoff
+              ? (inFlightHandoff as {
+                  id: string;
+                  status: string;
+                  client_email: string;
+                  started_at: string;
+                  accepted_at: string | null;
+                })
+              : null
+          }
+        />
 
         <Card>
           <CardHeader>

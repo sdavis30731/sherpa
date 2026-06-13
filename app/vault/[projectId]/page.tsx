@@ -107,12 +107,29 @@ export default async function ProjectPage({
 
   const { data: credentials } = await supabase
     .from("credentials")
-    .select("id, project_id, service, env, label, ciphertext, last_rotated_at, created_at")
+    .select(
+      "id, project_id, service, env, label, ciphertext, ciphertext_format, last_rotated_at, created_at",
+    )
     .eq("project_id", projectId)
     .is("deleted_at", null)
     .order("service");
 
-  const credList = (credentials ?? []) as CredentialView[];
+  // SHRP-051 — flag credentials that have a rotation policy so the
+  // row can render the Auto-rotates pill + Rotate now button.
+  const { data: rotPolicyRows } = await supabase
+    .from("rotation_policies")
+    .select("credential_id, enabled")
+    .eq("project_id", projectId);
+  const autoRotatingIds = new Set(
+    (rotPolicyRows ?? [])
+      .filter((r) => (r as { enabled?: boolean }).enabled !== false)
+      .map((r) => (r as { credential_id: string }).credential_id),
+  );
+
+  const credList = ((credentials ?? []) as CredentialView[]).map((c) => ({
+    ...c,
+    auto_rotates: autoRotatingIds.has(c.id),
+  }));
 
   const riskInputs: RiskCredentialInput[] = credList.map((c) => {
     const days =

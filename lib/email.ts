@@ -380,6 +380,172 @@ Questions? Reply to this email — it goes to ${args.agencyPartnerName || args.a
   }
 }
 
+/**
+ * SHRP-100 — Engagement handoff invite email.
+ *
+ * Sent to the client when the agency initiates a handoff at engagement
+ * launch. Same agency-branded display-name pattern as
+ * sendCredentialRequestEmail.
+ */
+export async function sendHandoffInviteEmail(args: {
+  to: string;
+  shareUrl: string;
+  agencyName: string;
+  agencyLogoUrl: string | null;
+  agencyPrimaryColor: string;
+  agencyPartnerName: string;
+  agencyPartnerEmail: string;
+  clientName: string | null;
+  engagementName: string;
+  agencyMessage: string | null;
+  optedInToPaidVault: boolean;
+  expiresAt: Date;
+}): Promise<SendResult> {
+  const apiKey = process.env.RESEND_API_KEY;
+  const fromAddress =
+    process.env.EMAIL_FROM_ADDRESS ?? "notifications@sherpakeys.com";
+
+  if (!apiKey) {
+    console.warn(
+      "[email] RESEND_API_KEY not set — skipping handoff invite email.",
+    );
+    return { sent: false, reason: "no_api_key" };
+  }
+
+  const fromDisplay = args.agencyPartnerName
+    ? `${args.agencyPartnerName} (via SherpaKeys)`
+    : `${args.agencyName} (via SherpaKeys)`;
+  const from = `${fromDisplay} <${fromAddress}>`;
+  const replyTo = args.agencyPartnerEmail;
+
+  const greeting = args.clientName?.trim()
+    ? `Hi ${escapeHtml(args.clientName.trim().split(/\s+/)[0] ?? args.clientName.trim())},`
+    : "Hi,";
+
+  const messageBlock = args.agencyMessage?.trim()
+    ? `<tr><td style="padding: 8px 32px 0;">
+        <blockquote style="margin: 0; padding: 12px 14px; background: #f8fafc; border-left: 3px solid ${escapeHtml(args.agencyPrimaryColor)}; border-radius: 6px; color: #0f172a; font-size: 14px; line-height: 1.55; white-space: pre-wrap;">${escapeHtml(args.agencyMessage.trim())}</blockquote>
+      </td></tr>`
+    : "";
+
+  const logoBlock = args.agencyLogoUrl
+    ? `<img src="${escapeHtml(args.agencyLogoUrl)}" alt="${escapeHtml(args.agencyName)} logo" style="width: 44px; height: 44px; border-radius: 8px; object-fit: contain; background: #fff; border: 1px solid #e2e8f0;">`
+    : `<div style="width: 44px; height: 44px; border-radius: 8px; background: ${escapeHtml(args.agencyPrimaryColor)}; color: white; display: inline-block; line-height: 44px; text-align: center; font-weight: 800; font-size: 18px;">${escapeHtml((args.agencyName.charAt(0) || "A").toUpperCase())}</div>`;
+
+  const daysLeft = Math.max(
+    1,
+    Math.round(
+      (args.expiresAt.getTime() - Date.now()) / (24 * 60 * 60 * 1000),
+    ),
+  );
+
+  const paidVaultBullet = args.optedInToPaidVault
+    ? `<li style="margin-bottom: 4px;"><strong>Auto-rotating credential vault ($9/month)</strong> — your production secrets rotate themselves on a schedule. You never have to think about credential hygiene again. Cancel anytime.</li>`
+    : `<li style="margin-bottom: 4px;">A free credential vault you control. Add or remove credentials whenever you want.</li>`;
+
+  const subject = args.clientName?.trim()
+    ? `${args.engagementName} is yours — claim your vault`
+    : `Your engagement is ready — claim your vault`;
+
+  const html = `<!DOCTYPE html>
+<html>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f1f5f9; padding: 32px 16px; margin: 0;">
+  <table cellpadding="0" cellspacing="0" border="0" style="max-width: 560px; margin: 0 auto; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(15, 23, 42, 0.08);">
+    <tr><td style="padding: 28px 32px 16px;">
+      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 18px;">
+        ${logoBlock}
+        <div>
+          <p style="margin: 0; font-size: 12px; font-weight: 700; color: #64748b; letter-spacing: 0.05em; text-transform: uppercase;">${escapeHtml(args.agencyName)}</p>
+          <p style="margin: 2px 0 0; font-size: 13px; color: #0f172a;">Engagement: ${escapeHtml(args.engagementName)}</p>
+        </div>
+      </div>
+      <h1 style="margin: 8px 0 0; font-size: 22px; color: #0f172a; font-weight: 700; line-height: 1.3;">${greeting}</h1>
+      <p style="margin: 10px 0 0; font-size: 15px; color: #334155; line-height: 1.6;">
+        Your engagement <strong>${escapeHtml(args.engagementName)}</strong> is live, and we&apos;ve put together a secure vault with every credential ${escapeHtml(args.agencyPartnerName || args.agencyName)} used to build it. Now it&apos;s ready to be yours.
+      </p>
+    </td></tr>
+    ${messageBlock}
+    <tr><td style="padding: 12px 32px 0;">
+      <p style="margin: 0 0 6px; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #64748b;">What you&apos;ll get</p>
+      <ul style="margin: 0; padding-left: 18px; color: #0f172a; font-size: 14px; line-height: 1.65;">
+        <li style="margin-bottom: 4px;">Ownership of every Stripe key, GitHub token, Vercel env var, DNS record — every credential running ${escapeHtml(args.engagementName)}.</li>
+        ${paidVaultBullet}
+        <li style="margin-bottom: 4px;">Your signed Custody Record, attached and dated.</li>
+      </ul>
+    </td></tr>
+    <tr><td style="padding: 24px 32px 0;">
+      <a href="${escapeHtml(args.shareUrl)}" style="display: inline-block; background: ${escapeHtml(args.agencyPrimaryColor)}; color: white; padding: 14px 26px; border-radius: 10px; text-decoration: none; font-weight: 700; font-size: 15px; box-shadow: 0 2px 8px rgba(15, 23, 42, 0.12);">Claim your vault →</a>
+      <p style="margin: 12px 0 0; font-size: 12px; color: #64748b;">Link expires in ${daysLeft} day${daysLeft === 1 ? "" : "s"}.</p>
+    </td></tr>
+    <tr><td style="padding: 22px 32px 0;">
+      <div style="border-top: 1px solid #e2e8f0; padding-top: 16px;">
+        <p style="margin: 0; font-size: 12px; font-weight: 700; color: #047857; letter-spacing: 0.05em; text-transform: uppercase;">🔒 How this transfer works</p>
+        <p style="margin: 6px 0 0; font-size: 13px; color: #334155; line-height: 1.55;">
+          ${escapeHtml(args.agencyName)} encrypts every credential in their browser before it reaches you. SherpaKeys is the vault — we can&apos;t read them either. After you create a passphrase, only <strong>you</strong> can decrypt them.
+        </p>
+      </div>
+    </td></tr>
+    <tr><td style="padding: 22px 32px 28px;">
+      <p style="margin: 0; font-size: 12px; color: #64748b; line-height: 1.55;">
+        Questions? Reply to this email — it goes straight to ${escapeHtml(args.agencyPartnerName || args.agencyName)}.
+      </p>
+    </td></tr>
+  </table>
+  <p style="text-align: center; color: #94a3b8; font-size: 11px; margin: 16px auto 0; max-width: 560px;">
+    Sent by ${escapeHtml(args.agencyName)} using SherpaKeys
+  </p>
+</body>
+</html>`;
+
+  const text = `${greeting}
+
+Your engagement ${args.engagementName} is live, and we've put together a secure vault with every credential ${args.agencyPartnerName || args.agencyName} used to build it. Now it's ready to be yours.
+
+${args.agencyMessage?.trim() ? `${args.agencyMessage.trim()}\n\n` : ""}What you'll get:
+  - Ownership of every Stripe key, GitHub token, Vercel env var, DNS record — every credential running ${args.engagementName}.
+  ${args.optedInToPaidVault ? "- Auto-rotating credential vault ($9/month) — your production secrets rotate themselves on a schedule. Cancel anytime." : "- A free credential vault you control."}
+  - Your signed Custody Record, attached and dated.
+
+Claim your vault (link expires in ${daysLeft} day${daysLeft === 1 ? "" : "s"}):
+${args.shareUrl}
+
+How this transfer works: ${args.agencyName} encrypts every credential in their browser before it reaches you. SherpaKeys is the vault — we can't read them either. After you create a passphrase, only you can decrypt them.
+
+Questions? Reply to this email — it goes to ${args.agencyPartnerName || args.agencyName}.
+
+— Sent by ${args.agencyName} using SherpaKeys`;
+
+  try {
+    const response = await fetch(RESEND_API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        from,
+        to: [args.to],
+        reply_to: replyTo,
+        subject,
+        html,
+        text,
+      }),
+    });
+    if (!response.ok) {
+      const errBody = (await response.json().catch(() => ({}))) as ResendErrorBody;
+      const reason = errBody.message ?? `http_${response.status}`;
+      return { sent: false, reason };
+    }
+    const body = (await response.json().catch(() => ({}))) as ResendSuccessBody;
+    return { sent: true, messageId: body.id };
+  } catch (err) {
+    return {
+      sent: false,
+      reason: err instanceof Error ? err.message : "unknown",
+    };
+  }
+}
+
 function escapeHtml(str: string): string {
   return str
     .replace(/&/g, "&amp;")
