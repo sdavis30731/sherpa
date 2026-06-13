@@ -46,6 +46,7 @@ type EngagementRow = {
   launch_date: string | null;
   status: "active" | "launched" | "archived";
   custody_assertions: Record<string, unknown> | null;
+  attestation_id: string | null;
 };
 
 type AgencyProfileRow = {
@@ -69,7 +70,9 @@ export default async function CustodyViewPage({
 
   const { data: projectRaw } = await supabase
     .from("projects")
-    .select("id, name, client_name, launch_date, status, custody_assertions")
+    .select(
+      "id, name, client_name, launch_date, status, custody_assertions, attestation_id",
+    )
     .eq("id", projectId)
     .maybeSingle();
   if (!projectRaw) notFound();
@@ -233,7 +236,17 @@ export default async function CustodyViewPage({
               <Pencil className="h-4 w-4" />
               Edit
             </Link>
-            <PrintButton />
+            {issued ? (
+              <PrintButton />
+            ) : (
+              <span
+                title="Issue this Custody Record to enable PDF export. The draft watermark is what your client would see if you exported now."
+                className="inline-flex cursor-not-allowed items-center gap-2 rounded-md border border-dashed border-amber-300 bg-amber-50 px-4 py-2 text-xs font-medium text-amber-800"
+              >
+                <AlertTriangle className="h-3.5 w-3.5" />
+                Issue to enable PDF export
+              </span>
+            )}
           </div>
         </div>
       </div>
@@ -352,29 +365,52 @@ export default async function CustodyViewPage({
         <section className="cr-page">
           <div className="cr-section-header">
             <span className="cr-eyebrow">For the reader</span>
-            {(() => {
-              const opener = plainOpener({
-                custody,
-                agencyName: agencyDisplayName,
-                clientName: project.client_name ?? "",
-                engagementName: project.name,
-              });
-              return (
-                <>
-                  <h2>{opener.headline}</h2>
-                  {opener.paragraphs.map((p, i) => (
-                    <p
-                      key={i}
-                      className={
-                        "cr-plain-opener" + (i === 0 ? " is-first" : "")
-                      }
-                    >
-                      {p}
-                    </p>
-                  ))}
-                </>
-              );
-            })()}
+            {issued ? (
+              (() => {
+                const opener = plainOpener({
+                  custody,
+                  agencyName: agencyDisplayName,
+                  clientName: project.client_name ?? "",
+                  engagementName: project.name,
+                });
+                return (
+                  <>
+                    <h2>{opener.headline}</h2>
+                    {opener.paragraphs.map((p, i) => (
+                      <p
+                        key={i}
+                        className={
+                          "cr-plain-opener" + (i === 0 ? " is-first" : "")
+                        }
+                      >
+                        {p}
+                      </p>
+                    ))}
+                  </>
+                );
+              })()
+            ) : (
+              // SHRP-105d — high-value plain-English opener is hidden
+              // on drafts. Replaced with a placeholder so the agency
+              // sees the section exists but can't screenshot a usable
+              // version.
+              <>
+                <h2>What this means for your client.</h2>
+                <div className="cr-paywall-placeholder">
+                  <p>
+                    The plain-English summary the client reads first will
+                    appear here once you issue this Custody Record. It
+                    composes from the engagement metadata, transfer counts,
+                    and exceptions — the human-voice paragraphs that turn a
+                    structured document into something a non-technical
+                    client can actually act on.
+                  </p>
+                  <p className="cr-paywall-cta">
+                    Issue this record to populate.
+                  </p>
+                </div>
+              </>
+            )}
           </div>
 
           <div className="cr-exec-grid">
@@ -553,7 +589,23 @@ export default async function CustodyViewPage({
         })}
 
         {/* ──────────── What to watch for (SHRP-104d) ──────────── */}
-        {(() => {
+        {!issued ? (
+          // SHRP-105d — paywalled. Show structure only.
+          <section className="cr-page">
+            <div className="cr-section-header">
+              <span className="cr-eyebrow">For the reader</span>
+              <h2>What to watch for.</h2>
+            </div>
+            <div className="cr-paywall-placeholder">
+              <p>
+                The dated action items the client should monitor — exception
+                deadlines, scheduled transfers, follow-up reminders —
+                appear here once you issue this record.
+              </p>
+              <p className="cr-paywall-cta">Issue to populate.</p>
+            </div>
+          </section>
+        ) : (() => {
           const items = watchForItems(custody, (id) => {
             const def = getService(id);
             const matchingService = services.find((s) => s.service_id === id);
@@ -625,37 +677,96 @@ export default async function CustodyViewPage({
             </p>
           </div>
 
-          <div className="cr-sig-row">
-            <div className="cr-sig-pad">
-              <div className="cr-sig-line">
-                {custody.issued_by?.name || "— pending signature —"}
+          {issued ? (
+            <>
+              <div className="cr-sig-row">
+                <div className="cr-sig-pad">
+                  <div className="cr-sig-line">
+                    {custody.issued_by?.name || "— pending signature —"}
+                  </div>
+                  <div className="cr-sig-label">Signed by Agency Principal</div>
+                  <div className="cr-sig-name">
+                    {custody.issued_by?.name || "—"}
+                  </div>
+                  <div className="cr-sig-role">
+                    {custody.issued_by?.role || "—"}
+                    {agency.name ? ` · ${agency.name}` : ""}
+                    {issuedAt
+                      ? ` · ${issuedAt.toLocaleDateString(undefined, {
+                          year: "numeric",
+                          month: "short",
+                          day: "numeric",
+                        })}`
+                      : ""}
+                  </div>
+                </div>
+                <div className="cr-sig-pad">
+                  <div className="cr-sig-line cr-sig-pending">
+                    — pending client signature —
+                  </div>
+                  <div className="cr-sig-label">Acknowledged by Client</div>
+                  <div className="cr-sig-name">
+                    {project.client_name || "Client"}
+                  </div>
+                </div>
               </div>
-              <div className="cr-sig-label">Signed by Agency Principal</div>
-              <div className="cr-sig-name">
-                {custody.issued_by?.name || "—"}
-              </div>
-              <div className="cr-sig-role">
-                {custody.issued_by?.role || "—"}
-                {agency.name ? ` · ${agency.name}` : ""}
-                {issuedAt
-                  ? ` · ${issuedAt.toLocaleDateString(undefined, {
-                      year: "numeric",
-                      month: "short",
-                      day: "numeric",
-                    })}`
-                  : ""}
-              </div>
+
+              {/* SHRP-105e — attestation badge appears only on issued
+                  records. Includes the unique attestation_id and the
+                  verify URL. Hard to forge convincingly, easy for the
+                  client to check. */}
+              {project.attestation_id && (
+                <div className="cr-attestation">
+                  <div className="cr-attestation-seal">
+                    <div className="cr-attestation-seal-top">SHERPAKEYS</div>
+                    <div className="cr-attestation-seal-mid">ATTESTED</div>
+                    <div className="cr-attestation-seal-bot">✓</div>
+                  </div>
+                  <div className="cr-attestation-body">
+                    <div className="cr-attestation-label">
+                      Custody Record · Attestation ID
+                    </div>
+                    <div className="cr-attestation-id">
+                      {project.attestation_id}
+                    </div>
+                    <div className="cr-attestation-meta">
+                      Issued by{" "}
+                      <strong>{agency.name || "Agency"}</strong>
+                      {issuedAt
+                        ? ` on ${issuedAt.toLocaleDateString(undefined, {
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric",
+                          })}`
+                        : ""}
+                    </div>
+                    <div className="cr-attestation-verify">
+                      Verify at sherpakeys.com/verify/
+                      {project.attestation_id}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </>
+          ) : (
+            // SHRP-105d — signature block paywalled. The most valuable
+            // piece for an agency to screenshot — without it, a fake
+            // PDF can't pass as the deliverable.
+            <div className="cr-paywall-placeholder cr-paywall-large">
+              <p>
+                <strong>The signature block appears here once issued.</strong>{" "}
+                The agency principal&apos;s signed attestation, the
+                acknowledgement line for the client, the dated SherpaKeys
+                attestation seal, and the unique verification URL — the
+                things that make this an official record rather than a
+                document mock-up.
+              </p>
+              <p className="cr-paywall-cta">
+                Issue this record to populate and unlock the official
+                signature, attestation seal, and verification URL.
+              </p>
             </div>
-            <div className="cr-sig-pad">
-              <div className="cr-sig-line cr-sig-pending">
-                — pending client signature —
-              </div>
-              <div className="cr-sig-label">Acknowledged by Client</div>
-              <div className="cr-sig-name">
-                {project.client_name || "Client"}
-              </div>
-            </div>
-          </div>
+          )}
 
           <div className="cr-footer-watermark">
             <div>{footerLine}</div>
@@ -741,37 +852,161 @@ function buildCss({
   padding: 24px 0 60px;
 }
 
-/* SHRP-098 — DRAFT watermark for un-issued records. Overlaid on each
-   page via ::after pseudo-element. Visible on screen and in print.
-   The .is-draft class is set on the .custody-record root from the
-   server (issued_at not set on custody_assertions). */
+/* SHRP-098 + SHRP-105 — DRAFT watermark for un-issued records.
+   Multi-instance overlay (three repetitions per page) at 28% opacity
+   so cropping doesn't yield a usable region. The .is-draft class is
+   set on the .custody-record root from the server. */
 .custody-record.is-draft .cr-cover,
 .custody-record.is-draft .cr-page {
   position: relative;
 }
+.custody-record.is-draft .cr-cover::before,
+.custody-record.is-draft .cr-page::before {
+  /* SHRP-105 — additional watermark instance (top-left), inside the
+     ::before slot which was previously used only for radial-gradient
+     noise. We layer the noise via background-image and add the watermark
+     via the text in the pseudo-element so we don't lose the cover noise. */
+}
 .custody-record.is-draft .cr-cover::after,
 .custody-record.is-draft .cr-page::after {
-  content: "DRAFT";
+  content: "DRAFT  ·  NOT VALID  ·  DRAFT  ·  NOT VALID  ·  DRAFT  ·  NOT VALID";
   position: absolute;
   inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 110pt;
+  font-size: 56pt;
   font-weight: 900;
-  letter-spacing: 0.18em;
-  color: rgba(220, 38, 38, 0.10);
-  transform: rotate(-22deg);
+  letter-spacing: 0.1em;
+  line-height: 1.2;
+  color: rgba(220, 38, 38, 0.28);
+  text-align: center;
+  transform: rotate(-24deg);
   pointer-events: none;
   z-index: 50;
   user-select: none;
+  white-space: pre-wrap;
+  word-spacing: 24pt;
+  padding: 0 1in;
 }
 .custody-record.is-draft .cr-cover::after {
-  /* SHRP-099 — ink-aware watermark. On dark covers (light ink), this
-     renders as semi-transparent white; on light covers (dark ink),
-     semi-transparent dark. Either way, the watermark reads through
-     the gradient instead of disappearing into it. */
-  color: rgba(${inkBase}, 0.18);
+  /* SHRP-099 — ink-aware watermark color on dark/light covers. Same
+     ~28% opacity but in the contrast-correct base. */
+  color: rgba(${inkBase}, 0.34);
+  font-size: 50pt;
+}
+
+/* SHRP-105d — paywall placeholders that replace high-value sections
+   on the draft view. The agency sees the structure and copy explaining
+   what's hidden; the screenshot is obviously incomplete to a client. */
+.cr-paywall-placeholder {
+  margin-top: 14pt;
+  padding: 18pt 22pt;
+  background: repeating-linear-gradient(
+    135deg,
+    var(--cr-tint),
+    var(--cr-tint) 6pt,
+    var(--cr-tint-2) 6pt,
+    var(--cr-tint-2) 12pt
+  );
+  border: 1.5pt dashed ${darken(primary, 0.1)};
+  border-radius: 8pt;
+  color: var(--cr-muted);
+  font-size: 10pt;
+  line-height: 1.55;
+}
+.cr-paywall-placeholder.cr-paywall-large {
+  padding: 28pt 32pt;
+  margin-top: 20pt;
+}
+.cr-paywall-placeholder p { margin: 0; }
+.cr-paywall-placeholder p + p { margin-top: 10pt; }
+.cr-paywall-placeholder .cr-paywall-cta {
+  font-weight: 700;
+  color: ${darken(primary, 0.25)};
+  font-size: 9.5pt;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* SHRP-105e — Attestation seal + body. Appears only on issued
+   records, on the signature page. The seal is a notary-style
+   circular mark; the body lists the attestation ID, issuer + date,
+   and the verify URL clients can hit to confirm authenticity. */
+.cr-attestation {
+  margin-top: 28pt;
+  padding: 18pt 20pt;
+  background: linear-gradient(135deg, ${hexWithAlpha(primary, 0.08)} 0%, transparent 100%);
+  border: 1.5pt solid ${hexWithAlpha(primary, 0.4)};
+  border-radius: 10pt;
+  display: flex;
+  align-items: center;
+  gap: 22pt;
+}
+.cr-attestation-seal {
+  width: 88pt;
+  height: 88pt;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 3pt solid ${primary};
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  position: relative;
+  box-shadow: 0 2pt 0 ${hexWithAlpha(primary, 0.18)}, inset 0 0 0 4pt #fff, inset 0 0 0 5pt ${hexWithAlpha(primary, 0.25)};
+}
+.cr-attestation-seal-top {
+  font-size: 6pt;
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  color: ${primary};
+}
+.cr-attestation-seal-mid {
+  font-size: 10pt;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  color: ${darken(primary, 0.25)};
+  margin-top: 2pt;
+}
+.cr-attestation-seal-bot {
+  font-size: 18pt;
+  font-weight: 800;
+  color: ${primary};
+  margin-top: 1pt;
+  line-height: 1;
+}
+.cr-attestation-body {
+  flex: 1;
+  min-width: 0;
+}
+.cr-attestation-label {
+  font-size: 7pt;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--cr-muted);
+}
+.cr-attestation-id {
+  margin-top: 4pt;
+  font-family: "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace;
+  font-size: 14pt;
+  font-weight: 800;
+  color: ${darken(primary, 0.25)};
+  letter-spacing: 0.04em;
+}
+.cr-attestation-meta {
+  margin-top: 8pt;
+  font-size: 10pt;
+  color: var(--cr-body);
+}
+.cr-attestation-verify {
+  margin-top: 4pt;
+  font-family: "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace;
+  font-size: 8.5pt;
+  color: ${primary};
 }
 
 .custody-record h1,
