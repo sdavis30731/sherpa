@@ -33,6 +33,7 @@ interface Props {
   alreadyTransferred: boolean;
   inFlight: {
     id: string;
+    token: string;
     status: string;
     client_email: string;
     started_at: string;
@@ -132,9 +133,7 @@ export function HandoffSection({
                   </Button>
                   <Button
                     onClick={() => {
-                      // Day 5-6: this opens the rekey flow. For now, point
-                      // at the rekey route placeholder.
-                      window.location.href = `/handoff/${inFlight.id}/complete`;
+                      window.location.href = `/handoff/${inFlight.token}/complete`;
                     }}
                   >
                     Complete transfer

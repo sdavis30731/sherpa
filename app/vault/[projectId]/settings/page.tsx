@@ -66,7 +66,7 @@ export default async function ProjectSettingsPage({
     !project.transferred_at;
   const { data: inFlightHandoff } = await supabase
     .from("engagement_handoffs")
-    .select("id, status, client_email, started_at, accepted_at")
+    .select("id, token, status, client_email, started_at, accepted_at")
     .eq("project_id", projectId)
     .in("status", ["pending_acceptance", "pending_rekey"])
     .maybeSingle();
@@ -161,6 +161,7 @@ export default async function ProjectSettingsPage({
             inFlightHandoff
               ? (inFlightHandoff as {
                   id: string;
+                  token: string;
                   status: string;
                   client_email: string;
                   started_at: string;

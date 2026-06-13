@@ -211,6 +211,34 @@ const REGISTRY: Record<string, AuditActionMeta> = {
     severity: "info",
     category: "credential",
   },
+  engagement_handoff_initiated: {
+    label: "Handoff initiated",
+    description: "Agency sent a claim link to the client.",
+    icon: ShieldCheck,
+    severity: "info",
+    category: "project",
+  },
+  engagement_handoff_accepted: {
+    label: "Client accepted handoff",
+    description: "Client signed up and is ready to receive the engagement.",
+    icon: ShieldCheck,
+    severity: "notable",
+    category: "project",
+  },
+  engagement_handoff_transferred: {
+    label: "Engagement transferred to client",
+    description: "Ownership of the vault, credentials, and policies moved to the client.",
+    icon: ShieldCheck,
+    severity: "success",
+    category: "project",
+  },
+  engagement_handoff_revoked: {
+    label: "Handoff revoked",
+    description: "Agency cancelled an in-flight handoff.",
+    icon: ShieldAlert,
+    severity: "warning",
+    category: "project",
+  },
 
   // ----- Agent (MCP) -----
   mcp_token_created: {
