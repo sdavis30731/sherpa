@@ -1,12 +1,17 @@
+import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { CustodyEditForm } from "./_components/custody-edit-form";
+import { GenerateCard } from "./_components/generate-card";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
 import {
   normalizeCustody,
   reconcileServices,
+  isIssued,
   type CustodyAssertions,
 } from "@/lib/custody";
+import { Callout } from "@/components/ui/callout";
+import { Eye } from "lucide-react";
 
 /**
  * SHRP-096 Day 9-10 — Custody Record wizard (edit mode).
@@ -27,10 +32,14 @@ type EngagementRow = {
 
 export default async function CustodyEditPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ projectId: string }>;
+  searchParams: Promise<{ ungenerated?: string }>;
 }) {
   const { projectId } = await params;
+  const sp = await searchParams;
+  const fromUngeneratedView = sp.ungenerated === "1";
 
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -67,6 +76,7 @@ export default async function CustodyEditPage({
   // actually in the vault right now.
   const existing: CustodyAssertions = normalizeCustody(project.custody_assertions);
   existing.services = reconcileServices(existing.services ?? [], distinctServices);
+  const alreadyIssued = isIssued(existing);
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-10">
@@ -85,11 +95,51 @@ export default async function CustodyEditPage({
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-slate-900">Custody Record</h1>
         <p className="mt-1 text-sm text-slate-600">
-          Fill in the ownership details for this engagement. When you save,
-          the record becomes available at a shareable view that you can
-          export to PDF and hand to your client.
+          Fill in the ownership details for this engagement. When you&apos;re
+          ready, generate the Custody Record — the rendered document with the
+          attestation seal and verify URL is produced at that moment.
         </p>
       </div>
+
+      {fromUngeneratedView && !alreadyIssued && (
+        <div className="mb-6">
+          <Callout tone="info" title="Generate to view">
+            The rendered Custody Record only exists once you generate it.
+            Fill out the form below, then click <strong>Generate</strong>{" "}
+            to produce the signed, dated, verifiable document.
+          </Callout>
+        </div>
+      )}
+
+      {alreadyIssued && (
+        <div className="mb-6">
+          <Callout tone="success" title="Already generated">
+            <div className="flex flex-wrap items-center gap-2 text-xs">
+              <span>
+                This Custody Record was issued and is permanently available.
+                Edit the form below to update; future revisions are free.
+              </span>
+              <Link
+                href={`/vault/${projectId}/custody/view`}
+                className="inline-flex items-center gap-1 rounded-md bg-emerald-600 px-2.5 py-1 text-xs font-semibold text-white hover:bg-emerald-700"
+              >
+                <Eye className="h-3 w-3" />
+                Open record
+              </Link>
+            </div>
+          </Callout>
+        </div>
+      )}
+
+      {!alreadyIssued && (
+        <div className="mb-6">
+          <GenerateCard
+            projectId={project.id}
+            clientName={project.client_name ?? ""}
+            hasSavedDraft={Boolean(existing.saved_at)}
+          />
+        </div>
+      )}
 
       <CustodyEditForm
         projectId={project.id}

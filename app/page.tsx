@@ -18,23 +18,25 @@ import { EnvAnalyzer } from "./_components/env-analyzer";
 import { TopNav } from "./_components/top-nav";
 
 /**
- * Homepage (SHRP-093) — agency-positioned.
+ * Homepage (SHRP-106) — agency-positioned, lifecycle-framed.
  *
- * Promoted from /agencies; the vibe-coder pitch is gone. The wedge is
- * one sentence: "Take on client credentials. Not client risk."
+ * The wedge is one sentence: "Take on client credentials. Not client
+ * risk." The pitch is the full credential lifecycle for agencies
+ * building with AI: request → build → auto-rotate → hand off → recur.
  *
  * Page structure:
  *   1. Sticky top nav with anchor links to each section below
- *   2. Hero — pitch (left) + .env analyzer (right, reframed for agencies)
- *   3. Pillar chips — Build safely · Hand off cleanly · Prove it
- *   4. Headaches — 4 cards in agency voice
- *   5. Workflow — Intake → Build → Handoff
- *   6. Custody Record — the deliverable
- *   7. Trust block — honest tradeoff disclosure (mediated agent bridge)
- *   8. Founding cohort — 10-agency apply CTA
+ *   2. Hero — single-column pitch (analyzer moved to its own beat)
+ *   3. Analyzer — pre-handoff diagnostic on a client's .env
+ *   4. Pillar chips — Build safely · Hand off cleanly · Prove it
+ *   5. Headaches — 4 cards in agency voice
+ *   6. Workflow — 5 stages: request → build → auto-rotate → hand off → recur
+ *   7. Custody Record — attestation seal + verify URL + plain-English layer
+ *   8. Trust block — honest tradeoff disclosure
  *   9. Open source — dark beat ("your client's security person can audit")
- *  10. Pricing — Free for 1 workspace + Agency $299/mo
- *  11. Footer
+ *  10. Pricing — Free for 2 projects + $19/project + $99/record + $9/vault
+ *  11. Founding cohort callout
+ *  12. Footer
  *
  * Anchor IDs match TopNav's NAV_LINKS exactly.
  */
@@ -71,10 +73,10 @@ export default function HomePage() {
               <span className="text-slate-400">Not client risk.</span>
             </h1>
             <p className="mt-6 max-w-2xl text-balance text-xl leading-tight tracking-tight text-slate-600 sm:text-2xl">
-              Your client&apos;s Stripe key, Supabase service_role, AWS
-              credentials — usable by Claude, Cursor, and Codex while you
-              build. Never visible to them. Fully accounted for when you
-              hand off.
+              The credential lifecycle for agencies building with AI.
+              Request keys with a branded onboarding page. Use them through
+              Claude, Cursor, and Codex without exposing them. Auto-rotate
+              on a schedule. Hand off with a verifiable Custody Record.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <Link
@@ -228,7 +230,8 @@ export default function HomePage() {
       </section>
 
       {/* ============================================================
-          WORKFLOW — Intake → Build → Handoff
+          WORKFLOW — 5 stages: Request → Build → Auto-rotate → Hand off →
+          Recurring revenue. SHRP-106 lifecycle expansion.
           ============================================================ */}
       <section id="workflow" className="scroll-mt-24 bg-white">
         <div className="mx-auto max-w-6xl px-6 py-24 sm:py-32">
@@ -245,9 +248,9 @@ export default function HomePage() {
                 Everyone keeps receipts.
               </h2>
               <p className="mt-6 text-lg leading-relaxed text-slate-600">
-                Three stages, designed so the credential graph stays clean
-                from kickoff to launch — without slowing your team down on
-                the inside.
+                Five stages, designed so the credential graph stays clean
+                from kickoff to ongoing operations — and the agency stays
+                in the revenue loop long after the work ships.
               </p>
             </div>
 
@@ -255,18 +258,28 @@ export default function HomePage() {
               <ol className="space-y-6">
                 <FlowStep
                   step={1}
-                  title="Intake"
-                  body="The client adds their credentials to a dedicated client workspace — encrypted in their browser before anything leaves it — or you run intake together on a call. Either way: no keys in email, Slack, or a shared doc, ever."
+                  title="Request from client"
+                  body="One click sends your client a branded onboarding page with a step-by-step guide for each stack you need (Stripe, GitHub, Vercel, Cloudflare, Supabase, and more). They paste keys into their own browser, which encrypts them with your public key before sending — SherpaKeys can't read them, only you can."
                 />
                 <FlowStep
                   step={2}
-                  title="Build"
-                  body="Your team ships with Claude, Cursor, or Codex through the SherpaKeys firewall. The AI asks for the API call; SherpaKeys makes it server-side and returns the response. Reads flow silently. Anything that moves money or data pauses for your approval. Every call lands in the audit log with a timestamp and an actor."
+                  title="Build with AI agents"
+                  body="Your team ships with Claude, Cursor, or Codex through the SherpaKeys firewall. The AI asks for the API call; SherpaKeys makes it server-side and returns the response. Reads flow silently. Anything that moves money or data pauses for your approval in a real-time dashboard. Every call lands in the audit log."
                 />
                 <FlowStep
                   step={3}
-                  title="Handoff"
-                  body="On go-live day you deliver a branded Go-Live Custody Record: every credential inventoried, risk-scored, accounted for. Rotation done, your access revoked, the audit log exported. The client signs off knowing exactly what happened — because it's all written down."
+                  title="Auto-rotate on a schedule"
+                  body="Mark a credential auto-rotating: every N days SherpaKeys generates a new key at the provider, pushes it to your deployment target, verifies it works, revokes the old one. Failures roll back to the old key with an alert. Production never breaks at 3am because a key expired."
+                />
+                <FlowStep
+                  step={4}
+                  title="Hand off with a verifiable record"
+                  body="At launch, generate a Go-Live Custody Record — signed, dated, sealed with the SherpaKeys attestation badge, and tied to a public verify URL the client can hit to confirm authenticity. Your $99 deliverable. The client receives a document that can't be faked from a screenshot."
+                />
+                <FlowStep
+                  step={5}
+                  title="Earn recurring revenue post-launch"
+                  body="The client takes ownership of the vault at $9/month and inherits the auto-rotation policies you set up. They get hands-off credential hygiene; you optionally take a cut of the recurring revenue. The agency stays in the loop long after the engagement ends."
                 />
               </ol>
             </div>
@@ -305,19 +318,28 @@ export default function HomePage() {
               </p>
               <ul className="mt-8 space-y-3 text-sm text-slate-700">
                 <BulletCheck>
-                  <strong>Your branding, not ours</strong> — white-label
-                  reports on the Agency tier
+                  <strong>SherpaKeys attestation seal + verify URL.</strong>{" "}
+                  Every issued record carries a unique ID and a public{" "}
+                  <code className="rounded bg-slate-100 px-1 font-mono text-xs">
+                    sherpakeys.com/verify/SKR-…
+                  </code>{" "}
+                  link. Clients learn to ask for the verify URL the same way
+                  they learn to ask for a SOC 2 report.
                 </BulletCheck>
                 <BulletCheck>
-                  Per-credential inventory with risk scoring — the same engine
-                  as the analyzer in the hero
+                  <strong>Your branding.</strong> Logo, primary color, custom
+                  footer — the record looks like the agency made it.
                 </BulletCheck>
                 <BulletCheck>
-                  Rotation + revocation checklist, completed and timestamped
+                  <strong>Plain-English layer for the client.</strong>{" "}
+                  &ldquo;What this means for you,&rdquo; per-service caption,
+                  &ldquo;What to watch for&rdquo; — a document a non-technical
+                  founder can actually act on.
                 </BulletCheck>
                 <BulletCheck>
-                  Full audit log export — every access, every approval, every
-                  actor
+                  <strong>Pay only on generate — $99 per record.</strong>{" "}
+                  No preview. No screenshot evasion. Once generated, the
+                  document is yours to share, mark up, and resell.
                 </BulletCheck>
               </ul>
               <Link
@@ -553,22 +575,22 @@ export default function HomePage() {
                 When you grow
               </p>
               <p className="mt-2 text-sm text-slate-600">
-                Two add-ons. That&apos;s the whole pricing book.
+                Three add-ons. That&apos;s the whole pricing book.
               </p>
             </div>
             <div className="mt-5 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-              <div className="grid grid-cols-1 divide-y divide-slate-200 sm:grid-cols-2 sm:divide-y-0 sm:divide-x">
+              <div className="grid grid-cols-1 divide-y divide-slate-200 sm:grid-cols-3 sm:divide-y-0 sm:divide-x">
                 <div className="p-6 sm:p-7">
                   <div className="flex items-baseline gap-1.5">
                     <span className="text-3xl font-bold tracking-tight text-slate-900">
                       $19
                     </span>
                     <span className="text-xs text-slate-500">
-                      / month / project
+                      / mo / project
                     </span>
                   </div>
                   <div className="mt-1.5 text-sm font-semibold text-slate-900">
-                    Each additional client project
+                    Each extra active project
                   </div>
                   <div className="mt-1.5 text-xs leading-relaxed text-slate-600">
                     Beyond the 2 included. Add and remove projects as you
@@ -582,16 +604,34 @@ export default function HomePage() {
                       $99
                     </span>
                     <span className="text-xs text-slate-500">
-                      / Custody Record
+                      / record
                     </span>
                   </div>
                   <div className="mt-1.5 text-sm font-semibold text-slate-900">
-                    Each Go-Live Custody Record
+                    Each Custody Record
                   </div>
                   <div className="mt-1.5 text-xs leading-relaxed text-slate-600">
-                    Bill your client whatever you want for the launch
-                    closeout — typically $750 to $2,500. You keep the
-                    markup. SherpaKeys takes one fixed price.
+                    Pay only when you generate. Bill your client whatever
+                    you want for the launch closeout — typically $750 to
+                    $2,500. You keep the markup.
+                  </div>
+                </div>
+                <div className="p-6 sm:p-7">
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-3xl font-bold tracking-tight text-slate-900">
+                      $9
+                    </span>
+                    <span className="text-xs text-slate-500">
+                      / mo / vault
+                    </span>
+                  </div>
+                  <div className="mt-1.5 text-sm font-semibold text-slate-900">
+                    Client vault, post-handoff
+                  </div>
+                  <div className="mt-1.5 text-xs leading-relaxed text-slate-600">
+                    After the handoff, the client keeps the firewall +
+                    auto-rotation. Bill it through, mark it up, or
+                    SherpaKeys can bill them direct — your call.
                   </div>
                 </div>
               </div>
@@ -616,10 +656,11 @@ export default function HomePage() {
                   First 10 agencies who sign up lock founder rates for life.
                 </h3>
                 <p className="mt-2 text-sm leading-relaxed text-slate-700">
-                  $14 / month / project · $79 / Custody Record · direct line
-                  to the founder during build. We&apos;re selecting the first
-                  10 from the free signups based on engagement — no separate
-                  application, no apply form. Just start your first project.
+                  $14 / mo / project · $79 / Custody Record · $7 / mo /
+                  client vault · direct line to the founder during build.
+                  We&apos;re selecting the first 10 from the free signups
+                  based on engagement — no separate application, no apply
+                  form. Just start your first project.
                 </p>
               </div>
             </div>

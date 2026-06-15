@@ -95,6 +95,14 @@ export default async function CustodyViewPage({
   const custody: CustodyAssertions = normalizeCustody(project.custody_assertions);
   const issued = isIssued(custody);
 
+  // SHRP-105-rev — pay-at-generate model. Until the agency issues the
+  // record, there's nothing to render. Redirect back to the edit form
+  // with the Issue CTA. This makes the screenshot-evasion path
+  // unreachable: there is no draft document to capture.
+  if (!issued) {
+    redirect(`/vault/${projectId}/custody/edit?ungenerated=1`);
+  }
+
   const issuedAt = custody.issued_at ? new Date(custody.issued_at) : null;
   const savedAt = custody.saved_at ? new Date(custody.saved_at) : null;
   const launchDate = project.launch_date

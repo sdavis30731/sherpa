@@ -529,10 +529,10 @@ function CustodyCard({
             Edit
           </Link>
           <Link
-            href={`/vault/${projectId}/custody/view`}
+            href={`/vault/${projectId}/custody/edit`}
             className="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-amber-500 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-amber-600"
           >
-            Review &amp; Issue
+            Review &amp; Generate
             <ArrowRight className="h-3 w-3" />
           </Link>
         </div>
